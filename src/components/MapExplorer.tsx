@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MapEntity } from "@/lib/types";
 
 const ICONS: Record<string, string> = {
@@ -18,9 +18,16 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
   const [history, setHistory] = useState<string[]>(rootMap ? [rootMap.id] : []);
   const [zooming, setZooming] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
+  const [imageRatio, setImageRatio] = useState<number | null>(null);
 
   const currentId = history[history.length - 1];
   const current = currentId ? mapById.get(currentId) : undefined;
+
+  // Reset to the fallback ratio whenever the map changes, so the box doesn't
+  // briefly keep the previous map's shape while the new image loads.
+  useEffect(() => {
+    setImageRatio(null);
+  }, [currentId]);
 
   if (!current) {
     return <p className="text-parchment/50">No maps have been revealed yet.</p>;
@@ -76,7 +83,7 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
 
       <div
         className="relative w-full overflow-hidden rounded-lg border border-gold/20 bg-void"
-        style={{ aspectRatio: "16 / 10" }}
+        style={{ aspectRatio: imageRatio ? String(imageRatio) : "16 / 10" }}
       >
         <div
           className="absolute inset-0 transition-transform duration-[450ms] ease-in"
@@ -87,7 +94,13 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={current.imageUrl} alt={current.name} className="w-full h-full object-cover select-none" draggable={false} />
+          <img
+            src={current.imageUrl}
+            alt={current.name}
+            className="w-full h-full object-contain select-none"
+            draggable={false}
+            onLoad={(e) => setImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+          />
           {!zooming &&
             (current.pins ?? []).map((pin) => (
               <button

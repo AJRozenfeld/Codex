@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MapPin } from "@/lib/types";
 
 const ICON_OPTIONS = [
@@ -49,7 +49,14 @@ export function MapPinEditor({
   const [pins, setPins] = useState<MapPin[]>(initialPins);
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<DraftPin | null>(null);
+  const [imageRatio, setImageRatio] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Reset to the fallback ratio whenever the map image changes, so the box
+  // doesn't briefly keep the previous image's shape while the new one loads.
+  useEffect(() => {
+    setImageRatio(null);
+  }, [imageUrl]);
 
   function handleImageClick(e: React.MouseEvent<HTMLDivElement>) {
     if (!editMode || draft) return;
@@ -133,10 +140,16 @@ export function MapPinEditor({
         ref={containerRef}
         onClick={handleImageClick}
         className={`relative w-full overflow-hidden rounded-lg border border-gold/20 bg-void ${editMode ? "cursor-crosshair" : ""}`}
-        style={{ aspectRatio: "16 / 10" }}
+        style={{ aspectRatio: imageRatio ? String(imageRatio) : "16 / 10" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="" className="w-full h-full object-cover select-none" draggable={false} />
+        <img
+          src={imageUrl}
+          alt=""
+          className="w-full h-full object-contain select-none"
+          draggable={false}
+          onLoad={(e) => setImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+        />
         {pins.map((pin) => (
           <button
             key={pin.id}
