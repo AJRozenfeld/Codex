@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { MapEntity } from "@/lib/types";
 
 const ICONS: Record<string, string> = {
@@ -18,16 +18,14 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
   const [history, setHistory] = useState<string[]>(rootMap ? [rootMap.id] : []);
   const [zooming, setZooming] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
-  const [imageRatio, setImageRatio] = useState<number | null>(null);
+  // Keyed by map id, so a map's ratio is measured once and reused instantly
+  // on every later visit - no reset-and-remeasure flicker when navigating
+  // back to a map, which was shifting pins relative to a briefly-wrong box
+  // shape.
+  const [imageRatios, setImageRatios] = useState<Record<string, number>>({});
 
   const currentId = history[history.length - 1];
   const current = currentId ? mapById.get(currentId) : undefined;
-
-  // Reset to the fallback ratio whenever the map changes, so the box doesn't
-  // briefly keep the previous map's shape while the new image loads.
-  useEffect(() => {
-    setImageRatio(null);
-  }, [currentId]);
 
   if (!current) {
     return <p className="text-parchment/50">No maps have been revealed yet.</p>;
@@ -83,7 +81,7 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
 
       <div
         className="relative w-full overflow-hidden rounded-lg border border-gold/20 bg-void"
-        style={{ aspectRatio: imageRatio ? String(imageRatio) : "16 / 10" }}
+        style={{ aspectRatio: imageRatios[currentId] ? String(imageRatios[currentId]) : "16 / 10" }}
       >
         <div
           className="absolute inset-0 transition-transform duration-[450ms] ease-in"
@@ -99,7 +97,10 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
             alt={current.name}
             className="w-full h-full object-contain select-none"
             draggable={false}
-            onLoad={(e) => setImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+            onLoad={(e) => {
+              const ratio = e.currentTarget.naturalWidth / e.currentTarget.naturalHeight;
+              setImageRatios((prev) => (prev[currentId] === ratio ? prev : { ...prev, [currentId]: ratio }));
+            }}
           />
           {!zooming &&
             (current.pins ?? []).map((pin) => (
