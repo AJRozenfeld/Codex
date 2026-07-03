@@ -41,6 +41,7 @@ import type {
   SectionEntityType,
   Template,
   TemplateWithFields,
+  TemplateField,
   TemplateFieldType,
   TemplateFieldRole,
   Article,
@@ -1400,6 +1401,11 @@ export interface TemplateFieldInput {
   label: string;
   fieldType: TemplateFieldType;
   role?: TemplateFieldRole | null;
+  // Only meaningful when fieldType === "reference" - see the design note on
+  // TemplateField in types.ts.
+  referenceTargetType?: SectionEntityType | null;
+  referenceTemplateId?: string | null;
+  referenceMultiple?: boolean;
 }
 
 /** If the new/edited field claims role "title", clears that role off every other field in the template first (at most one title field per template). */
@@ -1422,22 +1428,58 @@ export async function adminCreateTemplateField(templateId: string, input: Templa
   const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
   const id = newId();
   if (input.role === "title") await clearOtherTitleRoles(templateId);
+  const isReference = input.fieldType === "reference";
   await db.execute({
-    sql: "INSERT INTO template_fields (id, template_id, key, label, field_type, role, sort_order) VALUES (?,?,?,?,?,?,?)",
-    args: [id, templateId, key, input.label, input.fieldType, input.role ?? null, nextOrder],
+    sql: "INSERT INTO template_fields (id, template_id, key, label, field_type, role, reference_target_type, reference_template_id, reference_multiple, sort_order) VALUES (?,?,?,?,?,?,?,?,?,?)",
+    args: [
+      id,
+      templateId,
+      key,
+      input.label,
+      input.fieldType,
+      input.role ?? null,
+      isReference ? input.referenceTargetType ?? null : null,
+      isReference && input.referenceTargetType === "custom" ? input.referenceTemplateId ?? null : null,
+      isReference && input.referenceMultiple ? 1 : 0,
+      nextOrder,
+    ],
   });
   return id;
 }
 
-/** Updates a field's label/type/role. The machine `key` is intentionally immutable once created - existing articles' data blobs are already keyed by it. */
+/** Updates a field's label/type/role/reference-target. The machine `key` is intentionally immutable once created - existing articles' data blobs are already keyed by it. */
 export async function adminUpdateTemplateField(templateId: string, fieldId: string, input: TemplateFieldInput): Promise<void> {
   await ensureSchema();
   const db = getDb();
   if (input.role === "title") await clearOtherTitleRoles(templateId, fieldId);
+  const isReference = input.fieldType === "reference";
   await db.execute({
-    sql: "UPDATE template_fields SET label=?, field_type=?, role=? WHERE id=? AND template_id=?",
-    args: [input.label, input.fieldType, input.role ?? null, fieldId, templateId],
+    sql: "UPDATE template_fields SET label=?, field_type=?, role=?, reference_target_type=?, reference_template_id=?, reference_multiple=? WHERE id=? AND template_id=?",
+    args: [
+      input.label,
+      input.fieldType,
+      input.role ?? null,
+      isReference ? input.referenceTargetType ?? null : null,
+      isReference && input.referenceTargetType === "custom" ? input.referenceTemplateId ?? null : null,
+      isReference && input.referenceMultiple ? 1 : 0,
+      fieldId,
+      templateId,
+    ],
   });
+}
+
+/**
+ * {id, label} options for whatever a reference field targets - the
+ * reference-field analogue of adminGetEntityOptions/adminGetArticleOptions,
+ * used to populate the admin article form's picker for a 'reference' field.
+ */
+export async function adminGetReferenceOptions(campaignId: string, field: TemplateField): Promise<{ id: string; label: string }[]> {
+  if (!field.referenceTargetType) return [];
+  if (field.referenceTargetType === "custom") {
+    if (!field.referenceTemplateId) return [];
+    return adminGetArticleOptions(campaignId, field.referenceTemplateId);
+  }
+  return adminGetEntityOptions(campaignId, field.referenceTargetType);
 }
 
 export async function adminDeleteTemplateField(fieldId: string): Promise<void> {
@@ -1517,7 +1559,34 @@ export async function adminUpsertArticle(
   if (input.restrictedPlayerIds !== undefined) {
     await adminSetRestrictedPlayerIds(campaignId, "articles", articleId, input.restrictedPlayerIds);
   }
+  if (template) await syncArticleReferences(articleId, template.fields, input.data);
   return articleId;
+}
+
+/**
+ * Rebuilds article_references for one article from scratch, to match
+ * whatever its 'reference' fields currently hold - called on every
+ * adminUpsertArticle so the "Referenced By" backlink index (see
+ * getBacklinksForEntity in queries.ts) never drifts from the article's own
+ * data blob. Cheap at this app's scale (a handful of reference fields per
+ * template, a handful of ids per field) and much simpler than trying to
+ * diff old vs. new values field-by-field.
+ */
+async function syncArticleReferences(articleId: string, fields: TemplateField[], data: ArticleData): Promise<void> {
+  const db = getDb();
+  await db.execute({ sql: "DELETE FROM article_references WHERE article_id = ?", args: [articleId] });
+  for (const field of fields) {
+    if (field.fieldType !== "reference" || !field.referenceTargetType) continue;
+    const raw = data[field.key];
+    const ids = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+    for (const targetId of ids) {
+      if (!targetId) continue;
+      await db.execute({
+        sql: "INSERT INTO article_references (id, article_id, field_id, target_type, target_id) VALUES (?,?,?,?,?)",
+        args: [newId(), articleId, field.id, field.referenceTargetType, targetId],
+      });
+    }
+  }
 }
 
 export async function adminDeleteArticle(campaignId: string, id: string): Promise<void> {

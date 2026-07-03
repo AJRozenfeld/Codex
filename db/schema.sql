@@ -440,26 +440,69 @@ CREATE TABLE IF NOT EXISTS templates (
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- field_type: 'text' | 'textarea' | 'number' | 'image' | 'checkbox' | 'heading'
+-- field_type: 'text' | 'textarea' | 'number' | 'image' | 'checkbox' | 'heading' | 'reference'
 --   ('heading' is a static divider/label in the form and detail page - it
---   never stores a value in an article's data blob.)
+--   never stores a value in an article's data blob. 'reference' is Phase 3
+--   of the "Section Creator" - see the article_references table below.)
 -- role: NULL | 'title' | 'subtitle' | 'description' | 'image' - marks which
 --   field feeds the card/detail-page display when an article of this
 --   template appears in a list. Exactly one field should carry role='title'
 --   (enforced in adminUpsertTemplateField, not by a DB constraint, since
 --   SQLite can't easily express "at most one row per template_id" here).
+-- reference_target_type / reference_template_id / reference_multiple only
+--   apply when field_type = 'reference': target_type is one of the six
+--   built-in SectionEntityType names or 'custom' (mirroring how article_lists
+--   picks its entity_type), reference_template_id is set only when
+--   target_type = 'custom' (which template's articles this field points at),
+--   and reference_multiple controls whether the field stores one id or an
+--   array of ids in the article's data blob (see ArticleData in types.ts).
 CREATE TABLE IF NOT EXISTS template_fields (
-  id          TEXT PRIMARY KEY,
-  template_id TEXT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
-  key         TEXT NOT NULL,
-  label       TEXT NOT NULL,
-  field_type  TEXT NOT NULL CHECK (field_type IN ('text','textarea','number','image','checkbox','heading')),
-  role        TEXT CHECK (role IS NULL OR role IN ('title','subtitle','description','image')),
-  sort_order  INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  id                     TEXT PRIMARY KEY,
+  template_id            TEXT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+  key                    TEXT NOT NULL,
+  label                  TEXT NOT NULL,
+  field_type             TEXT NOT NULL CHECK (field_type IN ('text','textarea','number','image','checkbox','heading','reference')),
+  role                   TEXT CHECK (role IS NULL OR role IN ('title','subtitle','description','image')),
+  reference_target_type  TEXT CHECK (reference_target_type IS NULL OR reference_target_type IN ('characters','locations','factions','storylines','artifacts','regions','custom')),
+  reference_template_id  TEXT REFERENCES templates(id) ON DELETE SET NULL,
+  reference_multiple     INTEGER NOT NULL DEFAULT 0,
+  sort_order             INTEGER NOT NULL DEFAULT 0,
+  created_at             TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (template_id, key)
 );
 CREATE INDEX IF NOT EXISTS idx_template_fields_template ON template_fields(template_id);
+
+-- ---------------------------------------------------------------------------
+-- Phase 3 of the "Section Creator": relationships between templates (and
+-- between a template and the six built-in entity types). Whenever an article
+-- with a 'reference' field is saved, adminUpsertArticle (admin-queries.ts)
+-- rebuilds this table's rows for that article from scratch - one row per
+-- referenced id, across every reference field on its template. target_id
+-- deliberately has no FK (same reasoning as article_list_items.entity_id):
+-- it can point into any of the six built-in tables OR the articles table,
+-- and since every id in this app is an app-generated UUID (crypto.randomUUID,
+-- see newId() in db.ts), ids are unique across every table, so a plain
+-- `target_id = ?` lookup is enough to resolve backlinks without needing
+-- target_type in the query - target_type is kept only for admin-facing
+-- clarity/debugging. This is what powers each entity's public "Referenced By"
+-- section (see getBacklinksForEntity in queries.ts): find every article
+-- pointing at this id, regardless of which field or template did the
+-- pointing. A deleted article cascades its own outgoing reference rows away;
+-- a deleted TARGET (built-in entity or another article) just leaves other
+-- articles' reference rows pointing at a now-missing id, which silently
+-- resolves to nothing at render time - same "dangling id" tolerance used
+-- throughout this schema (article_list_items, entity_player_access, etc).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS article_references (
+  id          TEXT PRIMARY KEY,
+  article_id  TEXT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  field_id    TEXT NOT NULL REFERENCES template_fields(id) ON DELETE CASCADE,
+  target_type TEXT NOT NULL,
+  target_id   TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_article_references_article ON article_references(article_id);
+CREATE INDEX IF NOT EXISTS idx_article_references_target ON article_references(target_id);
 
 -- ---------------------------------------------------------------------------
 -- Articles: campaign-scoped instances of a (global) Template - the actual

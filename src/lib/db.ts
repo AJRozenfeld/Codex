@@ -381,5 +381,40 @@ async function runMigrations(db: Client): Promise<void> {
     await db.execute("ALTER TABLE article_lists ADD COLUMN template_id TEXT REFERENCES templates(id) ON DELETE SET NULL");
   }
 
+  // Phase 3 of the "Section Creator": template_fields.field_type's CHECK
+  // constraint needs 'reference' added, plus three new nullable columns
+  // describing a reference field's target - SQLite can't ALTER a CHECK
+  // constraint in place, so this needs the same drop-and-rebuild rebuild
+  // pattern as REBUILD_SPECS above, just gated on a marker column existing
+  // rather than campaign_id (foreign_keys is already OFF from above, so no
+  // extra pragma toggle is needed here). article_references itself is a
+  // brand-new table, already handled by CREATE TABLE IF NOT EXISTS.
+  if (!(await hasColumn(db, "template_fields", "reference_target_type"))) {
+    await db.batch(
+      [
+        `CREATE TABLE template_fields_new (
+          id                     TEXT PRIMARY KEY,
+          template_id            TEXT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+          key                    TEXT NOT NULL,
+          label                  TEXT NOT NULL,
+          field_type             TEXT NOT NULL CHECK (field_type IN ('text','textarea','number','image','checkbox','heading','reference')),
+          role                   TEXT CHECK (role IS NULL OR role IN ('title','subtitle','description','image')),
+          reference_target_type  TEXT CHECK (reference_target_type IS NULL OR reference_target_type IN ('characters','locations','factions','storylines','artifacts','regions','custom')),
+          reference_template_id  TEXT REFERENCES templates(id) ON DELETE SET NULL,
+          reference_multiple     INTEGER NOT NULL DEFAULT 0,
+          sort_order             INTEGER NOT NULL DEFAULT 0,
+          created_at             TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (template_id, key)
+        )`,
+        `INSERT INTO template_fields_new (id, template_id, key, label, field_type, role, sort_order, created_at)
+         SELECT id, template_id, key, label, field_type, role, sort_order, created_at FROM template_fields`,
+        `DROP TABLE template_fields`,
+        `ALTER TABLE template_fields_new RENAME TO template_fields`,
+        "CREATE INDEX IF NOT EXISTS idx_template_fields_template ON template_fields(template_id)",
+      ],
+      "write"
+    );
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

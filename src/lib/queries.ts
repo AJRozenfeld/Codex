@@ -880,7 +880,7 @@ function summaryGroupKey(entityType: SectionEntityType, templateId: string | nul
   return entityType === "custom" ? `custom:${templateId}` : entityType;
 }
 
-async function buildSummariesForType(
+export async function buildSummariesForType(
   entityType: SectionEntityType,
   viewer: ViewerContext,
   templateId?: string | null
@@ -1111,6 +1111,9 @@ export function rowToTemplateField(row: any): TemplateField {
     label: row.label,
     fieldType: row.field_type,
     role: row.role ?? null,
+    referenceTargetType: (row.reference_target_type as SectionEntityType) ?? null,
+    referenceTemplateId: row.reference_template_id ?? null,
+    referenceMultiple: !!row.reference_multiple,
     sortOrder: Number(row.sort_order ?? 0),
   };
 }
@@ -1181,4 +1184,80 @@ export async function getArticleBySlug(
   const template = await getTemplateWithFields(article.templateId);
   if (!template) return null;
   return { article: { ...article, data: resolveArticleData(article.data, viewer.username) }, template };
+}
+
+// ---------------------------------------------------------------------------
+// Relationships (Phase 3 of the "Section Creator"). A "reference" field's
+// value in an article's data blob is either a single id string or an array
+// of id strings (see ArticleData in types.ts), pointing at either a built-in
+// entity type or another template's articles (field.referenceTargetType /
+// referenceTemplateId). resolveReferenceField renders the FORWARD direction
+// (what does this field point at) by reusing buildSummariesForType - the
+// same map-of-everything-then-pick-out-what-you-need approach already used
+// by attachListsToSections, just filtered down to the specific id(s) this
+// field holds instead of a whole list's membership.
+//
+// getBacklinksForEntity renders the REVERSE direction (what points at this
+// entity) via the article_references index table, which adminUpsertArticle
+// (admin-queries.ts) keeps in sync with every reference field's value on
+// every save. Since every id in this app is a globally-unique UUID, a plain
+// `target_id = ?` lookup finds every referencing article regardless of which
+// field or template did the pointing - see the design note on
+// article_references in schema.sql.
+// ---------------------------------------------------------------------------
+
+export async function resolveReferenceField(
+  field: TemplateField,
+  value: string | number | boolean | string[] | null | undefined,
+  viewer: ViewerContext = ANONYMOUS
+): Promise<ArticleListItemSummary[]> {
+  if (!field.referenceTargetType) return [];
+  const ids = Array.isArray(value) ? value : value ? [String(value)] : [];
+  if (ids.length === 0) return [];
+  const summaryMap = await buildSummariesForType(field.referenceTargetType, viewer, field.referenceTemplateId);
+  return ids.map((id) => summaryMap.get(id)).filter((v): v is ArticleListItemSummary => Boolean(v));
+}
+
+export async function getBacklinksForEntity(
+  entityId: string,
+  viewer: ViewerContext = ANONYMOUS
+): Promise<ArticleListItemSummary[]> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: `SELECT DISTINCT a.* FROM article_references ar
+          JOIN articles a ON a.id = ar.article_id
+          WHERE ar.target_id = ? AND a.revealed = 1 AND a.campaign_id = ?`,
+    args: [entityId, viewer.campaignId],
+  });
+  let articles = r.rows.map(rowToArticle);
+  articles = await filterByPlayerAccess("articles", articles, viewer.playerId);
+  if (articles.length === 0) return [];
+
+  const templateIds = Array.from(new Set(articles.map((a) => a.templateId)));
+  const templatesById = new Map<string, TemplateWithFields>();
+  for (const templateId of templateIds) {
+    const template = await getTemplateWithFields(templateId);
+    if (template) templatesById.set(templateId, template);
+  }
+
+  const summaries: ArticleListItemSummary[] = [];
+  for (const a of articles) {
+    const template = templatesById.get(a.templateId);
+    if (!template) continue;
+    const titleField = template.fields.find((f) => f.role === "title");
+    const subtitleField = template.fields.find((f) => f.role === "subtitle");
+    const descriptionField = template.fields.find((f) => f.role === "description");
+    const imageField = template.fields.find((f) => f.role === "image");
+    const data = resolveArticleData(a.data, viewer.username);
+    summaries.push({
+      entityId: a.id,
+      title: titleField ? String(data[titleField.key] ?? "") : template.name,
+      subtitle: subtitleField ? (data[subtitleField.key] != null ? String(data[subtitleField.key]) : null) : null,
+      description: descriptionField ? (data[descriptionField.key] != null ? String(data[descriptionField.key]) : null) : null,
+      imagePath: imageField ? (data[imageField.key] != null ? String(data[imageField.key]) : null) : null,
+      href: `/articles/${a.slug}`,
+    });
+  }
+  return summaries;
 }

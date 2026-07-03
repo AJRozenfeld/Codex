@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCharacterBySlug, getCharacterFactions } from "@/lib/queries";
+import { getCharacterBySlug, getCharacterFactions, getBacklinksForEntity } from "@/lib/queries";
 import { getViewerContext } from "@/lib/player-session";
-import { SectionHeading } from "@/components/Card";
+import { SectionHeading, EntityCard } from "@/components/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,7 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
   if (!character) notFound();
 
   const factions = await getCharacterFactions(character.id, viewer);
+  const backlinks = await getBacklinksForEntity(character.id, viewer);
 
   return (
     <div>
@@ -64,6 +65,17 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {backlinks.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl text-gold mb-4">Referenced By</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {backlinks.map((b) => (
+              <EntityCard key={b.entityId} href={b.href} title={b.title} subtitle={b.subtitle} description={b.description} imageUrl={b.imagePath} />
+            ))}
+          </div>
         </section>
       )}
     </div>

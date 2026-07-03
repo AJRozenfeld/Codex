@@ -428,7 +428,7 @@ export interface AdminArticleList {
 // the codex is public-use), unlike every other piece of content here.
 // ---------------------------------------------------------------------------
 
-export type TemplateFieldType = "text" | "textarea" | "number" | "image" | "checkbox" | "heading";
+export type TemplateFieldType = "text" | "textarea" | "number" | "image" | "checkbox" | "heading" | "reference";
 
 // Marks which field feeds the card/detail-page display for an article of
 // this template. Exactly one field should carry "title" - enforced in
@@ -436,6 +436,17 @@ export type TemplateFieldType = "text" | "textarea" | "number" | "image" | "chec
 // on a field whose fieldType is itself "image".
 export type TemplateFieldRole = "title" | "subtitle" | "description" | "image";
 
+// ---------------------------------------------------------------------------
+// Phase 3 of the "Section Creator": relationships. A field with
+// fieldType === "reference" points at either a built-in entity type or
+// another (global) template's articles - referenceTargetType picks which,
+// mirroring how ArticleList.entityType already distinguishes built-ins from
+// "custom" + templateId. referenceMultiple controls whether the field stores
+// a single id or an array of ids in the article's data blob (see ArticleData
+// below). Both referenceTargetType and referenceTemplateId are null/unused
+// on every non-"reference" field. See article_references in schema.sql for
+// how these get indexed for reverse lookup ("Referenced By").
+// ---------------------------------------------------------------------------
 export interface TemplateField {
   id: string;
   templateId: string;
@@ -443,6 +454,9 @@ export interface TemplateField {
   label: string;
   fieldType: TemplateFieldType;
   role: TemplateFieldRole | null;
+  referenceTargetType?: SectionEntityType | null;
+  referenceTemplateId?: string | null;
+  referenceMultiple?: boolean;
   sortOrder: number;
 }
 
@@ -459,9 +473,11 @@ export interface TemplateWithFields extends Template {
 
 // One article's field values, keyed by TemplateField.key. Values are
 // strings for text/textarea/image(url), numbers for number fields, booleans
-// for checkbox fields. "heading" fields never appear here - they're a pure
-// display divider, not data.
-export type ArticleData = Record<string, string | number | boolean | null>;
+// for checkbox fields, a single id string for a single-valued "reference"
+// field, or an array of id strings for a multi-valued "reference" field.
+// "heading" fields never appear here - they're a pure display divider, not
+// data.
+export type ArticleData = Record<string, string | number | boolean | string[] | null>;
 
 export interface Article {
   id: string;

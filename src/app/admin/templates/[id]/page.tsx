@@ -1,17 +1,21 @@
 import { notFound, redirect } from "next/navigation";
 import {
   adminGetTemplate,
+  adminGetTemplates,
   adminUpsertTemplate,
   adminDeleteTemplate,
   adminCreateTemplateField,
   adminUpdateTemplateField,
   adminDeleteTemplateField,
   adminMoveTemplateField,
+  SECTION_ENTITY_TYPE_LABELS,
 } from "@/lib/admin-queries";
-import type { TemplateFieldType, TemplateFieldRole, TemplateField } from "@/lib/types";
+import { SECTION_ENTITY_TYPES, type TemplateFieldType, type TemplateFieldRole, type TemplateField, type SectionEntityType } from "@/lib/types";
 import { Field, TextArea, Select, FormActions } from "@/components/AdminForm";
 
 export const dynamic = "force-dynamic";
+
+const TEMPLATE_PREFIX = "template:";
 
 const FIELD_TYPE_OPTIONS: { value: TemplateFieldType; label: string }[] = [
   { value: "text", label: "Short text" },
@@ -20,6 +24,7 @@ const FIELD_TYPE_OPTIONS: { value: TemplateFieldType; label: string }[] = [
   { value: "image", label: "Image upload" },
   { value: "checkbox", label: "Yes / No" },
   { value: "heading", label: "Section heading (display only, no data)" },
+  { value: "reference", label: "Reference to another entity" },
 ];
 
 const FIELD_ROLE_OPTIONS: { value: string; label: string }[] = [
@@ -29,6 +34,15 @@ const FIELD_ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "description", label: "Description - shown as body text on cards" },
   { value: "image", label: "Image - shown as the card thumbnail" },
 ];
+
+/** Parses a "reference target" select value - either a built-in SectionEntityType or `template:<id>` - into the two DB columns it maps to. */
+function parseReferenceTarget(raw: string): { referenceTargetType: SectionEntityType | null; referenceTemplateId: string | null } {
+  if (!raw) return { referenceTargetType: null, referenceTemplateId: null };
+  if (raw.startsWith(TEMPLATE_PREFIX)) {
+    return { referenceTargetType: "custom", referenceTemplateId: raw.slice(TEMPLATE_PREFIX.length) || null };
+  }
+  return { referenceTargetType: raw as SectionEntityType, referenceTemplateId: null };
+}
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
@@ -54,7 +68,15 @@ async function addFieldAction(templateId: string, formData: FormData) {
   const fieldType = String(formData.get("fieldType") ?? "text") as TemplateFieldType;
   const roleRaw = String(formData.get("role") ?? "");
   if (!label) return;
-  await adminCreateTemplateField(templateId, { label, fieldType, role: (roleRaw || null) as TemplateFieldRole | null });
+  const { referenceTargetType, referenceTemplateId } = parseReferenceTarget(String(formData.get("referenceTarget") ?? ""));
+  await adminCreateTemplateField(templateId, {
+    label,
+    fieldType,
+    role: (roleRaw || null) as TemplateFieldRole | null,
+    referenceTargetType,
+    referenceTemplateId,
+    referenceMultiple: formData.get("referenceMultiple") === "on",
+  });
   redirect(`/admin/templates/${templateId}`);
 }
 
@@ -64,7 +86,15 @@ async function updateFieldAction(templateId: string, fieldId: string, formData: 
   const fieldType = String(formData.get(`fieldType-${fieldId}`) ?? "text") as TemplateFieldType;
   const roleRaw = String(formData.get(`role-${fieldId}`) ?? "");
   if (!label) return;
-  await adminUpdateTemplateField(templateId, fieldId, { label, fieldType, role: (roleRaw || null) as TemplateFieldRole | null });
+  const { referenceTargetType, referenceTemplateId } = parseReferenceTarget(String(formData.get(`referenceTarget-${fieldId}`) ?? ""));
+  await adminUpdateTemplateField(templateId, fieldId, {
+    label,
+    fieldType,
+    role: (roleRaw || null) as TemplateFieldRole | null,
+    referenceTargetType,
+    referenceTemplateId,
+    referenceMultiple: formData.get(`referenceMultiple-${fieldId}`) === "on",
+  });
   redirect(`/admin/templates/${templateId}`);
 }
 
@@ -84,6 +114,8 @@ export default async function AdminTemplateEditPage({ params }: { params: { id: 
   const isNew = params.id === "new";
   const template = isNew ? null : await adminGetTemplate(params.id);
   if (!isNew && !template) notFound();
+
+  const allTemplates = isNew ? [] : await adminGetTemplates();
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
   const del = deleteAction.bind(null, params.id);
@@ -115,6 +147,7 @@ export default async function AdminTemplateEditPage({ params }: { params: { id: 
               <TemplateFieldRow
                 key={f.id}
                 field={f}
+                allTemplates={allTemplates}
                 isFirst={i === 0}
                 isLast={i === template.fields.length - 1}
                 updateAction={updateFieldAction.bind(null, params.id, f.id)}
@@ -134,6 +167,32 @@ export default async function AdminTemplateEditPage({ params }: { params: { id: 
               <Field label="Field Label" name="label" className="flex-1 min-w-[10rem]" required />
               <Select label="Type" name="fieldType" options={FIELD_TYPE_OPTIONS} required />
               <Select label="Role" name="role" options={FIELD_ROLE_OPTIONS.filter((o) => o.value)} />
+              <label className="block">
+                <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Reference Target (if type = Reference)</span>
+                <select
+                  name="referenceTarget"
+                  defaultValue=""
+                  className="rounded-lg bg-void border border-gold/30 px-3 py-2 text-sm text-parchment focus:outline-none focus:border-gold/70"
+                >
+                  <option value="">&mdash;</option>
+                  <optgroup label="Built-in">
+                    {SECTION_ENTITY_TYPES.map((t) => (
+                      <option key={t} value={t}>{SECTION_ENTITY_TYPE_LABELS[t]}</option>
+                    ))}
+                  </optgroup>
+                  {allTemplates.length > 0 && (
+                    <optgroup label="Custom Templates">
+                      {allTemplates.map((t) => (
+                        <option key={t.id} value={`${TEMPLATE_PREFIX}${t.id}`}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-parchment/70 h-fit pb-2">
+                <input type="checkbox" name="referenceMultiple" className="accent-gold" />
+                Allow multiple
+              </label>
               <button type="submit" className="rounded-full bg-gold/90 text-ink px-4 py-2 text-sm font-medium hover:bg-gold h-fit">
                 Add Field
               </button>
@@ -147,6 +206,7 @@ export default async function AdminTemplateEditPage({ params }: { params: { id: 
 
 function TemplateFieldRow({
   field,
+  allTemplates,
   isFirst,
   isLast,
   updateAction,
@@ -155,6 +215,7 @@ function TemplateFieldRow({
   moveDownAction,
 }: {
   field: TemplateField;
+  allTemplates: { id: string; name: string }[];
   isFirst: boolean;
   isLast: boolean;
   updateAction: (formData: FormData) => Promise<void>;
@@ -162,6 +223,11 @@ function TemplateFieldRow({
   moveUpAction: () => Promise<void>;
   moveDownAction: () => Promise<void>;
 }) {
+  const referenceTargetDefault =
+    field.referenceTargetType === "custom"
+      ? `${TEMPLATE_PREFIX}${field.referenceTemplateId ?? ""}`
+      : field.referenceTargetType ?? "";
+
   return (
     <div className="px-4 py-3">
       <form action={updateAction} className="flex flex-wrap items-end gap-3">
@@ -196,6 +262,32 @@ function TemplateFieldRow({
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+        </label>
+        <label className="block">
+          <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Reference Target</span>
+          <select
+            name={`referenceTarget-${field.id}`}
+            defaultValue={referenceTargetDefault}
+            className="rounded-lg bg-void border border-gold/30 px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-gold/70"
+          >
+            <option value="">&mdash;</option>
+            <optgroup label="Built-in">
+              {SECTION_ENTITY_TYPES.map((t) => (
+                <option key={t} value={t}>{SECTION_ENTITY_TYPE_LABELS[t]}</option>
+              ))}
+            </optgroup>
+            {allTemplates.length > 0 && (
+              <optgroup label="Custom Templates">
+                {allTemplates.map((t) => (
+                  <option key={t.id} value={`${TEMPLATE_PREFIX}${t.id}`}>{t.name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-xs text-parchment/70">
+          <input type="checkbox" name={`referenceMultiple-${field.id}`} defaultChecked={!!field.referenceMultiple} className="accent-gold" />
+          Multiple
         </label>
         <button type="submit" className="text-xs text-gold hover:underline whitespace-nowrap">Save</button>
         <div className="flex items-center gap-2 ml-auto">

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getStorylineBySlug, getStorylineCharacters } from "@/lib/queries";
+import { getStorylineBySlug, getStorylineCharacters, getBacklinksForEntity } from "@/lib/queries";
 import { getViewerContext } from "@/lib/player-session";
-import { SectionHeading, EmptyState } from "@/components/Card";
+import { SectionHeading, EmptyState, EntityCard } from "@/components/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,7 @@ export default async function StorylineDetailPage({ params }: { params: { slug: 
   if (!storyline) notFound();
 
   const characters = await getStorylineCharacters(storyline.id, viewer);
+  const backlinks = await getBacklinksForEntity(storyline.id, viewer);
 
   return (
     <div>
@@ -74,6 +75,17 @@ export default async function StorylineDetailPage({ params }: { params: { slug: 
           </ul>
         )}
       </section>
+
+      {backlinks.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl text-gold mb-4">Referenced By</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {backlinks.map((b) => (
+              <EntityCard key={b.entityId} href={b.href} title={b.title} subtitle={b.subtitle} description={b.description} imageUrl={b.imagePath} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

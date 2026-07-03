@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getRegionBySlug, getLocations, getFactions } from "@/lib/queries";
+import { getRegionBySlug, getLocations, getFactions, getBacklinksForEntity } from "@/lib/queries";
 import { getViewerContext } from "@/lib/player-session";
 import { SectionHeading, EntityCard, EmptyState } from "@/components/Card";
 
@@ -14,6 +14,7 @@ export default async function RegionDetailPage({ params }: { params: { slug: str
   const [allLocations, allFactions] = await Promise.all([getLocations(viewer), getFactions(viewer)]);
   const locations = allLocations.filter((l) => l.regionId === region.id && !l.parentId);
   const factions = allFactions.filter((f) => f.regionId === region.id);
+  const backlinks = await getBacklinksForEntity(region.id, viewer);
 
   return (
     <div>
@@ -73,6 +74,17 @@ export default async function RegionDetailPage({ params }: { params: { slug: str
 
       {locations.length === 0 && factions.length === 0 && (
         <EmptyState message="No further details have been revealed for this region yet." />
+      )}
+
+      {backlinks.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl text-gold mb-4">Referenced By</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {backlinks.map((b) => (
+              <EntityCard key={b.entityId} href={b.href} title={b.title} subtitle={b.subtitle} description={b.description} imageUrl={b.imagePath} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

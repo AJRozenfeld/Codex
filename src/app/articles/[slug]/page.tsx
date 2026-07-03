@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { getArticleBySlug } from "@/lib/queries";
+import { getArticleBySlug, resolveReferenceField, getBacklinksForEntity } from "@/lib/queries";
 import { getViewerContext } from "@/lib/player-session";
-import { SectionHeading } from "@/components/Card";
-import type { TemplateField } from "@/lib/types";
+import { SectionHeading, EntityCard } from "@/components/Card";
+import type { TemplateField, ArticleListItemSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,22 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   const roleFieldIds = new Set([titleField?.id, subtitleField?.id, descriptionField?.id, imageField?.id].filter(Boolean));
   const remainingFields = template.fields.filter((f) => !roleFieldIds.has(f.id));
 
+  // Reference fields (Phase 3) resolve to a set of linked cards rather than
+  // plain text, so their targets are fetched up front here (server side,
+  // same access/redaction rules as everything else) and handed to the
+  // display component per field id.
+  const referenceSummaries = new Map<string, ArticleListItemSummary[]>();
+  for (const field of remainingFields) {
+    if (field.fieldType === "reference") {
+      referenceSummaries.set(field.id, await resolveReferenceField(field, article.data[field.key], viewer));
+    }
+  }
+
+  // "Referenced By" - every article (any template, any campaign-matching
+  // viewer) whose own reference field points at this one. See
+  // getBacklinksForEntity in queries.ts.
+  const backlinks = await getBacklinksForEntity(article.id, viewer);
+
   return (
     <div className="max-w-2xl">
       <div className="text-xs uppercase tracking-widest text-ember/70 mb-2">{template.name}</div>
@@ -49,17 +65,54 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       {remainingFields.length > 0 && (
         <div className="space-y-4">
           {remainingFields.map((field) => (
-            <ArticleFieldDisplay key={field.id} field={field} value={article.data[field.key]} />
+            <ArticleFieldDisplay
+              key={field.id}
+              field={field}
+              value={article.data[field.key]}
+              referencedItems={referenceSummaries.get(field.id)}
+            />
           ))}
         </div>
+      )}
+
+      {backlinks.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl text-gold mb-4">Referenced By</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {backlinks.map((b) => (
+              <EntityCard key={b.entityId} href={b.href} title={b.title} subtitle={b.subtitle} description={b.description} imageUrl={b.imagePath} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function ArticleFieldDisplay({ field, value }: { field: TemplateField; value: string | number | boolean | null | undefined }) {
+function ArticleFieldDisplay({
+  field,
+  value,
+  referencedItems,
+}: {
+  field: TemplateField;
+  value: string | number | boolean | string[] | null | undefined;
+  referencedItems?: ArticleListItemSummary[];
+}) {
   if (field.fieldType === "heading") {
     return <h2 className="font-display text-lg text-gold pt-4 border-t border-gold/15">{field.label}</h2>;
+  }
+  if (field.fieldType === "reference") {
+    if (!referencedItems || referencedItems.length === 0) return null;
+    return (
+      <div>
+        <div className="text-xs uppercase tracking-widest text-ember/70 mb-2">{field.label}</div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {referencedItems.map((item) => (
+            <EntityCard key={item.entityId} href={item.href} title={item.title} subtitle={item.subtitle} description={item.description} imageUrl={item.imagePath} />
+          ))}
+        </div>
+      </div>
+    );
   }
   if (value == null || value === "") return null;
   if (field.fieldType === "image") {

@@ -6,11 +6,12 @@ import {
   adminDeleteArticle,
   adminGetTemplate,
   adminAddArticleListItem,
+  adminGetReferenceOptions,
 } from "@/lib/admin-queries";
 import { uploadImage } from "@/lib/blob-storage";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import type { ArticleData, TemplateField } from "@/lib/types";
-import { Field, TextArea, RevealedToggle, FormActions } from "@/components/AdminForm";
+import { Field, TextArea, RevealedToggle, FormActions, CheckboxGroup } from "@/components/AdminForm";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,13 @@ async function saveAction(
     } else if (field.fieldType === "number") {
       const raw = formData.get(field.key);
       data[field.key] = raw != null && raw !== "" ? Number(raw) : null;
+    } else if (field.fieldType === "reference") {
+      if (field.referenceMultiple) {
+        data[field.key] = formData.getAll(field.key).map(String).filter(Boolean);
+      } else {
+        const raw = String(formData.get(field.key) ?? "");
+        data[field.key] = raw || null;
+      }
     } else {
       data[field.key] = String(formData.get(field.key) ?? "");
     }
@@ -97,7 +105,7 @@ export default async function AdminArticleEditPage({
       <p className="text-sm text-parchment/40 mb-6">Template: {template.name}</p>
       <form action={save} className="space-y-4">
         {template.fields.map((field) => (
-          <ArticleFieldInput key={field.id} field={field} value={existing?.data[field.key] ?? null} />
+          <ArticleFieldInput key={field.id} field={field} value={existing?.data[field.key] ?? null} campaignId={campaignId} />
         ))}
         <RevealedToggle defaultChecked={existing ? existing.revealed : true} />
         <FormActions deleteAction={isNew ? undefined : del} />
@@ -106,7 +114,15 @@ export default async function AdminArticleEditPage({
   );
 }
 
-function ArticleFieldInput({ field, value }: { field: TemplateField; value: string | number | boolean | null }) {
+async function ArticleFieldInput({
+  field,
+  value,
+  campaignId,
+}: {
+  field: TemplateField;
+  value: string | number | boolean | string[] | null;
+  campaignId: string;
+}) {
   if (field.fieldType === "heading") {
     return <h3 className="font-display text-sm text-ember pt-2 border-t border-gold/10">{field.label}</h3>;
   }
@@ -144,6 +160,36 @@ function ArticleFieldInput({ field, value }: { field: TemplateField; value: stri
           />
         </label>
       </div>
+    );
+  }
+  if (field.fieldType === "reference") {
+    const options = await adminGetReferenceOptions(campaignId, field);
+    if (field.referenceMultiple) {
+      const selected = Array.isArray(value) ? value : [];
+      return (
+        <CheckboxGroup
+          label={field.label}
+          name={field.key}
+          options={options.map((o) => ({ value: o.id, label: o.label }))}
+          selected={selected}
+        />
+      );
+    }
+    const current = typeof value === "string" ? value : "";
+    return (
+      <label className="block">
+        <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">{field.label}</span>
+        <select
+          name={field.key}
+          defaultValue={current}
+          className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
+        >
+          <option value="">&mdash;</option>
+          {options.map((o) => (
+            <option key={o.id} value={o.id}>{o.label}</option>
+          ))}
+        </select>
+      </label>
     );
   }
   // "text"
