@@ -357,6 +357,7 @@ export function MapPinEditor({
         <img
           src={imageUrl}
           alt=""
+          data-region-surface="1"
           className="w-full h-full object-contain select-none"
           draggable={false}
           onLoad={(e) => setImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
@@ -367,6 +368,7 @@ export function MapPinEditor({
             <div
               key={region.id}
               onClick={(e) => openExistingRegion(region, e)}
+              onPointerDown={(e) => e.stopPropagation()}
               className="absolute rounded border-2 border-ember/70 bg-ember/15 hover:bg-ember/25 cursor-pointer flex items-end p-1"
               style={{
                 left: `${region.x * 100}%`,
