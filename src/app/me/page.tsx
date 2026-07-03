@@ -67,6 +67,14 @@ export default async function MyCharacterPage() {
           Your account isn&apos;t linked to a character yet. Ask your DM to connect one from the admin panel.
         </p>
       )}
+      <div className="mt-6">
+        <Link
+          href="/me/password"
+          className="rounded-full border border-gold/40 text-gold px-4 py-2 text-sm hover:bg-gold/10"
+        >
+          Change Password
+        </Link>
+      </div>
       <form action={logoutAction} className="mt-8">
         <button type="submit" className="text-sm text-parchment/50 hover:text-blood">Log out</button>
       </form>
