@@ -15,6 +15,10 @@ import {
   rowToMapPin,
   rowToMapRegion,
   rowToSection,
+  rowToTemplate,
+  rowToTemplateField,
+  rowToArticle,
+  getTemplateWithFields,
   resolveCharacterAnchor,
   type RegionRect,
 } from "./queries";
@@ -35,6 +39,12 @@ import type {
   Section,
   AdminArticleList,
   SectionEntityType,
+  Template,
+  TemplateWithFields,
+  TemplateFieldType,
+  TemplateFieldRole,
+  Article,
+  ArticleData,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -63,6 +73,7 @@ const REVEALABLE_TABLES = new Set([
   "timeline_events",
   "maps",
   "sections",
+  "articles",
 ]);
 const DELETABLE_TABLES = new Set([...REVEALABLE_TABLES, "moons", "players"]);
 
@@ -103,6 +114,40 @@ async function uniqueSlug(campaignId: string, table: string, base: string, exclu
     if (r.rows.length === 0) return slug;
     n += 1;
     slug = `${slugify(base)}-${n}`;
+  }
+}
+
+/** Same as uniqueSlug, but for the (deliberately global, campaign-less) `templates` table. */
+async function uniqueGlobalSlug(table: string, base: string, excludeId?: string): Promise<string> {
+  const db = getDb();
+  let slug = slugify(base) || "item";
+  let n = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const r = await db.execute({
+      sql: `SELECT id FROM ${table} WHERE slug = ? ${excludeId ? "AND id != ?" : ""}`,
+      args: excludeId ? [slug, excludeId] : [slug],
+    });
+    if (r.rows.length === 0) return slug;
+    n += 1;
+    slug = `${slugify(base)}-${n}`;
+  }
+}
+
+/** Machine key for a template field, unique within its own template. Fixed at creation - see adminUpdateTemplateField. */
+async function uniqueFieldKey(templateId: string, label: string, excludeId?: string): Promise<string> {
+  const db = getDb();
+  let key = slugify(label).replace(/-/g, "_") || "field";
+  let n = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const r = await db.execute({
+      sql: `SELECT id FROM template_fields WHERE template_id = ? AND key = ? ${excludeId ? "AND id != ?" : ""}`,
+      args: excludeId ? [templateId, key, excludeId] : [templateId, key],
+    });
+    if (r.rows.length === 0) return key;
+    n += 1;
+    key = `${slugify(label).replace(/-/g, "_")}_${n}`;
   }
 }
 
@@ -1083,8 +1128,10 @@ export async function adminDeleteSection(campaignId: string, id: string): Promis
   await getDb().execute({ sql: "DELETE FROM sections WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
 }
 
-// Human labels for the "+ Add List" entity-type picker.
-export const SECTION_ENTITY_TYPE_LABELS: Record<SectionEntityType, string> = {
+// Human labels for the "+ Add List" entity-type picker. Only the six
+// built-in types have a fixed label here - "custom" lists show the
+// template's own name instead (see templateName on AdminArticleList).
+export const SECTION_ENTITY_TYPE_LABELS: Record<Exclude<SectionEntityType, "custom">, string> = {
   characters: "Characters",
   locations: "Locations",
   factions: "Factions",
@@ -1100,7 +1147,7 @@ export const SECTION_ENTITY_TYPE_LABELS: Record<SectionEntityType, string> = {
 // list ahead of revealing it.
 export async function adminGetEntityOptions(
   campaignId: string,
-  entityType: SectionEntityType
+  entityType: Exclude<SectionEntityType, "custom">
 ): Promise<{ id: string; label: string }[]> {
   switch (entityType) {
     case "characters":
@@ -1118,17 +1165,38 @@ export async function adminGetEntityOptions(
   }
 }
 
+/** {id, label} options for an existing Template's articles in this campaign - the custom-list analogue of adminGetEntityOptions. */
+export async function adminGetArticleOptions(campaignId: string, templateId: string): Promise<{ id: string; label: string }[]> {
+  await ensureSchema();
+  const template = await getTemplateWithFields(templateId);
+  const titleField = template?.fields.find((f) => f.role === "title");
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT * FROM articles WHERE campaign_id = ? AND template_id = ?",
+    args: [campaignId, templateId],
+  });
+  return r.rows.map((row) => {
+    const article = rowToArticle(row);
+    const label = titleField ? String(article.data[titleField.key] ?? "(untitled)") : "(untitled)";
+    return { id: article.id, label };
+  });
+}
+
 export async function adminGetArticleLists(campaignId: string, sectionId: string): Promise<AdminArticleList[]> {
   await ensureSchema();
   const db = getDb();
   const listsResult = await db.execute({
-    sql: "SELECT * FROM article_lists WHERE section_id = ? ORDER BY sort_order ASC",
+    sql: "SELECT al.*, t.name AS template_name FROM article_lists al LEFT JOIN templates t ON t.id = al.template_id WHERE al.section_id = ? ORDER BY al.sort_order ASC",
     args: [sectionId],
   });
   const lists: AdminArticleList[] = [];
   for (const row of listsResult.rows) {
     const entityType = row.entity_type as SectionEntityType;
-    const options = await adminGetEntityOptions(campaignId, entityType);
+    const templateId = (row.template_id as string) ?? null;
+    const options =
+      entityType === "custom" && templateId
+        ? await adminGetArticleOptions(campaignId, templateId)
+        : await adminGetEntityOptions(campaignId, entityType as Exclude<SectionEntityType, "custom">);
     const titleById = new Map(options.map((o) => [o.id, o.label]));
     const itemsResult = await db.execute({
       sql: "SELECT * FROM article_list_items WHERE list_id = ? ORDER BY sort_order ASC",
@@ -1144,6 +1212,8 @@ export async function adminGetArticleLists(campaignId: string, sectionId: string
       id: row.id as string,
       sectionId: row.section_id as string,
       entityType,
+      templateId,
+      templateName: (row.template_name as string) ?? null,
       name: row.name as string,
       sortOrder: Number(row.sort_order ?? 0),
       items,
@@ -1154,6 +1224,7 @@ export async function adminGetArticleLists(campaignId: string, sectionId: string
 
 export interface ArticleListInput {
   entityType: SectionEntityType;
+  templateId?: string | null;
   name: string;
 }
 
@@ -1167,8 +1238,8 @@ export async function adminCreateArticleList(sectionId: string, input: ArticleLi
   const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
   const id = newId();
   await db.execute({
-    sql: "INSERT INTO article_lists (id, section_id, entity_type, name, sort_order) VALUES (?,?,?,?,?)",
-    args: [id, sectionId, input.entityType, input.name, nextOrder],
+    sql: "INSERT INTO article_lists (id, section_id, entity_type, template_id, name, sort_order) VALUES (?,?,?,?,?,?)",
+    args: [id, sectionId, input.entityType, input.entityType === "custom" ? input.templateId ?? null : null, input.name, nextOrder],
   });
   return id;
 }
@@ -1249,4 +1320,212 @@ export async function adminMoveArticleListItem(listId: string, itemId: string, d
     ],
     "write"
   );
+}
+
+// ---------------------------------------------------------------------------
+// Templates (Phase 2 of the "Section Creator"). Deliberately global - no
+// campaignId parameter anywhere in this block, unlike every other admin
+// query in this file. See the design note on the `templates` table in
+// schema.sql and [[project_erendyl_sections_phase2_templates]] for why.
+// ---------------------------------------------------------------------------
+
+export interface AdminTemplateSummary extends Template {
+  fieldCount: number;
+  articleCount: number;
+}
+
+export async function adminGetTemplates(): Promise<AdminTemplateSummary[]> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute(
+    `SELECT t.*,
+            (SELECT COUNT(*) FROM template_fields tf WHERE tf.template_id = t.id) AS field_count,
+            (SELECT COUNT(*) FROM articles a WHERE a.template_id = t.id) AS article_count
+     FROM templates t
+     ORDER BY t.name ASC`
+  );
+  return r.rows.map((row) => ({
+    ...rowToTemplate(row),
+    fieldCount: Number(row.field_count ?? 0),
+    articleCount: Number(row.article_count ?? 0),
+  }));
+}
+
+export async function adminGetTemplate(id: string): Promise<TemplateWithFields | null> {
+  return getTemplateWithFields(id);
+}
+
+export interface TemplateInput {
+  name: string;
+  description?: string | null;
+}
+
+export async function adminUpsertTemplate(input: TemplateInput, id?: string): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const slug = await uniqueGlobalSlug("templates", input.name, id);
+  if (id) {
+    await db.execute({
+      sql: `UPDATE templates SET name=?, slug=?, description=?, updated_at=datetime('now') WHERE id=?`,
+      args: [input.name, slug, input.description ?? null, id],
+    });
+    return id;
+  }
+  const newIdVal = newId();
+  await db.execute({
+    sql: `INSERT INTO templates (id, slug, name, description) VALUES (?,?,?,?)`,
+    args: [newIdVal, slug, input.name, input.description ?? null],
+  });
+  return newIdVal;
+}
+
+/**
+ * Deletes a template UNLESS any article, in any campaign, still uses it -
+ * since the template is global, deleting it out from under existing
+ * articles would silently break content in every campaign at once, not
+ * just the one the DM currently has selected. Returns the number of
+ * articles blocking the delete (0 means it succeeded).
+ */
+export async function adminDeleteTemplate(id: string): Promise<{ deleted: boolean; articleCount: number }> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({ sql: "SELECT COUNT(*) AS c FROM articles WHERE template_id = ?", args: [id] });
+  const articleCount = Number(r.rows[0]?.c ?? 0);
+  if (articleCount > 0) return { deleted: false, articleCount };
+  await db.execute({ sql: "DELETE FROM templates WHERE id = ?", args: [id] });
+  return { deleted: true, articleCount: 0 };
+}
+
+export interface TemplateFieldInput {
+  label: string;
+  fieldType: TemplateFieldType;
+  role?: TemplateFieldRole | null;
+}
+
+/** If the new/edited field claims role "title", clears that role off every other field in the template first (at most one title field per template). */
+async function clearOtherTitleRoles(templateId: string, excludeFieldId?: string): Promise<void> {
+  const db = getDb();
+  await db.execute({
+    sql: `UPDATE template_fields SET role = NULL WHERE template_id = ? AND role = 'title' ${excludeFieldId ? "AND id != ?" : ""}`,
+    args: excludeFieldId ? [templateId, excludeFieldId] : [templateId],
+  });
+}
+
+export async function adminCreateTemplateField(templateId: string, input: TemplateFieldInput): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const key = input.fieldType === "heading" ? await uniqueFieldKey(templateId, `heading_${newId().slice(0, 8)}`) : await uniqueFieldKey(templateId, input.label);
+  const existing = await db.execute({
+    sql: "SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM template_fields WHERE template_id = ?",
+    args: [templateId],
+  });
+  const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
+  const id = newId();
+  if (input.role === "title") await clearOtherTitleRoles(templateId);
+  await db.execute({
+    sql: "INSERT INTO template_fields (id, template_id, key, label, field_type, role, sort_order) VALUES (?,?,?,?,?,?,?)",
+    args: [id, templateId, key, input.label, input.fieldType, input.role ?? null, nextOrder],
+  });
+  return id;
+}
+
+/** Updates a field's label/type/role. The machine `key` is intentionally immutable once created - existing articles' data blobs are already keyed by it. */
+export async function adminUpdateTemplateField(templateId: string, fieldId: string, input: TemplateFieldInput): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  if (input.role === "title") await clearOtherTitleRoles(templateId, fieldId);
+  await db.execute({
+    sql: "UPDATE template_fields SET label=?, field_type=?, role=? WHERE id=? AND template_id=?",
+    args: [input.label, input.fieldType, input.role ?? null, fieldId, templateId],
+  });
+}
+
+export async function adminDeleteTemplateField(fieldId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM template_fields WHERE id = ?", args: [fieldId] });
+}
+
+/** Swaps this field's sort_order with its neighbor in the given direction, scoped to its own template. */
+export async function adminMoveTemplateField(templateId: string, fieldId: string, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, sort_order FROM template_fields WHERE template_id = ? ORDER BY sort_order ASC",
+    args: [templateId],
+  });
+  const rows = r.rows.map((row) => ({ id: row.id as string, sortOrder: Number(row.sort_order ?? 0) }));
+  const index = rows.findIndex((row) => row.id === fieldId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= rows.length) return;
+  const a = rows[index];
+  const b = rows[swapIndex];
+  await db.batch(
+    [
+      { sql: "UPDATE template_fields SET sort_order = ? WHERE id = ?", args: [b.sortOrder, a.id] },
+      { sql: "UPDATE template_fields SET sort_order = ? WHERE id = ?", args: [a.sortOrder, b.id] },
+    ],
+    "write"
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Articles: campaign-scoped instances of a (global) Template. See the design
+// note on the `articles` table in schema.sql.
+// ---------------------------------------------------------------------------
+
+export async function adminGetArticle(campaignId: string, id: string): Promise<Article | null> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM articles WHERE id = ? AND campaign_id = ?",
+    args: [id, campaignId],
+  });
+  return r.rows[0] ? rowToArticle(r.rows[0]) : null;
+}
+
+export interface ArticleInput {
+  data: ArticleData;
+  revealed: boolean;
+  restrictedPlayerIds?: string[];
+}
+
+/** Creates or updates an article. The slug is derived from the template's title-role field value, same pattern as every other entity's name/title-derived slug. */
+export async function adminUpsertArticle(
+  campaignId: string,
+  templateId: string,
+  input: ArticleInput,
+  id?: string
+): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const template = await getTemplateWithFields(templateId);
+  const titleField = template?.fields.find((f) => f.role === "title");
+  const titleValue = titleField ? String(input.data[titleField.key] ?? "untitled") : "untitled";
+  const slug = await uniqueSlug(campaignId, "articles", titleValue, id);
+  const dataJson = JSON.stringify(input.data);
+  const articleId = id ?? newId();
+  if (id) {
+    await db.execute({
+      sql: `UPDATE articles SET slug=?, revealed=?, data=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
+      args: [slug, input.revealed ? 1 : 0, dataJson, id, campaignId],
+    });
+  } else {
+    await db.execute({
+      sql: `INSERT INTO articles (id, campaign_id, template_id, slug, revealed, data) VALUES (?,?,?,?,?,?)`,
+      args: [articleId, campaignId, templateId, slug, input.revealed ? 1 : 0, dataJson],
+    });
+  }
+  if (input.restrictedPlayerIds !== undefined) {
+    await adminSetRestrictedPlayerIds(campaignId, "articles", articleId, input.restrictedPlayerIds);
+  }
+  return articleId;
+}
+
+export async function adminDeleteArticle(campaignId: string, id: string): Promise<void> {
+  await ensureSchema();
+  // article_list_items.entity_id has no FK (it can point into six different
+  // tables plus this one), so any list membership referencing this article
+  // is left in place and simply resolves to nothing at render time - same
+  // pattern as every other entity type's delete (see attachListsToSections
+  // in queries.ts).
+  await getDb().execute({ sql: "DELETE FROM articles WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
 }

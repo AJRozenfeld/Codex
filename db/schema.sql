@@ -396,12 +396,14 @@ CREATE TABLE IF NOT EXISTS article_lists (
   id          TEXT PRIMARY KEY,
   section_id  TEXT NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
   entity_type TEXT NOT NULL,
+  template_id TEXT REFERENCES templates(id) ON DELETE SET NULL,
   name        TEXT NOT NULL,
   sort_order  INTEGER NOT NULL DEFAULT 0,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_article_lists_section ON article_lists(section_id);
+CREATE INDEX IF NOT EXISTS idx_article_lists_template ON article_lists(template_id);
 
 CREATE TABLE IF NOT EXISTS article_list_items (
   id         TEXT PRIMARY KEY,
@@ -412,6 +414,78 @@ CREATE TABLE IF NOT EXISTS article_list_items (
   UNIQUE (list_id, entity_id)
 );
 CREATE INDEX IF NOT EXISTS idx_article_list_items_list ON article_list_items(list_id);
+
+-- ---------------------------------------------------------------------------
+-- Phase 2 of the "Section Creator": DM-authored custom article Templates.
+-- Deliberately NOT campaign-scoped (no campaign_id) - per Aviv's explicit
+-- direction (2026-07-03), templates are meant to be a reusable, potentially
+-- community-shared asset once this codex becomes public-use, so they live
+-- in one global catalog usable from every campaign in this installation,
+-- unlike every other table here. A template is just a named, ordered set of
+-- fields (see template_fields); the DM picks a template when creating an
+-- Article List bound to entity_type = 'custom' (see article_lists.template_id
+-- above), and every article created for that list uses this field shape.
+-- Deleting a template is blocked at the application layer (not via ON DELETE
+-- CASCADE) whenever any article across any campaign still references it -
+-- see adminDeleteTemplate in admin-queries.ts - since a global template being
+-- deleted would otherwise silently destroy content in every campaign at
+-- once, not just the one currently selected.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS templates (
+  id          TEXT PRIMARY KEY,
+  slug        TEXT NOT NULL UNIQUE,
+  name        TEXT NOT NULL,
+  description TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- field_type: 'text' | 'textarea' | 'number' | 'image' | 'checkbox' | 'heading'
+--   ('heading' is a static divider/label in the form and detail page - it
+--   never stores a value in an article's data blob.)
+-- role: NULL | 'title' | 'subtitle' | 'description' | 'image' - marks which
+--   field feeds the card/detail-page display when an article of this
+--   template appears in a list. Exactly one field should carry role='title'
+--   (enforced in adminUpsertTemplateField, not by a DB constraint, since
+--   SQLite can't easily express "at most one row per template_id" here).
+CREATE TABLE IF NOT EXISTS template_fields (
+  id          TEXT PRIMARY KEY,
+  template_id TEXT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+  key         TEXT NOT NULL,
+  label       TEXT NOT NULL,
+  field_type  TEXT NOT NULL CHECK (field_type IN ('text','textarea','number','image','checkbox','heading')),
+  role        TEXT CHECK (role IS NULL OR role IN ('title','subtitle','description','image')),
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (template_id, key)
+);
+CREATE INDEX IF NOT EXISTS idx_template_fields_template ON template_fields(template_id);
+
+-- ---------------------------------------------------------------------------
+-- Articles: campaign-scoped instances of a (global) Template - the actual
+-- game content a DM creates once a template exists, e.g. a specific monster
+-- from a "Bestiary" template. `data` is a single JSON blob keyed by each
+-- template_fields.key, mirroring the same JSON-blob approach already used by
+-- character_sheets.data. Shares the same revealed/entity_player_access
+-- visibility model as every other content table (entity_type = 'articles'),
+-- and its string field values pass through the same <GM approved="..."> tag
+-- redaction as every other free-text field (see resolveArticleData in
+-- queries.ts). template_id deliberately has NO ON DELETE CASCADE (unlike
+-- most FKs here) - see the note on the templates table above.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS articles (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  template_id TEXT NOT NULL REFERENCES templates(id),
+  slug        TEXT NOT NULL,
+  revealed    INTEGER NOT NULL DEFAULT 1,
+  data        TEXT NOT NULL DEFAULT '{}',
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_articles_campaign ON articles(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_articles_template ON articles(template_id);
 
 -- ---------------------------------------------------------------------------
 -- Journals. Every character (PC or NPC) has an implicit journal made up of

@@ -343,6 +343,12 @@ export interface AdminCharacterMapToken {
 // custom article types (via a template editor) are a later phase.
 // ---------------------------------------------------------------------------
 
+// The six built-in entity types an Article List could bind to as of Phase 1.
+// Phase 2 adds a seventh possibility, "custom", for lists bound to a
+// DM-authored Template instead (see templateId below) - kept as a separate
+// literal rather than folded into this const array since a handful of call
+// sites (the create-list validation, the built-in "+ Add List" picker)
+// specifically need "just the six built-ins" without custom mixed in.
 export const SECTION_ENTITY_TYPES = [
   "characters",
   "locations",
@@ -351,7 +357,8 @@ export const SECTION_ENTITY_TYPES = [
   "artifacts",
   "regions",
 ] as const;
-export type SectionEntityType = (typeof SECTION_ENTITY_TYPES)[number];
+export type BuiltinSectionEntityType = (typeof SECTION_ENTITY_TYPES)[number];
+export type SectionEntityType = BuiltinSectionEntityType | "custom";
 
 export interface Section {
   id: string;
@@ -378,6 +385,9 @@ export interface ArticleList {
   id: string;
   sectionId: string;
   entityType: SectionEntityType;
+  // Only set (non-null) when entityType === "custom" - identifies which
+  // global Template every item in this list is an instance of.
+  templateId?: string | null;
   name: string;
   sortOrder: number;
   items: ArticleListItemSummary[];
@@ -402,9 +412,63 @@ export interface AdminArticleList {
   id: string;
   sectionId: string;
   entityType: SectionEntityType;
+  templateId?: string | null;
+  templateName?: string | null;
   name: string;
   sortOrder: number;
   items: AdminArticleListItem[];
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 of the "Section Creator": DM-authored custom article Templates.
+// Deliberately global (no campaign_id anywhere in this group) - see the
+// design note on the `templates` table in schema.sql and
+// project_erendyl_sections_phase2_templates memory: Aviv wants these
+// reusable/shareable across campaigns (and eventually across users, once
+// the codex is public-use), unlike every other piece of content here.
+// ---------------------------------------------------------------------------
+
+export type TemplateFieldType = "text" | "textarea" | "number" | "image" | "checkbox" | "heading";
+
+// Marks which field feeds the card/detail-page display for an article of
+// this template. Exactly one field should carry "title" - enforced in
+// adminUpsertTemplateField, not by the DB. "image" role is only meaningful
+// on a field whose fieldType is itself "image".
+export type TemplateFieldRole = "title" | "subtitle" | "description" | "image";
+
+export interface TemplateField {
+  id: string;
+  templateId: string;
+  key: string;
+  label: string;
+  fieldType: TemplateFieldType;
+  role: TemplateFieldRole | null;
+  sortOrder: number;
+}
+
+export interface Template {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+}
+
+export interface TemplateWithFields extends Template {
+  fields: TemplateField[];
+}
+
+// One article's field values, keyed by TemplateField.key. Values are
+// strings for text/textarea/image(url), numbers for number fields, booleans
+// for checkbox fields. "heading" fields never appear here - they're a pure
+// display divider, not data.
+export type ArticleData = Record<string, string | number | boolean | null>;
+
+export interface Article {
+  id: string;
+  templateId: string;
+  slug: string;
+  revealed: boolean;
+  data: ArticleData;
 }
 
 // ---------------------------------------------------------------------------

@@ -20,6 +20,11 @@ import type {
   ArticleListItemSummary,
   SectionWithLists,
   SectionEntityType,
+  Template,
+  TemplateField,
+  TemplateWithFields,
+  Article,
+  ArticleData,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -852,22 +857,58 @@ export function rowToSection(row: any): Section {
   };
 }
 
-function rowToArticleListMeta(row: any): { id: string; sectionId: string; entityType: SectionEntityType; name: string; sortOrder: number } {
+function rowToArticleListMeta(row: any): {
+  id: string;
+  sectionId: string;
+  entityType: SectionEntityType;
+  templateId: string | null;
+  name: string;
+  sortOrder: number;
+} {
   return {
     id: row.id,
     sectionId: row.section_id,
     entityType: row.entity_type as SectionEntityType,
+    templateId: row.template_id ?? null,
     name: row.name,
     sortOrder: Number(row.sort_order ?? 0),
   };
 }
 
+/** Groups a list's (entityType, templateId) into one string key, so custom lists bound to different templates get separate summary maps. */
+function summaryGroupKey(entityType: SectionEntityType, templateId: string | null): string {
+  return entityType === "custom" ? `custom:${templateId}` : entityType;
+}
+
 async function buildSummariesForType(
   entityType: SectionEntityType,
-  viewer: ViewerContext
+  viewer: ViewerContext,
+  templateId?: string | null
 ): Promise<Map<string, ArticleListItemSummary>> {
   const map = new Map<string, ArticleListItemSummary>();
   switch (entityType) {
+    case "custom": {
+      if (!templateId) break;
+      const template = await getTemplateWithFields(templateId);
+      if (!template) break;
+      const titleField = template.fields.find((f) => f.role === "title");
+      const subtitleField = template.fields.find((f) => f.role === "subtitle");
+      const descriptionField = template.fields.find((f) => f.role === "description");
+      const imageField = template.fields.find((f) => f.role === "image");
+      const articles = await getArticlesForTemplate(templateId, viewer);
+      for (const a of articles) {
+        const data = resolveArticleData(a.data, viewer.username);
+        map.set(a.id, {
+          entityId: a.id,
+          title: titleField ? String(data[titleField.key] ?? "") : "(untitled)",
+          subtitle: subtitleField ? (data[subtitleField.key] != null ? String(data[subtitleField.key]) : null) : null,
+          description: descriptionField ? (data[descriptionField.key] != null ? String(data[descriptionField.key]) : null) : null,
+          imagePath: imageField ? (data[imageField.key] != null ? String(data[imageField.key]) : null) : null,
+          href: `/articles/${a.slug}`,
+        });
+      }
+      break;
+    }
     case "characters": {
       const rows = await getCharacters(viewer);
       for (const c of rows) {
@@ -980,16 +1021,19 @@ async function attachListsToSections(sections: Section[], viewer: ViewerContext)
     idsByList.set(listId, arr);
   }
 
-  const neededTypes = new Set(listMetas.map((l) => l.entityType));
-  const summaryMapByType = new Map<SectionEntityType, Map<string, ArticleListItemSummary>>();
-  for (const t of neededTypes) {
-    summaryMapByType.set(t, await buildSummariesForType(t, viewer));
+  const neededGroups = new Map<string, { entityType: SectionEntityType; templateId: string | null }>();
+  for (const l of listMetas) {
+    neededGroups.set(summaryGroupKey(l.entityType, l.templateId), { entityType: l.entityType, templateId: l.templateId });
+  }
+  const summaryMapByGroup = new Map<string, Map<string, ArticleListItemSummary>>();
+  for (const [key, group] of neededGroups) {
+    summaryMapByGroup.set(key, await buildSummariesForType(group.entityType, viewer, group.templateId));
   }
 
   const listsBySection = new Map<string, ArticleList[]>();
   for (const meta of listMetas) {
     const ids = idsByList.get(meta.id) ?? [];
-    const summaryMap = summaryMapByType.get(meta.entityType)!;
+    const summaryMap = summaryMapByGroup.get(summaryGroupKey(meta.entityType, meta.templateId))!;
     const items = ids.map((id) => summaryMap.get(id)).filter((v): v is ArticleListItemSummary => Boolean(v));
     const list: ArticleList = { ...meta, items };
     const arr = listsBySection.get(meta.sectionId) ?? [];
@@ -1038,4 +1082,103 @@ export async function getVisibleSectionLinks(viewer: ViewerContext = ANONYMOUS):
   let sections = r.rows.map((row) => ({ id: row.id as string, slug: row.slug as string, name: row.name as string }));
   sections = await filterByPlayerAccess("sections", sections, viewer.playerId);
   return sections.map((s) => ({ slug: s.slug, name: s.name }));
+}
+
+// ---------------------------------------------------------------------------
+// Templates & Articles (Phase 2 of the "Section Creator"). Templates are
+// global (see the design note on the `templates` table in schema.sql), so
+// getTemplateWithFields has no campaign/viewer filtering at all - it's just
+// shape metadata, not player-facing game content. Articles ARE campaign
+// content though, so they go through the exact same
+// revealed/entity_player_access/GM-tag pipeline as every other entity type,
+// with entity_type = "articles" for the access-control tables.
+// ---------------------------------------------------------------------------
+
+export function rowToTemplate(row: any): Template {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? null,
+  };
+}
+
+export function rowToTemplateField(row: any): TemplateField {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    key: row.key,
+    label: row.label,
+    fieldType: row.field_type,
+    role: row.role ?? null,
+    sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
+export function rowToArticle(row: any): Article {
+  let data: ArticleData = {};
+  try {
+    data = JSON.parse(row.data ?? "{}");
+  } catch {
+    data = {};
+  }
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    slug: row.slug,
+    revealed: !!row.revealed,
+    data,
+  };
+}
+
+/** Applies <GM approved="..."> redaction to every string-valued field in an article's data blob. */
+export function resolveArticleData(data: ArticleData, viewerUsername: string | null): ArticleData {
+  const resolved: ArticleData = {};
+  for (const [key, value] of Object.entries(data)) {
+    resolved[key] = typeof value === "string" ? resolveGmTags(value, viewerUsername) : value;
+  }
+  return resolved;
+}
+
+export async function getTemplateWithFields(templateId: string): Promise<TemplateWithFields | null> {
+  await ensureSchema();
+  const db = getDb();
+  const templateResult = await db.execute({ sql: "SELECT * FROM templates WHERE id = ?", args: [templateId] });
+  if (!templateResult.rows[0]) return null;
+  const fieldsResult = await db.execute({
+    sql: "SELECT * FROM template_fields WHERE template_id = ? ORDER BY sort_order ASC",
+    args: [templateId],
+  });
+  return { ...rowToTemplate(templateResult.rows[0]), fields: fieldsResult.rows.map(rowToTemplateField) };
+}
+
+async function getArticlesForTemplate(templateId: string, viewer: ViewerContext): Promise<Article[]> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT * FROM articles WHERE template_id = ? AND revealed = 1 AND campaign_id = ?",
+    args: [templateId, viewer.campaignId],
+  });
+  let articles = r.rows.map(rowToArticle);
+  articles = await filterByPlayerAccess("articles", articles, viewer.playerId);
+  return articles;
+}
+
+export async function getArticleBySlug(
+  slug: string,
+  viewer: ViewerContext = ANONYMOUS
+): Promise<{ article: Article; template: TemplateWithFields } | null> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT * FROM articles WHERE slug = ? AND revealed = 1 AND campaign_id = ?",
+    args: [slug, viewer.campaignId],
+  });
+  if (!r.rows[0]) return null;
+  const article = rowToArticle(r.rows[0]);
+  const allowed = await checkPlayerAccess("articles", article.id, viewer.playerId);
+  if (!allowed) return null;
+  const template = await getTemplateWithFields(article.templateId);
+  if (!template) return null;
+  return { article: { ...article, data: resolveArticleData(article.data, viewer.username) }, template };
 }

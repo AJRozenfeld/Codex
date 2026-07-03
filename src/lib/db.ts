@@ -372,5 +372,14 @@ async function runMigrations(db: Client): Promise<void> {
     );
   }
 
+  // Phase 2 of the "Section Creator": article_lists predates the
+  // templates/articles tables (shipped in Phase 1), so an already-migrated
+  // database's article_lists table won't have template_id yet. The
+  // templates table itself is brand-new, so CREATE TABLE IF NOT EXISTS
+  // above already handles it - only this ALTER is needed here.
+  if (!(await hasColumn(db, "article_lists", "template_id"))) {
+    await db.execute("ALTER TABLE article_lists ADD COLUMN template_id TEXT REFERENCES templates(id) ON DELETE SET NULL");
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

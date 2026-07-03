@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import {
   adminGetSection,
   adminUpsertSection,
@@ -14,11 +15,15 @@ import {
   adminRemoveArticleListItem,
   adminMoveArticleListItem,
   adminGetEntityOptions,
+  adminGetArticleOptions,
+  adminGetTemplates,
   SECTION_ENTITY_TYPE_LABELS,
 } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
-import { SECTION_ENTITY_TYPES } from "@/lib/types";
+import { SECTION_ENTITY_TYPES, type SectionEntityType } from "@/lib/types";
 import { Field, Select, RevealedToggle, CheckboxGroup, FormActions } from "@/components/AdminForm";
+
+const TEMPLATE_PREFIX = "template:";
 
 export const dynamic = "force-dynamic";
 
@@ -47,10 +52,18 @@ async function deleteAction(id: string) {
 
 async function createListAction(sectionId: string, formData: FormData) {
   "use server";
-  const entityType = String(formData.get("entityType") ?? "") as (typeof SECTION_ENTITY_TYPES)[number];
+  const raw = String(formData.get("entityType") ?? "");
   const name = String(formData.get("listName") ?? "");
-  if (!name || !SECTION_ENTITY_TYPES.includes(entityType)) return;
-  await adminCreateArticleList(sectionId, { entityType, name });
+  if (!name) return;
+  if (raw.startsWith(TEMPLATE_PREFIX)) {
+    const templateId = raw.slice(TEMPLATE_PREFIX.length);
+    if (!templateId) return;
+    await adminCreateArticleList(sectionId, { entityType: "custom", templateId, name });
+  } else {
+    const entityType = raw as (typeof SECTION_ENTITY_TYPES)[number];
+    if (!SECTION_ENTITY_TYPES.includes(entityType)) return;
+    await adminCreateArticleList(sectionId, { entityType, name });
+  }
   redirect(`/admin/sections/${sectionId}`);
 }
 
@@ -105,6 +118,7 @@ export default async function AdminSectionEditPage({ params }: { params: { id: s
   if (!isNew && !section) notFound();
 
   const lists = isNew ? [] : await adminGetArticleLists(campaignId, params.id);
+  const templates = isNew ? [] : await adminGetTemplates();
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
   const del = deleteAction.bind(null, params.id);
@@ -156,16 +170,40 @@ export default async function AdminSectionEditPage({ params }: { params: { id: s
             <h3 className="font-display text-sm text-gold mb-3">+ Add List</h3>
             <form action={createList} className="flex flex-wrap items-end gap-3">
               <Field label="List Header" name="listName" className="flex-1 min-w-[10rem]" required />
-              <Select
-                label="Article Type"
-                name="entityType"
-                options={SECTION_ENTITY_TYPES.map((t) => ({ value: t, label: SECTION_ENTITY_TYPE_LABELS[t] }))}
-                required
-              />
+              <label className="block">
+                <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Article Type</span>
+                <select
+                  name="entityType"
+                  defaultValue=""
+                  required
+                  className="rounded-lg bg-void border border-gold/30 px-3 py-2 text-sm text-parchment focus:outline-none focus:border-gold/70"
+                >
+                  <option value="" disabled>&mdash;</option>
+                  <optgroup label="Built-in">
+                    {SECTION_ENTITY_TYPES.map((t) => (
+                      <option key={t} value={t}>{SECTION_ENTITY_TYPE_LABELS[t]}</option>
+                    ))}
+                  </optgroup>
+                  {templates.length > 0 && (
+                    <optgroup label="Custom Templates">
+                      {templates.map((t) => (
+                        <option key={t.id} value={`${TEMPLATE_PREFIX}${t.id}`}>{t.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </label>
               <button type="submit" className="rounded-full bg-gold/90 text-ink px-4 py-2 text-sm font-medium hover:bg-gold h-fit">
                 Create List
               </button>
             </form>
+            {templates.length === 0 && (
+              <p className="text-xs text-parchment/40 mt-2">
+                No custom templates yet - create one under{" "}
+                <Link href="/admin/templates" className="text-gold hover:underline">Templates</Link> to add fully
+                custom article types here.
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -202,9 +240,13 @@ async function ArticleListEditor({
   moveItemUpAction: (itemId: string) => (formData: FormData) => Promise<void>;
   moveItemDownAction: (itemId: string) => (formData: FormData) => Promise<void>;
 }) {
-  const allOptions = await adminGetEntityOptions(campaignId, list.entityType);
+  const isCustom = list.entityType === "custom" && !!list.templateId;
+  const allOptions = isCustom
+    ? await adminGetArticleOptions(campaignId, list.templateId!)
+    : await adminGetEntityOptions(campaignId, list.entityType as Exclude<SectionEntityType, "custom">);
   const addedIds = new Set(list.items.map((i) => i.entityId));
   const availableOptions = allOptions.filter((o) => !addedIds.has(o.id));
+  const typeLabel = isCustom ? `Custom: ${list.templateName ?? "(template deleted)"}` : SECTION_ENTITY_TYPE_LABELS[list.entityType as Exclude<SectionEntityType, "custom">];
 
   return (
     <div className="rounded-lg border border-gold/20 p-5">
@@ -218,7 +260,7 @@ async function ArticleListEditor({
           <button type="submit" className="text-xs text-gold hover:underline whitespace-nowrap">Rename</button>
         </form>
         <span className="text-xs uppercase tracking-widest text-ember/70 whitespace-nowrap">
-          {SECTION_ENTITY_TYPE_LABELS[list.entityType]}
+          {typeLabel}
         </span>
         <div className="flex items-center gap-2">
           <form action={moveUpAction}>
@@ -238,6 +280,14 @@ async function ArticleListEditor({
           <li key={item.id} className="flex items-center justify-between gap-3 rounded bg-void/40 px-3 py-1.5">
             <span className="text-sm text-parchment">{item.title}</span>
             <div className="flex items-center gap-3">
+              {isCustom && (
+                <Link
+                  href={`/admin/articles/${item.entityId}?campaignId=${campaignId}&templateId=${list.templateId}&sectionId=${sectionId}`}
+                  className="text-xs text-gold hover:underline"
+                >
+                  Edit
+                </Link>
+              )}
               <form action={moveItemUpAction(item.id)}>
                 <button type="submit" disabled={itemIndex === 0} className="text-xs text-parchment/50 hover:text-gold disabled:opacity-20">&uarr;</button>
               </form>
@@ -253,27 +303,37 @@ async function ArticleListEditor({
         {list.items.length === 0 && <li className="text-xs text-parchment/40 px-3 py-1">No articles in this list yet.</li>}
       </ul>
 
-      <form action={addItemAction} className="mt-4 flex items-center gap-2">
-        <select
-          name={`entityId-${list.id}`}
-          defaultValue=""
-          className="flex-1 rounded-lg bg-void border border-gold/30 px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-gold/70"
-        >
-          <option value="" disabled>
-            &mdash; choose {SECTION_ENTITY_TYPE_LABELS[list.entityType].toLowerCase()} &mdash;
-          </option>
-          {availableOptions.map((o) => (
-            <option key={o.id} value={o.id}>{o.label}</option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          disabled={availableOptions.length === 0}
-          className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10 disabled:opacity-30 whitespace-nowrap"
-        >
-          + Add {SECTION_ENTITY_TYPE_LABELS[list.entityType].replace(/s$/, "")}
-        </button>
-      </form>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <form action={addItemAction} className="flex items-center gap-2 flex-1 min-w-[16rem]">
+          <select
+            name={`entityId-${list.id}`}
+            defaultValue=""
+            className="flex-1 rounded-lg bg-void border border-gold/30 px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-gold/70"
+          >
+            <option value="" disabled>
+              &mdash; choose existing &mdash;
+            </option>
+            {availableOptions.map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            disabled={availableOptions.length === 0}
+            className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10 disabled:opacity-30 whitespace-nowrap"
+          >
+            + Add Existing
+          </button>
+        </form>
+        {isCustom && (
+          <Link
+            href={`/admin/articles/new?campaignId=${campaignId}&templateId=${list.templateId}&sectionId=${sectionId}&listId=${list.id}`}
+            className="rounded-full bg-gold/90 text-ink px-3 py-1.5 text-xs font-medium hover:bg-gold whitespace-nowrap"
+          >
+            + Create New Article
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
