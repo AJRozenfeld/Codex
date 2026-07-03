@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { MapEntity } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import type { MapEntity, CharacterMapToken } from "@/lib/types";
 
 const ICONS: Record<string, string> = {
   city: "●",
@@ -11,7 +12,13 @@ const ICONS: Record<string, string> = {
   district: "■",
 };
 
-export function MapExplorer({ maps }: { maps: MapEntity[] }) {
+export function MapExplorer({
+  maps,
+  onCurrentMapChange,
+}: {
+  maps: MapEntity[];
+  onCurrentMapChange?: (map: MapEntity) => void;
+}) {
   const mapById = useMemo(() => new Map(maps.map((m) => [m.id, m])), [maps]);
   const rootMap = maps.find((m) => m.isRoot) ?? maps[0];
 
@@ -23,9 +30,16 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
   // back to a map, which was shifting pins relative to a briefly-wrong box
   // shape.
   const [imageRatios, setImageRatios] = useState<Record<string, number>>({});
+  const [activeToken, setActiveToken] = useState<CharacterMapToken | null>(null);
 
   const currentId = history[history.length - 1];
   const current = currentId ? mapById.get(currentId) : undefined;
+
+  useEffect(() => {
+    if (current) onCurrentMapChange?.(current);
+    setActiveToken(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId]);
 
   if (!current) {
     return <p className="text-parchment/50">No maps have been revealed yet.</p>;
@@ -127,12 +141,81 @@ export function MapExplorer({ maps }: { maps: MapEntity[] }) {
                 )}
               </button>
             ))}
+          {!zooming &&
+            (current.tokens ?? []).map((token) => (
+              <button
+                key={token.characterId}
+                type="button"
+                onClick={() => setActiveToken(token)}
+                className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+                style={{ left: `${token.x * 100}%`, top: `${token.y * 100}%` }}
+                title={token.name}
+              >
+                {token.portraitPath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={token.portraitPath}
+                    alt={token.name}
+                    draggable={false}
+                    className="h-8 w-8 rounded-full object-cover border-2 border-parchment shadow-lg hover:scale-110 transition-transform"
+                  />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-void border-2 border-parchment text-[10px] text-parchment shadow-lg hover:scale-110 transition-transform">
+                    {token.name.slice(0, 1)}
+                  </span>
+                )}
+              </button>
+            ))}
         </div>
       </div>
       {current.locationName && (
         <p className="text-xs text-parchment/40 mt-2">
           Linked to <span className="text-parchment/60">{current.locationName}</span>
         </p>
+      )}
+
+      {activeToken && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
+          onClick={() => setActiveToken(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg border border-gold/30 bg-ink p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              {activeToken.portraitPath ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={activeToken.portraitPath}
+                  alt={activeToken.name}
+                  className="h-14 w-14 rounded-full object-cover border-2 border-gold/40"
+                />
+              ) : (
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-void border-2 border-gold/40 text-lg text-parchment">
+                  {activeToken.name.slice(0, 1)}
+                </span>
+              )}
+              <h3 className="font-display text-lg text-gold">{activeToken.name}</h3>
+            </div>
+            {activeToken.summary && <p className="mt-3 text-sm text-parchment/70">{activeToken.summary}</p>}
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveToken(null)}
+                className="text-xs text-parchment/50 hover:text-parchment"
+              >
+                Close
+              </button>
+              <Link
+                href={`/characters/${activeToken.slug}`}
+                className="rounded-full bg-gold/90 text-ink px-3 py-1 text-xs font-medium hover:bg-gold"
+              >
+                View Character
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

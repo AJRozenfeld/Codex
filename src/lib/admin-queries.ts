@@ -13,6 +13,9 @@ import {
   rowToTimelineEvent,
   rowToMap,
   rowToMapPin,
+  rowToMapRegion,
+  resolveCharacterAnchor,
+  type RegionRect,
 } from "./queries";
 import type {
   Moon,
@@ -26,6 +29,8 @@ import type {
   Player,
   MapEntity,
   MapPin,
+  MapRegion,
+  AdminCharacterMapToken,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -879,4 +884,136 @@ export async function adminUpdateMapPin(pinId: string, input: MapPinInput): Prom
 export async function adminDeleteMapPin(pinId: string): Promise<void> {
   await ensureSchema();
   await getDb().execute({ sql: "DELETE FROM map_pins WHERE id = ?", args: [pinId] });
+}
+
+// ---- Map Regions (character token auto-placement) --------------------------
+
+export async function adminGetMapRegions(mapId: string): Promise<MapRegion[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: `SELECT r.*, l.name AS location_name FROM map_regions r
+          LEFT JOIN locations l ON l.id = r.location_id
+          WHERE r.map_id = ?`,
+    args: [mapId],
+  });
+  return r.rows.map(rowToMapRegion);
+}
+
+export interface MapRegionInput {
+  locationId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export async function adminCreateMapRegion(mapId: string, input: MapRegionInput): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const id = newId();
+  await db.execute({
+    sql: `INSERT INTO map_regions (id, map_id, location_id, x, y, width, height) VALUES (?,?,?,?,?,?,?)`,
+    args: [id, mapId, input.locationId, input.x, input.y, input.width, input.height],
+  });
+  return id;
+}
+
+export async function adminUpdateMapRegion(regionId: string, input: MapRegionInput): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({
+    sql: `UPDATE map_regions SET location_id=?, x=?, y=?, width=?, height=?, updated_at=datetime('now') WHERE id=?`,
+    args: [input.locationId, input.x, input.y, input.width, input.height, regionId],
+  });
+}
+
+export async function adminDeleteMapRegion(regionId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM map_regions WHERE id = ?", args: [regionId] });
+}
+
+// ---- Character map tokens (admin editor: every character, auto-placed via
+// regions or manually dragged; see resolveCharacterAnchor in queries.ts) ----
+
+export async function adminGetCharacterMapTokens(campaignId: string, mapId: string): Promise<AdminCharacterMapToken[]> {
+  await ensureSchema();
+  const db = getDb();
+
+  const charsResult = await db.execute({
+    sql: `SELECT id, name, portrait_path, location_id FROM characters WHERE campaign_id = ? AND location_id IS NOT NULL`,
+    args: [campaignId],
+  });
+  if (charsResult.rows.length === 0) return [];
+
+  const locResult = await db.execute({
+    sql: "SELECT id, parent_id FROM locations WHERE campaign_id = ?",
+    args: [campaignId],
+  });
+  const parentOf = new Map<string, string | null>();
+  for (const row of locResult.rows) parentOf.set(row.id as string, (row.parent_id as string) ?? null);
+
+  const regionsResult = await db.execute({ sql: "SELECT * FROM map_regions WHERE map_id = ?", args: [mapId] });
+  const regionsByLocation = new Map<string, RegionRect>();
+  for (const row of regionsResult.rows) {
+    if (!regionsByLocation.has(row.location_id as string)) {
+      regionsByLocation.set(row.location_id as string, {
+        x: Number(row.x),
+        y: Number(row.y),
+        width: Number(row.width),
+        height: Number(row.height),
+      });
+    }
+  }
+
+  const overridesResult = await db.execute({
+    sql: "SELECT * FROM character_map_positions WHERE map_id = ?",
+    args: [mapId],
+  });
+  const overridesByCharacter = new Map<string, { x: number; y: number }>();
+  const overriddenIds = new Set<string>();
+  for (const row of overridesResult.rows) {
+    overridesByCharacter.set(row.character_id as string, { x: Number(row.x), y: Number(row.y) });
+    overriddenIds.add(row.character_id as string);
+  }
+
+  return charsResult.rows.map((row) => {
+    const characterId = row.id as string;
+    const locationId = (row.location_id as string) ?? null;
+    const anchor = resolveCharacterAnchor(characterId, locationId, regionsByLocation, overridesByCharacter, parentOf);
+    return {
+      characterId,
+      name: row.name as string,
+      portraitPath: (row.portrait_path as string) ?? null,
+      x: anchor?.x ?? null,
+      y: anchor?.y ?? null,
+      isOverride: overriddenIds.has(characterId),
+    };
+  });
+}
+
+export async function adminSetCharacterMapPosition(mapId: string, characterId: string, x: number, y: number): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const existing = await db.execute({
+    sql: "SELECT id FROM character_map_positions WHERE map_id = ? AND character_id = ?",
+    args: [mapId, characterId],
+  });
+  if (existing.rows[0]) {
+    await db.execute({
+      sql: "UPDATE character_map_positions SET x = ?, y = ?, updated_at = datetime('now') WHERE map_id = ? AND character_id = ?",
+      args: [x, y, mapId, characterId],
+    });
+  } else {
+    await db.execute({
+      sql: "INSERT INTO character_map_positions (id, map_id, character_id, x, y) VALUES (?,?,?,?,?)",
+      args: [newId(), mapId, characterId, x, y],
+    });
+  }
+}
+
+export async function adminClearCharacterMapPosition(mapId: string, characterId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({
+    sql: "DELETE FROM character_map_positions WHERE map_id = ? AND character_id = ?",
+    args: [mapId, characterId],
+  });
 }

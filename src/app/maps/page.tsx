@@ -1,7 +1,7 @@
 import { getMapExplorerData } from "@/lib/queries";
 import { getViewerContext } from "@/lib/player-session";
 import { SectionHeading, EmptyState } from "@/components/Card";
-import { MapExplorer } from "@/components/MapExplorer";
+import { MapsWithCharacterList } from "@/components/MapsWithCharacterList";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export default async function MapsPage() {
       {maps.length === 0 ? (
         <EmptyState message="No maps have been revealed yet." />
       ) : (
-        <MapExplorer maps={maps} />
+        <MapsWithCharacterList maps={maps} />
       )}
     </div>
   );

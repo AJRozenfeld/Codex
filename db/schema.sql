@@ -318,6 +318,51 @@ CREATE INDEX IF NOT EXISTS idx_map_pins_map ON map_pins(map_id);
 CREATE INDEX IF NOT EXISTS idx_map_pins_target ON map_pins(target_map_id);
 
 -- ---------------------------------------------------------------------------
+-- Map regions: rectangular areas (fractional 0..1 coords, like pins) drawn on
+-- a map's image and tied to a Location. Used purely to auto-place character
+-- tokens - see resolveCharacterTokens() in queries.ts: a character's token is
+-- placed in the region for their exact location, or (walking up parent_id)
+-- the nearest ancestor location that has a region on THIS map. Multiple
+-- regions can point at the same location (e.g. a sprawling location drawn as
+-- two disconnected areas) and a map can have zero regions, in which case no
+-- character ever auto-places on it. Admin-only concept - players never see
+-- the region boxes, only the resulting tokens.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS map_regions (
+  id          TEXT PRIMARY KEY,
+  map_id      TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+  location_id TEXT NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  x           REAL NOT NULL,
+  y           REAL NOT NULL,
+  width       REAL NOT NULL,
+  height      REAL NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_map_regions_map ON map_regions(map_id);
+CREATE INDEX IF NOT EXISTS idx_map_regions_location ON map_regions(location_id);
+
+-- ---------------------------------------------------------------------------
+-- Manual per-map character token placement. Set by the DM dragging a token
+-- in the admin map editor; overrides the automatic region-based placement
+-- for that one character on that one map. No row here = position is
+-- computed automatically from map_regions instead (see resolveCharacterTokens
+-- in queries.ts).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS character_map_positions (
+  id           TEXT PRIMARY KEY,
+  map_id       TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  x            REAL NOT NULL,
+  y            REAL NOT NULL,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (map_id, character_id)
+);
+CREATE INDEX IF NOT EXISTS idx_char_map_pos_map ON character_map_positions(map_id);
+CREATE INDEX IF NOT EXISTS idx_char_map_pos_char ON character_map_positions(character_id);
+
+-- ---------------------------------------------------------------------------
 -- Journals. Every character (PC or NPC) has an implicit journal made up of
 -- dated entries "written" by that character's owner - the DM for NPCs, the
 -- linked player for their own PC (and always the DM too). This is private

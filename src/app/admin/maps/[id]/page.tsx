@@ -11,6 +11,13 @@ import {
   adminCreateMapPin,
   adminUpdateMapPin,
   adminDeleteMapPin,
+  adminGetMapRegions,
+  adminCreateMapRegion,
+  adminUpdateMapRegion,
+  adminDeleteMapRegion,
+  adminGetCharacterMapTokens,
+  adminSetCharacterMapPosition,
+  adminClearCharacterMapPosition,
 } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { Field, Select, Checkbox, RevealedToggle, CheckboxGroup, FormActions } from "@/components/AdminForm";
@@ -72,6 +79,53 @@ async function deletePinAction(pinId: string): Promise<void> {
   await adminDeleteMapPin(pinId);
 }
 
+async function createRegionAction(
+  mapId: string,
+  locationId: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<string> {
+  "use server";
+  return adminCreateMapRegion(mapId, { locationId, x, y, width, height });
+}
+
+async function updateRegionAction(
+  regionId: string,
+  locationId: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<void> {
+  "use server";
+  await adminUpdateMapRegion(regionId, { locationId, x, y, width, height });
+}
+
+async function deleteRegionAction(regionId: string): Promise<void> {
+  "use server";
+  await adminDeleteMapRegion(regionId);
+}
+
+async function setTokenPositionAction(mapId: string, characterId: string, x: number, y: number): Promise<void> {
+  "use server";
+  await adminSetCharacterMapPosition(mapId, characterId, x, y);
+}
+
+async function clearTokenPositionAction(
+  campaignId: string,
+  mapId: string,
+  characterId: string
+): Promise<{ x: number; y: number } | null> {
+  "use server";
+  await adminClearCharacterMapPosition(mapId, characterId);
+  const tokens = await adminGetCharacterMapTokens(campaignId, mapId);
+  const token = tokens.find((t) => t.characterId === characterId);
+  if (!token || token.x === null || token.y === null) return null;
+  return { x: token.x, y: token.y };
+}
+
 export default async function AdminMapEditPage({ params }: { params: { id: string } }) {
   const isNew = params.id === "new";
   const campaignId = await getCurrentCampaignId();
@@ -85,6 +139,8 @@ export default async function AdminMapEditPage({ params }: { params: { id: strin
   if (!isNew && !map) notFound();
 
   const pins = isNew ? [] : await adminGetMapPins(params.id);
+  const regions = isNew ? [] : await adminGetMapRegions(params.id);
+  const tokens = isNew ? [] : await adminGetCharacterMapTokens(campaignId, params.id);
   const otherMaps = allMaps.filter((m) => m.id !== params.id).map((m) => ({ id: m.id, name: m.name }));
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
@@ -92,6 +148,11 @@ export default async function AdminMapEditPage({ params }: { params: { id: strin
   const boundCreatePin = createPinAction.bind(null, params.id);
   const boundUpdatePin = updatePinAction.bind(null);
   const boundDeletePin = deletePinAction.bind(null);
+  const boundCreateRegion = createRegionAction.bind(null, params.id);
+  const boundUpdateRegion = updateRegionAction.bind(null);
+  const boundDeleteRegion = deleteRegionAction.bind(null);
+  const boundSetTokenPosition = setTokenPositionAction.bind(null, params.id);
+  const boundClearTokenPosition = clearTokenPositionAction.bind(null, campaignId, params.id);
 
   return (
     <div className="max-w-3xl">
@@ -136,15 +197,23 @@ export default async function AdminMapEditPage({ params }: { params: { id: strin
 
       {!isNew && map && (
         <div className="mt-10">
-          <h2 className="font-display text-xl text-gold mb-4">Pins</h2>
+          <h2 className="font-display text-xl text-gold mb-4">Pins, Regions &amp; Tokens</h2>
           <MapPinEditor
             mapId={map.id}
             imageUrl={map.imageUrl}
             initialPins={pins}
             otherMaps={otherMaps}
+            locations={locations.map((l) => ({ id: l.id, name: l.name }))}
+            initialRegions={regions}
+            initialTokens={tokens}
             createPinAction={boundCreatePin}
             updatePinAction={boundUpdatePin}
             deletePinAction={boundDeletePin}
+            createRegionAction={boundCreateRegion}
+            updateRegionAction={boundUpdateRegion}
+            deleteRegionAction={boundDeleteRegion}
+            setTokenPositionAction={boundSetTokenPosition}
+            clearTokenPositionAction={boundClearTokenPosition}
           />
         </div>
       )}

@@ -13,6 +13,8 @@ import type {
   CharacterSummary,
   MapEntity,
   MapPin,
+  MapRegion,
+  CharacterMapToken,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -620,6 +622,49 @@ export function rowToTimelineEvent(row: any): TimelineEvent {
 // that links nowhere reachable would just be a dead click.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Character map tokens. Shared resolution logic used by both the public
+// explorer (revealed + access-filtered characters, below) and the admin map
+// editor (every character, unfiltered - see adminGetCharacterMapTokens in
+// admin-queries.ts). A character's token position on a given map is:
+//   1. A manual override, if the DM has dragged one for this exact
+//      (map, character) pair - takes precedence over everything.
+//   2. Otherwise, walk up the character's location's parent chain (starting
+//      at their own exact location) and use the center of the first region
+//      on THIS map whose location matches. This is what makes "closest
+//      location available" work: an unmapped/unregioned location simply
+//      falls through to its parent.
+//   3. If neither resolves, the character has no token on this map at all.
+// ---------------------------------------------------------------------------
+
+export interface RegionRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export function resolveCharacterAnchor(
+  characterId: string,
+  characterLocationId: string | null,
+  regionsByLocation: Map<string, RegionRect>,
+  overridesByCharacter: Map<string, { x: number; y: number }>,
+  parentOf: Map<string, string | null>
+): { x: number; y: number } | null {
+  const override = overridesByCharacter.get(characterId);
+  if (override) return override;
+  if (!characterLocationId) return null;
+  let current: string | null = characterLocationId;
+  const seen = new Set<string>();
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    const region = regionsByLocation.get(current);
+    if (region) return { x: region.x + region.width / 2, y: region.y + region.height / 2 };
+    current = parentOf.get(current) ?? null;
+  }
+  return null;
+}
+
 export async function getMapExplorerData(viewer: ViewerContext = ANONYMOUS): Promise<MapEntity[]> {
   await ensureSchema();
   const db = getDb();
@@ -636,11 +681,13 @@ export async function getMapExplorerData(viewer: ViewerContext = ANONYMOUS): Pro
 
   if (maps.length === 0) return [];
 
+  const mapIds = maps.map((m) => m.id);
+
   const pinsResult = await db.execute({
     sql: `SELECT p.*, t.slug AS target_map_slug, t.name AS target_map_name
           FROM map_pins p LEFT JOIN maps t ON t.id = p.target_map_id
-          WHERE p.map_id IN (${maps.map(() => "?").join(",")})`,
-    args: maps.map((m) => m.id),
+          WHERE p.map_id IN (${mapIds.map(() => "?").join(",")})`,
+    args: mapIds,
   });
   const pinsByMap = new Map<string, MapPin[]>();
   for (const row of pinsResult.rows) {
@@ -656,7 +703,69 @@ export async function getMapExplorerData(viewer: ViewerContext = ANONYMOUS): Pro
     pinsByMap.set(pin.mapId, list);
   }
 
-  return maps.map((m) => ({ ...m, pins: pinsByMap.get(m.id) ?? [] }));
+  const tokensByMap = new Map<string, CharacterMapToken[]>();
+  const characters = (await getCharacters(viewer)).filter((c) => c.locationId);
+  if (characters.length > 0) {
+    const locResult = await db.execute({
+      sql: "SELECT id, parent_id FROM locations WHERE campaign_id = ?",
+      args: [viewer.campaignId],
+    });
+    const parentOf = new Map<string, string | null>();
+    for (const row of locResult.rows) parentOf.set(row.id as string, (row.parent_id as string) ?? null);
+
+    const regionsResult = await db.execute({
+      sql: `SELECT * FROM map_regions WHERE map_id IN (${mapIds.map(() => "?").join(",")})`,
+      args: mapIds,
+    });
+    const regionsByMap = new Map<string, Map<string, RegionRect>>();
+    for (const row of regionsResult.rows) {
+      const mapId = row.map_id as string;
+      const byLoc = regionsByMap.get(mapId) ?? new Map<string, RegionRect>();
+      if (!byLoc.has(row.location_id as string)) {
+        byLoc.set(row.location_id as string, {
+          x: Number(row.x),
+          y: Number(row.y),
+          width: Number(row.width),
+          height: Number(row.height),
+        });
+      }
+      regionsByMap.set(mapId, byLoc);
+    }
+
+    const overridesResult = await db.execute({
+      sql: `SELECT * FROM character_map_positions WHERE map_id IN (${mapIds.map(() => "?").join(",")})`,
+      args: mapIds,
+    });
+    const overridesByMap = new Map<string, Map<string, { x: number; y: number }>>();
+    for (const row of overridesResult.rows) {
+      const mapId = row.map_id as string;
+      const byChar = overridesByMap.get(mapId) ?? new Map<string, { x: number; y: number }>();
+      byChar.set(row.character_id as string, { x: Number(row.x), y: Number(row.y) });
+      overridesByMap.set(mapId, byChar);
+    }
+
+    for (const mapId of mapIds) {
+      const regionsByLocation = regionsByMap.get(mapId) ?? new Map<string, RegionRect>();
+      const overridesByCharacter = overridesByMap.get(mapId) ?? new Map<string, { x: number; y: number }>();
+      const tokens: CharacterMapToken[] = [];
+      for (const c of characters) {
+        const anchor = resolveCharacterAnchor(c.id, c.locationId, regionsByLocation, overridesByCharacter, parentOf);
+        if (!anchor) continue;
+        tokens.push({
+          characterId: c.id,
+          name: c.name,
+          slug: c.slug,
+          summary: c.summary,
+          portraitPath: c.portraitPath,
+          x: anchor.x,
+          y: anchor.y,
+        });
+      }
+      tokensByMap.set(mapId, tokens);
+    }
+  }
+
+  return maps.map((m) => ({ ...m, pins: pinsByMap.get(m.id) ?? [], tokens: tokensByMap.get(m.id) ?? [] }));
 }
 
 export async function getMapBySlug(slug: string, viewer: ViewerContext = ANONYMOUS): Promise<MapEntity | null> {
@@ -687,6 +796,19 @@ export function rowToMap(row: any): MapEntity {
     isRoot: !!row.is_root,
     revealed: !!row.revealed,
     sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
+export function rowToMapRegion(row: any): MapRegion {
+  return {
+    id: row.id,
+    mapId: row.map_id,
+    locationId: row.location_id,
+    locationName: row.location_name ?? null,
+    x: Number(row.x),
+    y: Number(row.y),
+    width: Number(row.width),
+    height: Number(row.height),
   };
 }
 

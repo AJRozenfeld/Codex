@@ -291,6 +291,47 @@ export interface MapEntity {
   revealed: boolean;
   sortOrder: number;
   pins?: MapPin[];
+  tokens?: CharacterMapToken[];
+}
+
+// Admin-only editing concept: a rectangular area (fractional 0..1 coords,
+// like pins) tied to a Location, used purely to auto-place character tokens.
+// Never sent to the public site - see MapRegionEditor.tsx / getMapRegions in
+// admin-queries.ts.
+export interface MapRegion {
+  id: string;
+  mapId: string;
+  locationId: string;
+  locationName?: string | null;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// A resolved, ready-to-render character token for one specific map: either
+// auto-placed via MapRegion + the location parent-chain fallback, or an
+// admin-set manual override. See resolveCharacterTokens() in queries.ts.
+export interface CharacterMapToken {
+  characterId: string;
+  name: string;
+  slug: string;
+  summary: string;
+  portraitPath: string | null;
+  x: number;
+  y: number;
+}
+
+// A character available to be placed on a given map in the admin editor,
+// alongside its current resolved position (if any) and whether that position
+// is a manual override or auto-computed from regions.
+export interface AdminCharacterMapToken {
+  characterId: string;
+  name: string;
+  portraitPath: string | null;
+  x: number | null;
+  y: number | null;
+  isOverride: boolean;
 }
 
 // ---------------------------------------------------------------------------
