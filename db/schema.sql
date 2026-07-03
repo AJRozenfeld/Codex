@@ -487,8 +487,8 @@ CREATE INDEX IF NOT EXISTS idx_template_fields_template ON template_fields(templ
 -- clarity/debugging. This is what powers each entity's public "Referenced By"
 -- section (see getBacklinksForEntity in queries.ts): find every article
 -- pointing at this id, regardless of which field or template did the
--- pointing. A deleted article cascades its own outgoing reference rows away;
--- a deleted TARGET (built-in entity or another article) just leaves other
+-- pointing. A deleted article cascades its own outgoing reference rows away.
+-- A deleted TARGET (built-in entity or another article) just leaves other
 -- articles' reference rows pointing at a now-missing id, which silently
 -- resolves to nothing at render time - same "dangling id" tolerance used
 -- throughout this schema (article_list_items, entity_player_access, etc).

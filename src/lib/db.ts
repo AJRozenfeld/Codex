@@ -46,10 +46,24 @@ export async function ensureSchema(): Promise<void> {
     const db = getDb();
     const schemaPath = path.join(process.cwd(), "db", "schema.sql");
     const sql = fs.readFileSync(schemaPath, "utf-8");
+    // NOTE: this split is naive - it breaks the file on ANY semicolon that's
+    // immediately followed by (optional whitespace, then a newline or EOF),
+    // even one sitting inside a `--` comment line. A multi-line comment block
+    // whose prose happens to end a line with a period-turned-semicolon (easy
+    // to do by accident when writing design notes above a CREATE TABLE) gets
+    // cut there, producing a comment-only "statement" that libSQL rejects
+    // with SQL_PARSE_ERROR ("SQL string does not contain any statement") -
+    // this took production down once (2026-07-04, Phase 3 launch) before the
+    // isCommentOnly guard below was added. Comment lines in schema.sql must
+    // never end with a bare `;` - and even so, the guard here strips any
+    // stray comment-only chunk before it reaches db.execute().
+    const isCommentOnly = (s: string) =>
+      s.split("\n").every((line) => line.trim() === "" || line.trim().startsWith("--"));
     const statements = sql
       .split(/;\s*(?:\n|$)/)
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((s) => !isCommentOnly(s));
     // Index creation has to happen AFTER migrations, not interleaved with
     // table creation: several indexes are defined on campaign_id, and on an
     // existing pre-migration database that column doesn't exist on the old
