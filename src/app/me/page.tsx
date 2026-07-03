@@ -54,6 +54,12 @@ export default async function MyCharacterPage() {
             >
               Open Journal
             </Link>
+            <Link
+              href="/me/profile"
+              className="rounded-full border border-gold/40 text-gold px-4 py-2 text-sm hover:bg-gold/10"
+            >
+              Edit Bio &amp; Portrait
+            </Link>
           </div>
         </div>
       ) : (
