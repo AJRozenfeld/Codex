@@ -363,6 +363,57 @@ CREATE INDEX IF NOT EXISTS idx_char_map_pos_map ON character_map_positions(map_i
 CREATE INDEX IF NOT EXISTS idx_char_map_pos_char ON character_map_positions(character_id);
 
 -- ---------------------------------------------------------------------------
+-- DM-defined Sections. A Section is a custom player-facing page (its own
+-- header + slug) that the DM composes out of one or more Article Lists, each
+-- list showing a curated, ordered set of existing entities of ONE built-in
+-- type (characters, locations, factions, storylines, artifacts, or regions -
+-- see SECTION_ENTITY_TYPES in types.ts). This is Phase 1 of Aviv's "Section
+-- Creator" idea: composing existing content into new pages. Phase 2 (later)
+-- adds fully custom article types via a template system; article_list_items
+-- deliberately has no foreign key on entity_id since it can point into six
+-- different tables depending on the list's entity_type - membership is only
+-- as durable as the referenced row, so a deleted entity's item row just
+-- resolves to nothing and is silently skipped when rendering (see
+-- resolveArticleSummaries in queries.ts), never treated as an error.
+-- Sections share the same revealed / entity_player_access visibility model as
+-- every other content table; the underlying entities' own visibility and
+-- GM-tag redaction still apply on top when a list is rendered.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sections (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  revealed    INTEGER NOT NULL DEFAULT 1,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_sections_campaign ON sections(campaign_id);
+
+CREATE TABLE IF NOT EXISTS article_lists (
+  id          TEXT PRIMARY KEY,
+  section_id  TEXT NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_article_lists_section ON article_lists(section_id);
+
+CREATE TABLE IF NOT EXISTS article_list_items (
+  id         TEXT PRIMARY KEY,
+  list_id    TEXT NOT NULL REFERENCES article_lists(id) ON DELETE CASCADE,
+  entity_id  TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (list_id, entity_id)
+);
+CREATE INDEX IF NOT EXISTS idx_article_list_items_list ON article_list_items(list_id);
+
+-- ---------------------------------------------------------------------------
 -- Journals. Every character (PC or NPC) has an implicit journal made up of
 -- dated entries "written" by that character's owner - the DM for NPCs, the
 -- linked player for their own PC (and always the DM too). This is private

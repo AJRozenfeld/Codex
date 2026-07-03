@@ -16,6 +16,7 @@ const sections = [
   { href: "/admin/artifacts", label: "Artifacts" },
   { href: "/admin/timeline", label: "Timeline" },
   { href: "/admin/maps", label: "Maps" },
+  { href: "/admin/sections", label: "Sections" },
   { href: "/admin/players", label: "Players" },
 ];
 

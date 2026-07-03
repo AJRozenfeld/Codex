@@ -14,6 +14,7 @@ import {
   rowToMap,
   rowToMapPin,
   rowToMapRegion,
+  rowToSection,
   resolveCharacterAnchor,
   type RegionRect,
 } from "./queries";
@@ -31,6 +32,9 @@ import type {
   MapPin,
   MapRegion,
   AdminCharacterMapToken,
+  Section,
+  AdminArticleList,
+  SectionEntityType,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -58,6 +62,7 @@ const REVEALABLE_TABLES = new Set([
   "artifacts",
   "timeline_events",
   "maps",
+  "sections",
 ]);
 const DELETABLE_TABLES = new Set([...REVEALABLE_TABLES, "moons", "players"]);
 
@@ -1016,4 +1021,232 @@ export async function adminClearCharacterMapPosition(mapId: string, characterId:
     sql: "DELETE FROM character_map_positions WHERE map_id = ? AND character_id = ?",
     args: [mapId, characterId],
   });
+}
+
+// ---------------------------------------------------------------------------
+// Sections (Phase 1 of the "Section Creator" - see types.ts for the design
+// note). A Section is a custom player-facing page made of one or more
+// Article Lists, each curating an ordered set of ids from ONE existing
+// built-in entity table. No new content types are created here - Phase 2
+// will add a template system for genuinely custom article shapes.
+// ---------------------------------------------------------------------------
+
+export async function adminGetSections(campaignId: string): Promise<Section[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM sections WHERE campaign_id = ? ORDER BY sort_order ASC, name ASC",
+    args: [campaignId],
+  });
+  return r.rows.map(rowToSection);
+}
+
+export async function adminGetSection(campaignId: string, id: string): Promise<Section | null> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM sections WHERE id = ? AND campaign_id = ?",
+    args: [id, campaignId],
+  });
+  return r.rows[0] ? rowToSection(r.rows[0]) : null;
+}
+
+export interface SectionInput {
+  name: string;
+  revealed: boolean;
+  sortOrder: number;
+  restrictedPlayerIds?: string[];
+}
+
+export async function adminUpsertSection(campaignId: string, input: SectionInput, id?: string): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const slug = await uniqueSlug(campaignId, "sections", input.name, id);
+  const sectionId = id ?? newId();
+  if (id) {
+    await db.execute({
+      sql: `UPDATE sections SET name=?, slug=?, revealed=?, sort_order=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
+      args: [input.name, slug, input.revealed ? 1 : 0, input.sortOrder, id, campaignId],
+    });
+  } else {
+    await db.execute({
+      sql: `INSERT INTO sections (id, campaign_id, slug, name, revealed, sort_order) VALUES (?,?,?,?,?,?)`,
+      args: [sectionId, campaignId, slug, input.name, input.revealed ? 1 : 0, input.sortOrder],
+    });
+  }
+  if (input.restrictedPlayerIds !== undefined) {
+    await adminSetRestrictedPlayerIds(campaignId, "sections", sectionId, input.restrictedPlayerIds);
+  }
+  return sectionId;
+}
+
+export async function adminDeleteSection(campaignId: string, id: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM sections WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
+}
+
+// Human labels for the "+ Add List" entity-type picker.
+export const SECTION_ENTITY_TYPE_LABELS: Record<SectionEntityType, string> = {
+  characters: "Characters",
+  locations: "Locations",
+  factions: "Factions",
+  storylines: "Storylines",
+  artifacts: "Artifacts",
+  regions: "Regions",
+};
+
+// {id, label} options for whichever built-in type a list holds - used both
+// to populate the "+ Add [type]" picker (minus ids already in the list) and
+// nowhere else, so it deliberately returns every row in the campaign
+// regardless of revealed - the DM should be able to add hidden content to a
+// list ahead of revealing it.
+export async function adminGetEntityOptions(
+  campaignId: string,
+  entityType: SectionEntityType
+): Promise<{ id: string; label: string }[]> {
+  switch (entityType) {
+    case "characters":
+      return (await adminGetCharacters(campaignId)).map((c) => ({ id: c.id, label: c.name }));
+    case "locations":
+      return (await adminGetLocations(campaignId)).map((l) => ({ id: l.id, label: l.name }));
+    case "factions":
+      return (await adminGetFactions(campaignId)).map((f) => ({ id: f.id, label: f.name }));
+    case "storylines":
+      return (await adminGetStorylines(campaignId)).map((s) => ({ id: s.id, label: s.title }));
+    case "artifacts":
+      return (await adminGetArtifacts(campaignId)).map((a) => ({ id: a.id, label: a.name }));
+    case "regions":
+      return (await adminGetRegions(campaignId)).map((r) => ({ id: r.id, label: r.name }));
+  }
+}
+
+export async function adminGetArticleLists(campaignId: string, sectionId: string): Promise<AdminArticleList[]> {
+  await ensureSchema();
+  const db = getDb();
+  const listsResult = await db.execute({
+    sql: "SELECT * FROM article_lists WHERE section_id = ? ORDER BY sort_order ASC",
+    args: [sectionId],
+  });
+  const lists: AdminArticleList[] = [];
+  for (const row of listsResult.rows) {
+    const entityType = row.entity_type as SectionEntityType;
+    const options = await adminGetEntityOptions(campaignId, entityType);
+    const titleById = new Map(options.map((o) => [o.id, o.label]));
+    const itemsResult = await db.execute({
+      sql: "SELECT * FROM article_list_items WHERE list_id = ? ORDER BY sort_order ASC",
+      args: [row.id as string],
+    });
+    const items = itemsResult.rows.map((itemRow) => ({
+      id: itemRow.id as string,
+      entityId: itemRow.entity_id as string,
+      title: titleById.get(itemRow.entity_id as string) ?? "(deleted)",
+      sortOrder: Number(itemRow.sort_order ?? 0),
+    }));
+    lists.push({
+      id: row.id as string,
+      sectionId: row.section_id as string,
+      entityType,
+      name: row.name as string,
+      sortOrder: Number(row.sort_order ?? 0),
+      items,
+    });
+  }
+  return lists;
+}
+
+export interface ArticleListInput {
+  entityType: SectionEntityType;
+  name: string;
+}
+
+export async function adminCreateArticleList(sectionId: string, input: ArticleListInput): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const existing = await db.execute({
+    sql: "SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM article_lists WHERE section_id = ?",
+    args: [sectionId],
+  });
+  const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
+  const id = newId();
+  await db.execute({
+    sql: "INSERT INTO article_lists (id, section_id, entity_type, name, sort_order) VALUES (?,?,?,?,?)",
+    args: [id, sectionId, input.entityType, input.name, nextOrder],
+  });
+  return id;
+}
+
+export async function adminRenameArticleList(listId: string, name: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({
+    sql: "UPDATE article_lists SET name=?, updated_at=datetime('now') WHERE id=?",
+    args: [name, listId],
+  });
+}
+
+export async function adminDeleteArticleList(listId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM article_lists WHERE id = ?", args: [listId] });
+}
+
+/** Swaps this list's sort_order with its neighbor in the given direction, scoped to its own section. */
+export async function adminMoveArticleList(sectionId: string, listId: string, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, sort_order FROM article_lists WHERE section_id = ? ORDER BY sort_order ASC",
+    args: [sectionId],
+  });
+  const rows = r.rows.map((row) => ({ id: row.id as string, sortOrder: Number(row.sort_order ?? 0) }));
+  const index = rows.findIndex((row) => row.id === listId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= rows.length) return;
+  const a = rows[index];
+  const b = rows[swapIndex];
+  await db.batch(
+    [
+      { sql: "UPDATE article_lists SET sort_order = ? WHERE id = ?", args: [b.sortOrder, a.id] },
+      { sql: "UPDATE article_lists SET sort_order = ? WHERE id = ?", args: [a.sortOrder, b.id] },
+    ],
+    "write"
+  );
+}
+
+export async function adminAddArticleListItem(listId: string, entityId: string): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const existing = await db.execute({
+    sql: "SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM article_list_items WHERE list_id = ?",
+    args: [listId],
+  });
+  const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO article_list_items (id, list_id, entity_id, sort_order) VALUES (?,?,?,?)",
+    args: [newId(), listId, entityId, nextOrder],
+  });
+}
+
+export async function adminRemoveArticleListItem(itemId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM article_list_items WHERE id = ?", args: [itemId] });
+}
+
+/** Swaps this item's sort_order with its neighbor in the given direction, scoped to its own list. */
+export async function adminMoveArticleListItem(listId: string, itemId: string, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, sort_order FROM article_list_items WHERE list_id = ? ORDER BY sort_order ASC",
+    args: [listId],
+  });
+  const rows = r.rows.map((row) => ({ id: row.id as string, sortOrder: Number(row.sort_order ?? 0) }));
+  const index = rows.findIndex((row) => row.id === itemId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= rows.length) return;
+  const a = rows[index];
+  const b = rows[swapIndex];
+  await db.batch(
+    [
+      { sql: "UPDATE article_list_items SET sort_order = ? WHERE id = ?", args: [b.sortOrder, a.id] },
+      { sql: "UPDATE article_list_items SET sort_order = ? WHERE id = ?", args: [a.sortOrder, b.id] },
+    ],
+    "write"
+  );
 }

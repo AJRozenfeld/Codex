@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, ensureSchema } from "@/lib/db";
-import { getPlayerSession } from "@/lib/player-session";
+import { getPlayerSession, getViewerContext } from "@/lib/player-session";
+import { getVisibleSectionLinks } from "@/lib/queries";
 
 const links = [
   { href: "/regions", label: "Regions" },
@@ -33,6 +34,9 @@ async function getLoggedInDisplayName(): Promise<string | null> {
 
 export default async function NavBar() {
   const displayName = await getLoggedInDisplayName();
+  const viewer = await getViewerContext();
+  const sectionLinks = await getVisibleSectionLinks(viewer);
+  const allLinks = [...links, ...sectionLinks.map((s) => ({ href: `/sections/${s.slug}`, label: s.name }))];
 
   return (
     <header className="border-b border-gold/20 bg-ink/80 backdrop-blur sticky top-0 z-40">
@@ -41,7 +45,7 @@ export default async function NavBar() {
           Erendyl Codex
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm text-parchment/80">
-          {links.map((l) => (
+          {allLinks.map((l) => (
             <Link key={l.href} href={l.href} className="hover:text-gold transition-colors">
               {l.label}
             </Link>
@@ -76,7 +80,7 @@ export default async function NavBar() {
         </div>
       </div>
       <nav className="md:hidden flex flex-wrap gap-x-4 gap-y-1 px-4 pb-3 text-xs text-parchment/70">
-        {links.map((l) => (
+        {allLinks.map((l) => (
           <Link key={l.href} href={l.href} className="hover:text-gold transition-colors">
             {l.label}
           </Link>

@@ -335,6 +335,79 @@ export interface AdminCharacterMapToken {
 }
 
 // ---------------------------------------------------------------------------
+// DM-defined Sections (Phase 1 of the "Section Creator"). See queries.ts /
+// admin-queries.ts for read/write and src/app/sections/[slug]/page.tsx +
+// src/app/admin/sections for the public and admin UI. A Section is a custom
+// player-facing page composed of one or more Article Lists, each list
+// curating an ordered set of EXISTING entities of one built-in type. Fully
+// custom article types (via a template editor) are a later phase.
+// ---------------------------------------------------------------------------
+
+export const SECTION_ENTITY_TYPES = [
+  "characters",
+  "locations",
+  "factions",
+  "storylines",
+  "artifacts",
+  "regions",
+] as const;
+export type SectionEntityType = (typeof SECTION_ENTITY_TYPES)[number];
+
+export interface Section {
+  id: string;
+  slug: string;
+  name: string;
+  revealed: boolean;
+  sortOrder: number;
+}
+
+// A resolved, ready-to-render summary of one entity as it should appear
+// inside an Article List card - shape is uniform across every underlying
+// entity type so the public page can render them with one generic card
+// component, regardless of which table the entity actually lives in.
+export interface ArticleListItemSummary {
+  entityId: string;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  imagePath?: string | null;
+  href: string;
+}
+
+export interface ArticleList {
+  id: string;
+  sectionId: string;
+  entityType: SectionEntityType;
+  name: string;
+  sortOrder: number;
+  items: ArticleListItemSummary[];
+}
+
+export interface SectionWithLists extends Section {
+  lists: ArticleList[];
+}
+
+// Admin-editor shapes: article lists show their raw membership (with a
+// resolved title label, but unfiltered by revealed/access - the DM manages
+// everything regardless of current visibility) plus enough info to render
+// add/remove/reorder controls.
+export interface AdminArticleListItem {
+  id: string;
+  entityId: string;
+  title: string;
+  sortOrder: number;
+}
+
+export interface AdminArticleList {
+  id: string;
+  sectionId: string;
+  entityType: SectionEntityType;
+  name: string;
+  sortOrder: number;
+  items: AdminArticleListItem[];
+}
+
+// ---------------------------------------------------------------------------
 // Journals. Private, ownership-gated (see journal-queries.ts) - never part
 // of the public revealed/entity_player_access model.
 // ---------------------------------------------------------------------------

@@ -15,6 +15,11 @@ import type {
   MapPin,
   MapRegion,
   CharacterMapToken,
+  Section,
+  ArticleList,
+  ArticleListItemSummary,
+  SectionWithLists,
+  SectionEntityType,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -824,4 +829,213 @@ export function rowToMapPin(row: any): MapPin {
     targetMapSlug: row.target_map_slug ?? null,
     targetMapName: row.target_map_name ?? null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Sections (Phase 1 of the "Section Creator" - see types.ts for the full
+// design note). A section's article lists each hold an ordered set of ids
+// into ONE existing entity table; resolving them for display just means
+// calling that type's own already-filtered/redacted getter once per type
+// actually used on the page, then mapping the list's stored id order through
+// the result - which naturally drops any item whose entity is no longer
+// revealed/accessible to this viewer, or was deleted outright, exactly the
+// same way map pins drop targets the viewer can't reach.
+// ---------------------------------------------------------------------------
+
+export function rowToSection(row: any): Section {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    revealed: !!row.revealed,
+    sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
+function rowToArticleListMeta(row: any): { id: string; sectionId: string; entityType: SectionEntityType; name: string; sortOrder: number } {
+  return {
+    id: row.id,
+    sectionId: row.section_id,
+    entityType: row.entity_type as SectionEntityType,
+    name: row.name,
+    sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
+async function buildSummariesForType(
+  entityType: SectionEntityType,
+  viewer: ViewerContext
+): Promise<Map<string, ArticleListItemSummary>> {
+  const map = new Map<string, ArticleListItemSummary>();
+  switch (entityType) {
+    case "characters": {
+      const rows = await getCharacters(viewer);
+      for (const c of rows) {
+        map.set(c.id, {
+          entityId: c.id,
+          title: c.name,
+          subtitle: !c.isAlive ? "Deceased" : c.locationName ?? null,
+          description: c.summary,
+          imagePath: c.portraitPath,
+          href: `/characters/${c.slug}`,
+        });
+      }
+      break;
+    }
+    case "locations": {
+      const rows = await getLocations(viewer);
+      for (const l of rows) {
+        map.set(l.id, {
+          entityId: l.id,
+          title: l.name,
+          subtitle: l.type,
+          description: l.description,
+          imagePath: l.thumbnailPath,
+          href: `/locations/${l.slug}`,
+        });
+      }
+      break;
+    }
+    case "factions": {
+      const rows = await getFactions(viewer);
+      for (const f of rows) {
+        map.set(f.id, {
+          entityId: f.id,
+          title: f.name,
+          subtitle: f.type,
+          description: f.description,
+          imagePath: null,
+          href: `/factions/${f.slug}`,
+        });
+      }
+      break;
+    }
+    case "storylines": {
+      const rows = await getStorylines(viewer);
+      for (const s of rows) {
+        map.set(s.id, {
+          entityId: s.id,
+          title: s.title,
+          subtitle: s.status,
+          description: s.summary,
+          imagePath: null,
+          href: `/storylines/${s.slug}`,
+        });
+      }
+      break;
+    }
+    case "artifacts": {
+      const rows = await getArtifacts(viewer);
+      for (const a of rows) {
+        map.set(a.id, {
+          entityId: a.id,
+          title: a.name,
+          subtitle: a.rarity,
+          description: a.description,
+          imagePath: a.imagePath,
+          href: `/artifacts/${a.slug}`,
+        });
+      }
+      break;
+    }
+    case "regions": {
+      const rows = await getRegions(viewer);
+      for (const r of rows) {
+        map.set(r.id, {
+          entityId: r.id,
+          title: r.name,
+          subtitle: r.type,
+          description: r.description,
+          imagePath: null,
+          href: `/regions/${r.slug}`,
+        });
+      }
+      break;
+    }
+  }
+  return map;
+}
+
+async function attachListsToSections(sections: Section[], viewer: ViewerContext): Promise<SectionWithLists[]> {
+  if (sections.length === 0) return [];
+  const db = getDb();
+  const sectionIds = sections.map((s) => s.id);
+  const listsResult = await db.execute({
+    sql: `SELECT * FROM article_lists WHERE section_id IN (${sectionIds.map(() => "?").join(",")}) ORDER BY sort_order ASC`,
+    args: sectionIds,
+  });
+  const listMetas = listsResult.rows.map(rowToArticleListMeta);
+  if (listMetas.length === 0) return sections.map((s) => ({ ...s, lists: [] }));
+
+  const listIds = listMetas.map((l) => l.id);
+  const itemsResult = await db.execute({
+    sql: `SELECT * FROM article_list_items WHERE list_id IN (${listIds.map(() => "?").join(",")}) ORDER BY sort_order ASC`,
+    args: listIds,
+  });
+  const idsByList = new Map<string, string[]>();
+  for (const row of itemsResult.rows) {
+    const listId = row.list_id as string;
+    const arr = idsByList.get(listId) ?? [];
+    arr.push(row.entity_id as string);
+    idsByList.set(listId, arr);
+  }
+
+  const neededTypes = new Set(listMetas.map((l) => l.entityType));
+  const summaryMapByType = new Map<SectionEntityType, Map<string, ArticleListItemSummary>>();
+  for (const t of neededTypes) {
+    summaryMapByType.set(t, await buildSummariesForType(t, viewer));
+  }
+
+  const listsBySection = new Map<string, ArticleList[]>();
+  for (const meta of listMetas) {
+    const ids = idsByList.get(meta.id) ?? [];
+    const summaryMap = summaryMapByType.get(meta.entityType)!;
+    const items = ids.map((id) => summaryMap.get(id)).filter((v): v is ArticleListItemSummary => Boolean(v));
+    const list: ArticleList = { ...meta, items };
+    const arr = listsBySection.get(meta.sectionId) ?? [];
+    arr.push(list);
+    listsBySection.set(meta.sectionId, arr);
+  }
+
+  return sections.map((s) => ({ ...s, lists: listsBySection.get(s.id) ?? [] }));
+}
+
+export async function getSections(viewer: ViewerContext = ANONYMOUS): Promise<SectionWithLists[]> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT * FROM sections WHERE revealed = 1 AND campaign_id = ? ORDER BY sort_order ASC, name ASC",
+    args: [viewer.campaignId],
+  });
+  let sections = r.rows.map(rowToSection);
+  sections = await filterByPlayerAccess("sections", sections, viewer.playerId);
+  return attachListsToSections(sections, viewer);
+}
+
+export async function getSectionBySlug(slug: string, viewer: ViewerContext = ANONYMOUS): Promise<SectionWithLists | null> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT * FROM sections WHERE slug = ? AND revealed = 1 AND campaign_id = ?",
+    args: [slug, viewer.campaignId],
+  });
+  if (!r.rows[0]) return null;
+  const section = rowToSection(r.rows[0]);
+  const allowed = await checkPlayerAccess("sections", section.id, viewer.playerId);
+  if (!allowed) return null;
+  const [withLists] = await attachListsToSections([section], viewer);
+  return withLists;
+}
+
+/** Lightweight {slug, name} list for the nav bar - skips loading any list/item data. */
+export async function getVisibleSectionLinks(viewer: ViewerContext = ANONYMOUS): Promise<{ slug: string; name: string }[]> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, slug, name FROM sections WHERE revealed = 1 AND campaign_id = ? ORDER BY sort_order ASC, name ASC",
+    args: [viewer.campaignId],
+  });
+  let sections = r.rows.map((row) => ({ id: row.id as string, slug: row.slug as string, name: row.name as string }));
+  sections = await filterByPlayerAccess("sections", sections, viewer.playerId);
+  return sections.map((s) => ({ slug: s.slug, name: s.name }));
 }
