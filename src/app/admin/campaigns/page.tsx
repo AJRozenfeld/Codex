@@ -38,11 +38,19 @@ export default async function CampaignsPage() {
 
   return (
     <div className="max-w-2xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="font-display text-2xl text-gold">Campaigns</h1>
-        <Link href="/admin/campaigns/new" className="rounded-full bg-gold/90 text-ink px-4 py-2 text-sm font-medium hover:bg-gold">
-          + New Campaign
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/campaigns/export" className="text-sm text-gold hover:underline">
+            Export Campaign
+          </Link>
+          <Link href="/admin/campaigns/import" className="text-sm text-gold hover:underline">
+            Import Campaign
+          </Link>
+          <Link href="/admin/campaigns/new" className="rounded-full bg-gold/90 text-ink px-4 py-2 text-sm font-medium hover:bg-gold">
+            + New Campaign
+          </Link>
+        </div>
       </div>
       <div className="space-y-3">
         {campaigns.map((c) => {
