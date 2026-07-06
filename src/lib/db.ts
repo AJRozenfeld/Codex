@@ -71,7 +71,16 @@ export async function ensureSchema(): Promise<void> {
     // indexes here would fail with "no such column: campaign_id" before
     // runMigrations() ever gets a chance to add it. So: tables/pragmas first,
     // then migrations backfill campaign_id onto old tables, then indexes.
-    const isIndexStmt = (s: string) => /^create\s+index/i.test(s);
+    // MUST match "create unique index" too, not just plain "create index" -
+    // idx_characters_mask is a UNIQUE index and was slipping through this
+    // check uncaught (missing the optional UNIQUE keyword), so it ran in the
+    // tableStatements pass BEFORE runMigrations() added the mask column,
+    // throwing "no such column: mask" on every cold start and permanently
+    // wedging that instance's cached schemaReady promise (2026-07-06 -
+    // production /admin and /login outage, see feedback_erendyl_fuse_staleness-
+    // adjacent lesson: always re-check every regex like this against every
+    // statement in the file, not just the ones that existed when it was written).
+    const isIndexStmt = (s: string) => /^create\s+(unique\s+)?index/i.test(s);
     const tableStatements = statements.filter((s) => !isIndexStmt(s));
     const indexStatements = statements.filter(isIndexStmt);
     for (const stmt of tableStatements) {
@@ -81,7 +90,15 @@ export async function ensureSchema(): Promise<void> {
     for (const stmt of indexStatements) {
       await db.execute(stmt);
     }
-  })();
+  })().catch((err) => {
+    // Don't let a transient failure (or, as happened 2026-07-06, a genuine
+    // bug) permanently wedge this warm serverless instance - every future
+    // request on it would otherwise re-await the same rejected promise
+    // forever until the instance recycles. Reset so the next call retries
+    // from scratch instead.
+    schemaReady = null;
+    throw err;
+  });
   return schemaReady;
 }
 
