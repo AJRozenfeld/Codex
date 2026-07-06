@@ -10,6 +10,7 @@ import {
   adminGetCharacterFactionIds,
   adminGetStorylineCharacterIds,
   adminGetTimelineEventCharacterIds,
+  adminGetAllCharacterSheets,
 } from "@/lib/admin-queries";
 import { REGISTRY, ENTITY_TYPES, type EntityTypeKey } from "./registry";
 
@@ -24,7 +25,12 @@ import { REGISTRY, ENTITY_TYPES, type EntityTypeKey } from "./registry";
 // bytes + a zip-relative path; this module only reads the database.
 // ---------------------------------------------------------------------------
 
-export type FieldValue = string | number | boolean | string[] | null;
+// JsonValue backs the "json" FieldKind (currently just a CharacterSheetData
+// blob) - an opaque nested object/array that round-trips through YAML flow
+// syntax untouched. Every other FieldKind still only ever produces the
+// narrower scalar/list shapes; this arm exists solely for that escape hatch.
+export type JsonValue = { [key: string]: JsonValue } | JsonValue[] | string | number | boolean | null;
+export type FieldValue = string | number | boolean | string[] | JsonValue | null;
 
 export interface CollectedEntity {
   id: string;
@@ -39,22 +45,28 @@ export interface EntityOption {
 
 /** id -> label maps for every v1 entity type, scoped to one campaign - used both to resolve ref fields here and to power the export UI's item pickers. */
 export async function loadNameMaps(campaignId: string): Promise<Record<EntityTypeKey, Map<string, string>>> {
-  const [moons, regions, locations, factions, characters, storylines, artifacts, timelineEvents] = await Promise.all([
-    adminGetMoons(campaignId),
-    adminGetRegions(campaignId),
-    adminGetLocations(campaignId),
-    adminGetFactions(campaignId),
-    adminGetCharacters(campaignId),
-    adminGetStorylines(campaignId),
-    adminGetArtifacts(campaignId),
-    adminGetTimelineEvents(campaignId),
-  ]);
+  const [moons, regions, locations, factions, characters, characterSheets, storylines, artifacts, timelineEvents] =
+    await Promise.all([
+      adminGetMoons(campaignId),
+      adminGetRegions(campaignId),
+      adminGetLocations(campaignId),
+      adminGetFactions(campaignId),
+      adminGetCharacters(campaignId),
+      adminGetAllCharacterSheets(campaignId),
+      adminGetStorylines(campaignId),
+      adminGetArtifacts(campaignId),
+      adminGetTimelineEvents(campaignId),
+    ]);
   return {
     moons: new Map(moons.map((m) => [m.id, m.name])),
     regions: new Map(regions.map((r) => [r.id, r.name])),
     locations: new Map(locations.map((l) => [l.id, l.name])),
     factions: new Map(factions.map((f) => [f.id, f.name])),
     characters: new Map(characters.map((c) => [c.id, c.name])),
+    // Keyed by characterId (not a sheet-row id of its own) - a sheet is 1:1
+    // with its character, and the character's name doubles as this type's
+    // identity value (see registry.ts's identityField: "character" note).
+    characterSheets: new Map(characterSheets.map((s) => [s.characterId, s.characterName])),
     storylines: new Map(storylines.map((s) => [s.id, s.title])),
     artifacts: new Map(artifacts.map((a) => [a.id, a.name])),
     timelineEvents: new Map(timelineEvents.map((t) => [t.id, t.title])),
@@ -184,6 +196,19 @@ export async function collectEntities(
         });
       }
       return out;
+    }
+    case "characterSheets": {
+      const rows = await adminGetAllCharacterSheets(campaignId);
+      return rows
+        .filter((s) => !idFilter || idFilter.has(s.characterId))
+        .map((s) => ({
+          id: s.characterId,
+          identity: s.characterName,
+          record: {
+            character: s.characterName,
+            data: s.data as unknown as FieldValue,
+          },
+        }));
     }
     case "storylines": {
       const rows = await adminGetStorylines(campaignId);

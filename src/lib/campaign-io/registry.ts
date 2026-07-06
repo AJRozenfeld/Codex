@@ -23,7 +23,8 @@ export type FieldKind =
   | "boolean"
   | "image" // export: path into the zip's images/ folder. import: replaced with an uploaded blob URL before commit.
   | "ref" // a single reference to another entity, written as that entity's identity value (its name/title)
-  | "refList"; // a list of references, written as a plain YAML list of identity values
+  | "refList" // a list of references, written as a plain YAML list of identity values
+  | "json"; // an opaque nested object/array (e.g. a full CharacterSheetData blob) - written as one inline JSON value, which is also valid YAML flow syntax, so js-yaml's load() parses it straight back into the same object with no custom coercion needed.
 
 export interface FieldSchema {
   /** Property name on a collected/parsed record, and the YAML key in the MD file. */
@@ -52,6 +53,7 @@ export const ENTITY_TYPES = [
   "locations",
   "factions",
   "characters",
+  "characterSheets",
   "storylines",
   "artifacts",
   "timelineEvents",
@@ -74,6 +76,7 @@ export const IMPORT_ORDER: EntityTypeKey[] = [
   "locations",
   "factions",
   "characters",
+  "characterSheets",
   "artifacts",
   "storylines",
   "timelineEvents",
@@ -163,6 +166,26 @@ export const REGISTRY: Record<EntityTypeKey, EntityTypeSchema> = {
       { key: "revealed", kind: "boolean" },
       { key: "location", kind: "ref", refType: "locations" },
       { key: "factions", kind: "refList", refType: "factions" },
+    ],
+  },
+  // A character's full 5e stat block (ability scores, skills, spells,
+  // equipment, etc. - see CharacterSheetData in types.ts). Deliberately kept
+  // as its own entity type with just two fields rather than flattening every
+  // CharacterSheetData key into its own FieldSchema: the data is a nested
+  // object (ability scores, per-skill proficiency flags, an attacks array,
+  // a spells array) that doesn't fit this registry's flat-scalar field model
+  // without a "json" escape hatch - see the FieldKind doc above. One sheet
+  // per character (character_sheets.character_id is UNIQUE), so `character`
+  // (the owning character's name) doubles as this type's identity field -
+  // there's no separate name of its own.
+  characterSheets: {
+    key: "characterSheets",
+    tag: "CharacterSheets",
+    label: "Character Sheets",
+    identityField: "character",
+    fields: [
+      { key: "character", kind: "ref", refType: "characters", required: true },
+      { key: "data", kind: "json", required: true },
     ],
   },
   storylines: {

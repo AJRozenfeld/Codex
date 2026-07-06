@@ -608,4 +608,13 @@ CREATE INDEX IF NOT EXISTS idx_board_items_campaign ON dm_board_items(campaign_i
 -- the preview screen and pick a target campaign + which items to bring in.
 -- No campaign_id - a staged import isn't tied to any campaign until the DM
 -- commits it (they choose the target, or create a new one, at that point).
--- Rows older than two days are oppor
+-- Rows older than two days are opportunistically pruned whenever a new
+-- import is staged (see pruneOldStagingRows in import.ts) - an abandoned
+-- staging row is disposable scratch data, never referenced once its commit
+-- either happens or is abandoned.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS import_staging (
+  id         TEXT PRIMARY KEY,
+  data       TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -56,6 +56,13 @@ function emitLine(key: string, value: FieldValue, kind: string): string {
   if (kind === "number") {
     return `${key}: ${value == null ? 0 : value}`;
   }
+  if (kind === "json") {
+    // JSON is a subset of YAML flow syntax, so one inline JSON.stringify -
+    // no matter how deeply nested - is already a valid value for this key
+    // as far as js-yaml's load() is concerned. Simplest possible round trip:
+    // no custom nested-YAML pretty-printing to keep in sync with parse.ts.
+    return `${key}: ${JSON.stringify(value ?? null)}`;
+  }
   // string, image, ref - all plain/quoted scalars, or empty.
   const s = value == null ? "" : String(value);
   return `${key}: ${scalar(s)}`;

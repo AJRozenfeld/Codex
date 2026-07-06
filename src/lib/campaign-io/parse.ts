@@ -42,6 +42,13 @@ function coerceField(raw: unknown, kind: FieldKind): FieldValue {
     const n = Number(raw);
     return Number.isFinite(n) ? n : 0;
   }
+  if (kind === "json") {
+    // js-yaml's load() already parsed the inline JSON into a real
+    // object/array (or a hand-editor could have written genuine multi-line
+    // YAML for the same value - either way it comes through load() as a
+    // plain JS value) - pass it through as-is rather than stringifying it.
+    return (raw ?? null) as FieldValue;
+  }
   // string, text, image, ref
   if (raw == null) return null;
   return String(raw);

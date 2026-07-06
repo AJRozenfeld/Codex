@@ -6,6 +6,7 @@ export {
   SKILL_ABILITY,
   SKILL_LABELS,
   defaultCharacterSheet,
+  mergeWithDefaults,
   abilityModifier,
   formatModifier,
 } from "./character-sheet-shared";

@@ -13,6 +13,8 @@ import {
   adminUpsertArtifact,
   adminUpsertTimelineEvent,
 } from "@/lib/admin-queries";
+import { saveCharacterSheet, mergeWithDefaults } from "@/lib/character-sheet";
+import type { CharacterSheetData } from "@/lib/types";
 import { REGISTRY, ENTITY_TYPES, IMPORT_ORDER, type EntityTypeKey } from "./registry";
 import { loadNameMaps } from "./collect";
 import { parseCampaignMd, type RawEntity } from "./parse";
@@ -386,6 +388,21 @@ async function commitOne(
         },
         existingId
       );
+    case "characterSheets": {
+      // Not a distinct DB row of its own from this pipeline's point of view -
+      // character_sheets is a straight upsert-by-character_id (see
+      // saveCharacterSheet in character-sheet.ts), so there's no separate
+      // adminUpsert*Input shape to build. r.character is the OWNING
+      // character's name (this type's identityField - see registry.ts);
+      // resolve it the same way every other ref field does, then merge the
+      // parsed JSON blob over CharacterSheetData's defaults so a
+      // hand-edited/partial campaign.md can never write a half-shaped sheet.
+      const characterId = refOrWarn("character", "characters", r.character);
+      if (!characterId) return existingId ?? "";
+      const data = mergeWithDefaults((r.data ?? {}) as Partial<CharacterSheetData>);
+      await saveCharacterSheet(characterId, data);
+      return characterId;
+    }
     case "artifacts":
       return adminUpsertArtifact(
         campaignId,

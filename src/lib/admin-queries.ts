@@ -2,6 +2,7 @@ import { getDb, ensureSchema, newId } from "./db";
 import { slugify } from "./slug";
 import { hashPassword } from "./password";
 import { uploadMapImage, uploadCharacterPortrait } from "./blob-storage";
+import { getCharacterSheet, mergeWithDefaults } from "./character-sheet";
 import {
   rowToMoon,
   rowToRegion,
@@ -49,6 +50,7 @@ import type {
   TemplateFieldRole,
   Article,
   ArticleData,
+  CharacterSheetData,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -463,6 +465,36 @@ export async function adminGetCharacterFactionIds(characterId: string): Promise<
     args: [characterId],
   });
   return r.rows.map((row) => row.faction_id as string);
+}
+
+// Bulk read for the Campaign Export/Import feature's "characterSheets"
+// entity type (see campaign-io/collect.ts) - character_sheets has no
+// campaign_id of its own (it's keyed 1:1 off character_id), so this joins
+// through characters to scope the read to one campaign, same pattern as
+// every other adminGet* here. mergeWithDefaults keeps this symmetric with
+// getCharacterSheet's own read path (character-sheet.ts) so a
+// partially-filled JSON blob never round-trips through export/import with
+// missing keys.
+export async function adminGetAllCharacterSheets(
+  campaignId: string
+): Promise<{ characterId: string; characterName: string; data: CharacterSheetData }[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: `SELECT cs.character_id, c.name AS character_name, cs.data
+          FROM character_sheets cs
+          JOIN characters c ON c.id = cs.character_id
+          WHERE c.campaign_id = ?`,
+    args: [campaignId],
+  });
+  return r.rows.map((row) => {
+    let data: CharacterSheetData;
+    try {
+      data = mergeWithDefaults(JSON.parse(row.data as string));
+    } catch {
+      data = mergeWithDefaults({});
+    }
+    return { characterId: row.character_id as string, characterName: row.character_name as string, data };
+  });
 }
 
 // ---- Factions ------------------------------------------------------------
