@@ -431,11 +431,17 @@ export function MapPinEditor({
 
           {tool === "region" &&
             polygonPoints.map((p, i) => (
+              // r is in viewBox units (the whole canvas is 1x1, not pixels) -
+              // these need to be small fractions, not the "5"/"3.5" pixel-ish
+              // radii it originally shipped with, which rendered as circles
+              // several times wider than the entire map (looked like the
+              // whole image flashing solid yellow, then solid white on top
+              // of it once a second point existed - 2026-07-06 bug).
               <circle
                 key={i}
                 cx={p.x}
                 cy={p.y}
-                r={i === 0 ? 5 : 3.5}
+                r={i === 0 ? 0.012 : 0.008}
                 fill={i === 0 ? "rgb(251, 191, 36)" : "white"}
                 stroke="rgb(120, 53, 15)"
                 strokeWidth={1}
