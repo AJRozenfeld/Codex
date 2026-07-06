@@ -328,14 +328,19 @@ CREATE INDEX IF NOT EXISTS idx_map_pins_target ON map_pins(target_map_id);
 -- character ever auto-places on it. Admin-only concept - players never see
 -- the region boxes, only the resulting tokens.
 -- ---------------------------------------------------------------------------
+-- points: JSON array of {x,y} fractional (0..1) vertices, in the order the
+-- DM clicked them, forming a closed polygon (the shape implicitly closes
+-- from the last point back to the first - see MapPinEditor.tsx). Always at
+-- least 3 points. Replaced the old fixed x/y/width/height rectangle
+-- (2026-07-06, Aviv's call) so a region can trace an irregularly-shaped
+-- location instead of being forced into an axis-aligned box. See
+-- runMigrations() in db.ts for how existing rectangle rows get converted to
+-- an equivalent 4-point polygon.
 CREATE TABLE IF NOT EXISTS map_regions (
   id          TEXT PRIMARY KEY,
   map_id      TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
   location_id TEXT NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
-  x           REAL NOT NULL,
-  y           REAL NOT NULL,
-  width       REAL NOT NULL,
-  height      REAL NOT NULL,
+  points      TEXT NOT NULL,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -603,13 +608,4 @@ CREATE INDEX IF NOT EXISTS idx_board_items_campaign ON dm_board_items(campaign_i
 -- the preview screen and pick a target campaign + which items to bring in.
 -- No campaign_id - a staged import isn't tied to any campaign until the DM
 -- commits it (they choose the target, or create a new one, at that point).
--- Rows older than two days are opportunistically pruned whenever a new
--- import is staged (see pruneOldStagingRows in import.ts) - an abandoned
--- staging row is disposable scratch data, never referenced once its commit
--- either happens or is abandoned.
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS import_staging (
-  id         TEXT PRIMARY KEY,
-  data       TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+-- Rows older than two days are oppor

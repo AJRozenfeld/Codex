@@ -430,5 +430,40 @@ async function runMigrations(db: Client): Promise<void> {
     );
   }
 
+  // Map regions became polygons (Aviv's call, 2026-07-06): the old fixed
+  // x/y/width/height rectangle is replaced by a single `points` JSON column
+  // (an ordered array of {x,y} fractional vertices), so a region can trace
+  // an irregular location shape instead of being forced into a box. Existing
+  // rectangle rows are converted in place to an equivalent 4-point polygon
+  // via a pure-SQL string-concatenation INSERT...SELECT (no need to read
+  // rows into JS - SQLite's `||` operator builds the JSON text directly).
+  // No foreign_keys pragma concern here - unlike the characters/maps
+  // rebuilds above, nothing else cascades FROM map_regions as a parent, so
+  // dropping/recreating it can't wipe rows in any other table.
+  if (!(await hasColumn(db, "map_regions", "points"))) {
+    await db.batch(
+      [
+        `CREATE TABLE map_regions_new (
+          id          TEXT PRIMARY KEY,
+          map_id      TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+          location_id TEXT NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+          points      TEXT NOT NULL,
+          created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )`,
+        `INSERT INTO map_regions_new (id, map_id, location_id, points, created_at, updated_at)
+         SELECT id, map_id, location_id,
+           '[{"x":' || x || ',"y":' || y || '},{"x":' || (x + width) || ',"y":' || y || '},{"x":' || (x + width) || ',"y":' || (y + height) || '},{"x":' || x || ',"y":' || (y + height) || '}]',
+           created_at, updated_at
+         FROM map_regions`,
+        "DROP TABLE map_regions",
+        "ALTER TABLE map_regions_new RENAME TO map_regions",
+        "CREATE INDEX IF NOT EXISTS idx_map_regions_map ON map_regions(map_id)",
+        "CREATE INDEX IF NOT EXISTS idx_map_regions_location ON map_regions(location_id)",
+      ],
+      "write"
+    );
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

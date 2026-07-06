@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MapPin, MapRegion, AdminCharacterMapToken } from "@/lib/types";
+import type { MapPin, MapRegion, MapRegionPoint, AdminCharacterMapToken } from "@/lib/types";
 
 const ICON_OPTIONS = [
   { value: "", label: "Default" },
@@ -31,21 +31,39 @@ interface DraftPin {
 
 interface DraftRegion {
   regionId: string | null; // null = creating a new region
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  points: MapRegionPoint[];
   locationId: string;
 }
 
-interface DrawingRect {
-  startX: number;
-  startY: number;
-  curX: number;
-  curY: number;
+// Regions are drawn by clicking one vertex at a time (2026-07-06, Aviv's
+// call): a rubber-band line previews the next edge as the mouse moves, and
+// the shape closes either by clicking back near the first vertex or via the
+// "Finish Shape" button once at least MIN_POLYGON_POINTS vertices are down.
+// This replaced the old click-and-drag rectangle tool so a region can trace
+// an irregular location shape instead of being forced into an axis-aligned
+// box. The polygon is stored as an ordered list of fractional (0..1)
+// vertices; the shape implicitly closes from the last point back to the
+// first, so we never store the first point twice.
+const MIN_POLYGON_POINTS = 3;
+// How close (in fractional 0..1 units) a click needs to land to the first
+// vertex before it's treated as "close the shape" rather than "add a point".
+const CLOSE_THRESHOLD = 0.025;
+
+function averagePoint(points: MapRegionPoint[]): { x: number; y: number } {
+  if (points.length === 0) return { x: 0.5, y: 0.5 };
+  return {
+    x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+    y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+  };
 }
 
-const MIN_REGION_SIZE = 0.02; // fraction of image - smaller than this is treated as an accidental click, not a drag
+function distance(a: MapRegionPoint, b: MapRegionPoint): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function pointsToPolygonAttr(points: MapRegionPoint[]): string {
+  return points.map((p) => `${p.x},${p.y}`).join(" ");
+}
 
 export function MapPinEditor({
   mapId,
@@ -74,15 +92,8 @@ export function MapPinEditor({
   createPinAction: (x: number, y: number, label: string, targetMapId: string | null) => Promise<string>;
   updatePinAction: (pinId: string, x: number, y: number, label: string, targetMapId: string | null) => Promise<void>;
   deletePinAction: (pinId: string) => Promise<void>;
-  createRegionAction: (locationId: string, x: number, y: number, width: number, height: number) => Promise<string>;
-  updateRegionAction: (
-    regionId: string,
-    locationId: string,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => Promise<void>;
+  createRegionAction: (locationId: string, points: { x: number; y: number }[]) => Promise<string>;
+  updateRegionAction: (regionId: string, locationId: string, points: { x: number; y: number }[]) => Promise<void>;
   deleteRegionAction: (regionId: string) => Promise<void>;
   setTokenPositionAction: (characterId: string, x: number, y: number) => Promise<void>;
   clearTokenPositionAction: (characterId: string) => Promise<{ x: number; y: number } | null>;
@@ -95,7 +106,8 @@ export function MapPinEditor({
   const [tool, setTool] = useState<"pin" | "region">("pin");
   const [draft, setDraft] = useState<DraftPin | null>(null);
   const [regionDraft, setRegionDraft] = useState<DraftRegion | null>(null);
-  const [drawingRect, setDrawingRect] = useState<DrawingRect | null>(null);
+  const [polygonPoints, setPolygonPoints] = useState<MapRegionPoint[]>([]);
+  const [cursorPos, setCursorPos] = useState<MapRegionPoint | null>(null);
   const [draggingTokenId, setDraggingTokenId] = useState<string | null>(null);
 
   const [imageRatio, setImageRatio] = useState<number | null>(null);
@@ -116,9 +128,14 @@ export function MapPinEditor({
   // ---- Pins ----------------------------------------------------------------
 
   function handleContainerClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!editMode || tool !== "pin" || draft) return;
-    const { x, y } = fractionFromEvent(e.clientX, e.clientY);
-    setDraft({ pinId: null, x, y, label: "", icon: "", targetMapId: "" });
+    if (!editMode) return;
+    if (tool === "pin") {
+      if (draft) return;
+      const { x, y } = fractionFromEvent(e.clientX, e.clientY);
+      setDraft({ pinId: null, x, y, label: "", icon: "", targetMapId: "" });
+      return;
+    }
+    handleRegionClick(e);
   }
 
   function openExistingPin(pin: MapPin, e: React.MouseEvent) {
@@ -173,65 +190,87 @@ export function MapPinEditor({
     setDraft(null);
   }
 
-  // ---- Regions ---------------------------------------------------------
+  // ---- Regions (polygon vertex-click tool) ---------------------------------
 
-  function startDrawingRegion(e: React.PointerEvent<HTMLDivElement>) {
-    if (!editMode || tool !== "region" || regionDraft) return;
-    if (e.target !== containerRef.current && (e.target as HTMLElement).dataset.regionSurface !== "1") return;
-    const { x, y } = fractionFromEvent(e.clientX, e.clientY);
-    setDrawingRect({ startX: x, startY: y, curX: x, curY: y });
+  // Set while reshaping an existing region (via "Redraw Shape") so the next
+  // completed polygon is saved back onto that region's id/location instead
+  // of creating a new one.
+  const redrawTargetRef = useRef<{ regionId: string | null; locationId: string } | null>(null);
 
-    function onMove(ev: PointerEvent) {
-      const { x: cx, y: cy } = fractionFromEvent(ev.clientX, ev.clientY);
-      setDrawingRect((prev) => (prev ? { ...prev, curX: cx, curY: cy } : prev));
+  function resetRegionDrawing() {
+    setPolygonPoints([]);
+    setCursorPos(null);
+  }
+
+  function closePolygon(points: MapRegionPoint[]) {
+    if (points.length < MIN_POLYGON_POINTS) return;
+    const target = redrawTargetRef.current;
+    redrawTargetRef.current = null;
+    resetRegionDrawing();
+    setRegionDraft({
+      regionId: target?.regionId ?? null,
+      points,
+      locationId: target?.locationId ?? "",
+    });
+  }
+
+  function handleRegionClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!editMode || tool !== "region") return;
+    if (regionDraft) return; // a finished-shape popup is open - don't start another
+    const target = e.target as HTMLElement;
+    if (e.target !== containerRef.current && target.dataset.regionSurface !== "1") return;
+
+    const pt = fractionFromEvent(e.clientX, e.clientY);
+
+    if (polygonPoints.length >= MIN_POLYGON_POINTS && distance(pt, polygonPoints[0]) < CLOSE_THRESHOLD) {
+      closePolygon(polygonPoints);
+      return;
     }
-    function onUp(ev: PointerEvent) {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      const { x: endX, y: endY } = fractionFromEvent(ev.clientX, ev.clientY);
-      setDrawingRect((prev) => {
-        const startX = prev?.startX ?? x;
-        const startY = prev?.startY ?? y;
-        const rx = Math.min(startX, endX);
-        const ry = Math.min(startY, endY);
-        const rw = Math.abs(endX - startX);
-        const rh = Math.abs(endY - startY);
-        if (rw >= MIN_REGION_SIZE && rh >= MIN_REGION_SIZE) {
-          setRegionDraft({ regionId: null, x: rx, y: ry, width: rw, height: rh, locationId: "" });
-        }
-        return null;
-      });
-    }
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+
+    setPolygonPoints((prev) => [...prev, pt]);
+  }
+
+  function handleRegionMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!editMode || tool !== "region" || polygonPoints.length === 0) return;
+    setCursorPos(fractionFromEvent(e.clientX, e.clientY));
+  }
+
+  function finishPolygon(e: React.MouseEvent) {
+    e.stopPropagation();
+    closePolygon(polygonPoints);
+  }
+
+  function cancelPolygon(e: React.MouseEvent) {
+    e.stopPropagation();
+    resetRegionDrawing();
   }
 
   function openExistingRegion(region: MapRegion, e: React.MouseEvent) {
     e.stopPropagation();
     if (!editMode || tool !== "region") return;
-    setRegionDraft({
-      regionId: region.id,
-      x: region.x,
-      y: region.y,
-      width: region.width,
-      height: region.height,
-      locationId: region.locationId,
-    });
+    setRegionDraft({ regionId: region.id, points: region.points, locationId: region.locationId });
+  }
+
+  function redrawRegion() {
+    if (!regionDraft) return;
+    redrawTargetRef.current = { regionId: regionDraft.regionId, locationId: regionDraft.locationId };
+    setRegionDraft(null);
+    resetRegionDrawing();
   }
 
   async function saveRegionDraft() {
-    if (!regionDraft || !regionDraft.locationId) return;
-    const { x, y, width, height, locationId } = regionDraft;
+    if (!regionDraft || !regionDraft.locationId || regionDraft.points.length < MIN_POLYGON_POINTS) return;
+    const { points, locationId } = regionDraft;
     if (regionDraft.regionId) {
-      await updateRegionAction(regionDraft.regionId, locationId, x, y, width, height);
+      await updateRegionAction(regionDraft.regionId, locationId, points);
       const locationName = locations.find((l) => l.id === locationId)?.name ?? null;
       setRegions((prev) =>
-        prev.map((r) => (r.id === regionDraft.regionId ? { ...r, x, y, width, height, locationId, locationName } : r))
+        prev.map((r) => (r.id === regionDraft.regionId ? { ...r, points, locationId, locationName } : r))
       );
     } else {
-      const newId = await createRegionAction(locationId, x, y, width, height);
+      const newId = await createRegionAction(locationId, points);
       const locationName = locations.find((l) => l.id === locationId)?.name ?? null;
-      setRegions((prev) => [...prev, { id: newId, mapId, x, y, width, height, locationId, locationName }]);
+      setRegions((prev) => [...prev, { id: newId, mapId, points, locationId, locationName }]);
     }
     setRegionDraft(null);
   }
@@ -280,14 +319,7 @@ export function MapPinEditor({
   }
 
   const placedTokens = tokens.filter((t) => t.x !== null && t.y !== null);
-  const liveRect = drawingRect
-    ? {
-        x: Math.min(drawingRect.startX, drawingRect.curX),
-        y: Math.min(drawingRect.startY, drawingRect.curY),
-        width: Math.abs(drawingRect.curX - drawingRect.startX),
-        height: Math.abs(drawingRect.curY - drawingRect.startY),
-      }
-    : null;
+  const previewPoints = cursorPos ? [...polygonPoints, cursorPos] : polygonPoints;
 
   return (
     <div>
@@ -299,6 +331,7 @@ export function MapPinEditor({
               setEditMode((v) => !v);
               setDraft(null);
               setRegionDraft(null);
+              resetRegionDrawing();
             }}
             className={`rounded-full border px-4 py-1.5 text-xs font-medium ${
               editMode ? "border-gold bg-gold/20 text-gold" : "border-gold/40 text-gold hover:bg-gold/10"
@@ -310,7 +343,11 @@ export function MapPinEditor({
             <div className="flex items-center gap-1 rounded-full border border-gold/20 p-0.5">
               <button
                 type="button"
-                onClick={() => setTool("pin")}
+                onClick={() => {
+                  setTool("pin");
+                  setRegionDraft(null);
+                  resetRegionDrawing();
+                }}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   tool === "pin" ? "bg-gold/90 text-ink" : "text-gold/70 hover:bg-gold/10"
                 }`}
@@ -319,7 +356,10 @@ export function MapPinEditor({
               </button>
               <button
                 type="button"
-                onClick={() => setTool("region")}
+                onClick={() => {
+                  setTool("region");
+                  setDraft(null);
+                }}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   tool === "region" ? "bg-gold/90 text-ink" : "text-gold/70 hover:bg-gold/10"
                 }`}
@@ -338,7 +378,7 @@ export function MapPinEditor({
         <p className="text-xs text-parchment/40 mb-3">
           {tool === "pin"
             ? "Click the map to add a pin, click a pin to edit it."
-            : "Click and drag on the map to draw a region, click a region to edit or delete it."}
+            : "Click to place vertices; click near the first point (or press Finish Shape) to close the region. Click an existing region to edit or delete it."}
           {" "}Character tokens (circular portraits) can always be dragged to reposition them manually.
         </p>
       )}
@@ -346,10 +386,10 @@ export function MapPinEditor({
       <div
         ref={containerRef}
         onClick={handleContainerClick}
-        onPointerDown={startDrawingRegion}
+        onMouseMove={handleRegionMouseMove}
         data-region-surface="1"
         className={`relative w-full overflow-hidden rounded-lg border border-gold/20 bg-void ${
-          editMode ? (tool === "pin" ? "cursor-crosshair" : "cursor-crosshair") : ""
+          editMode ? "cursor-crosshair" : ""
         }`}
         style={{ aspectRatio: imageRatio ? String(imageRatio) : "16 / 10" }}
       >
@@ -363,37 +403,60 @@ export function MapPinEditor({
           onLoad={(e) => setImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
         />
 
+        <svg viewBox="0 0 1 1" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
+          {tool === "region" &&
+            regions.map((region) => (
+              <polygon
+                key={region.id}
+                points={pointsToPolygonAttr(region.points)}
+                fill="rgba(217, 119, 6, 0.15)"
+                stroke="rgb(217, 119, 6)"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+                className="pointer-events-auto cursor-pointer"
+                onClick={(e) => openExistingRegion(region, e as unknown as React.MouseEvent)}
+              />
+            ))}
+
+          {tool === "region" && polygonPoints.length > 0 && (
+            <polyline
+              points={pointsToPolygonAttr(previewPoints)}
+              fill="none"
+              stroke="rgb(251, 191, 36)"
+              strokeWidth={1.5}
+              strokeDasharray="0.01,0.008"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+
+          {tool === "region" &&
+            polygonPoints.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={i === 0 ? 5 : 3.5}
+                fill={i === 0 ? "rgb(251, 191, 36)" : "white"}
+                stroke="rgb(120, 53, 15)"
+                strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+        </svg>
+
         {tool === "region" &&
-          regions.map((region) => (
-            <div
-              key={region.id}
-              onClick={(e) => openExistingRegion(region, e)}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="absolute rounded border-2 border-ember/70 bg-ember/15 hover:bg-ember/25 cursor-pointer flex items-end p-1"
-              style={{
-                left: `${region.x * 100}%`,
-                top: `${region.y * 100}%`,
-                width: `${region.width * 100}%`,
-                height: `${region.height * 100}%`,
-              }}
-            >
-              <span className="text-[10px] text-parchment bg-ink/70 rounded px-1 truncate max-w-full">
+          regions.map((region) => {
+            const center = averagePoint(region.points);
+            return (
+              <span
+                key={region.id}
+                className="absolute -translate-x-1/2 -translate-y-1/2 text-[10px] text-parchment bg-ink/70 rounded px-1 truncate max-w-[80%] pointer-events-none"
+                style={{ left: `${center.x * 100}%`, top: `${center.y * 100}%` }}
+              >
                 {region.locationName ?? "Unnamed"}
               </span>
-            </div>
-          ))}
-
-        {liveRect && (
-          <div
-            className="absolute rounded border-2 border-dashed border-gold bg-gold/15 pointer-events-none"
-            style={{
-              left: `${liveRect.x * 100}%`,
-              top: `${liveRect.y * 100}%`,
-              width: `${liveRect.width * 100}%`,
-              height: `${liveRect.height * 100}%`,
-            }}
-          />
-        )}
+            );
+          })}
 
         {tool === "pin" &&
           pins.map((pin) => (
@@ -454,6 +517,36 @@ export function MapPinEditor({
             )}
           </div>
         ))}
+
+        {tool === "region" && polygonPoints.length >= MIN_POLYGON_POINTS && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-40">
+            <button
+              type="button"
+              onClick={finishPolygon}
+              className="rounded-full bg-gold/90 text-ink px-3 py-1.5 text-xs font-medium hover:bg-gold"
+            >
+              Finish Shape
+            </button>
+            <button
+              type="button"
+              onClick={cancelPolygon}
+              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        {tool === "region" && polygonPoints.length > 0 && polygonPoints.length < MIN_POLYGON_POINTS && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-40">
+            <button
+              type="button"
+              onClick={cancelPolygon}
+              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         {draft && (
           <div
@@ -531,8 +624,8 @@ export function MapPinEditor({
             onClick={(e) => e.stopPropagation()}
             className="absolute z-40 w-64 rounded-lg border border-ember/50 bg-ink p-4 shadow-xl space-y-3"
             style={{
-              left: `${Math.min(regionDraft.x * 100, 70)}%`,
-              top: `${Math.min((regionDraft.y + regionDraft.height) * 100, 60)}%`,
+              left: `${Math.min(Math.min(...regionDraft.points.map((p) => p.x)) * 100, 70)}%`,
+              top: `${Math.min(Math.max(...regionDraft.points.map((p) => p.y)) * 100, 60)}%`,
             }}
           >
             <label className="block">
@@ -563,6 +656,9 @@ export function MapPinEditor({
                 <span />
               )}
               <div className="flex gap-2">
+                <button type="button" onClick={redrawRegion} className="text-xs text-parchment/50 hover:text-parchment">
+                  Redraw Shape
+                </button>
                 <button
                   type="button"
                   onClick={() => setRegionDraft(null)}

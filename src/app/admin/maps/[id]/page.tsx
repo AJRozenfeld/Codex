@@ -82,25 +82,19 @@ async function deletePinAction(pinId: string): Promise<void> {
 async function createRegionAction(
   mapId: string,
   locationId: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number
+  points: { x: number; y: number }[]
 ): Promise<string> {
   "use server";
-  return adminCreateMapRegion(mapId, { locationId, x, y, width, height });
+  return adminCreateMapRegion(mapId, { locationId, points });
 }
 
 async function updateRegionAction(
   regionId: string,
   locationId: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number
+  points: { x: number; y: number }[]
 ): Promise<void> {
   "use server";
-  await adminUpdateMapRegion(regionId, { locationId, x, y, width, height });
+  await adminUpdateMapRegion(regionId, { locationId, points });
 }
 
 async function deleteRegionAction(regionId: string): Promise<void> {

@@ -20,7 +20,9 @@ import {
   rowToArticle,
   getTemplateWithFields,
   resolveCharacterAnchor,
-  type RegionRect,
+  polygonCentroid,
+  parseRegionPoints,
+  type RegionAnchor,
 } from "./queries";
 import type {
   Moon,
@@ -35,6 +37,7 @@ import type {
   MapEntity,
   MapPin,
   MapRegion,
+  MapRegionPoint,
   AdminCharacterMapToken,
   Section,
   AdminArticleList,
@@ -952,10 +955,7 @@ export async function adminGetMapRegions(mapId: string): Promise<MapRegion[]> {
 
 export interface MapRegionInput {
   locationId: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  points: MapRegionPoint[];
 }
 
 export async function adminCreateMapRegion(mapId: string, input: MapRegionInput): Promise<string> {
@@ -963,8 +963,8 @@ export async function adminCreateMapRegion(mapId: string, input: MapRegionInput)
   const db = getDb();
   const id = newId();
   await db.execute({
-    sql: `INSERT INTO map_regions (id, map_id, location_id, x, y, width, height) VALUES (?,?,?,?,?,?,?)`,
-    args: [id, mapId, input.locationId, input.x, input.y, input.width, input.height],
+    sql: `INSERT INTO map_regions (id, map_id, location_id, points) VALUES (?,?,?,?)`,
+    args: [id, mapId, input.locationId, JSON.stringify(input.points)],
   });
   return id;
 }
@@ -972,8 +972,8 @@ export async function adminCreateMapRegion(mapId: string, input: MapRegionInput)
 export async function adminUpdateMapRegion(regionId: string, input: MapRegionInput): Promise<void> {
   await ensureSchema();
   await getDb().execute({
-    sql: `UPDATE map_regions SET location_id=?, x=?, y=?, width=?, height=?, updated_at=datetime('now') WHERE id=?`,
-    args: [input.locationId, input.x, input.y, input.width, input.height, regionId],
+    sql: `UPDATE map_regions SET location_id=?, points=?, updated_at=datetime('now') WHERE id=?`,
+    args: [input.locationId, JSON.stringify(input.points), regionId],
   });
 }
 
@@ -1003,15 +1003,10 @@ export async function adminGetCharacterMapTokens(campaignId: string, mapId: stri
   for (const row of locResult.rows) parentOf.set(row.id as string, (row.parent_id as string) ?? null);
 
   const regionsResult = await db.execute({ sql: "SELECT * FROM map_regions WHERE map_id = ?", args: [mapId] });
-  const regionsByLocation = new Map<string, RegionRect>();
+  const regionsByLocation = new Map<string, RegionAnchor>();
   for (const row of regionsResult.rows) {
     if (!regionsByLocation.has(row.location_id as string)) {
-      regionsByLocation.set(row.location_id as string, {
-        x: Number(row.x),
-        y: Number(row.y),
-        width: Number(row.width),
-        height: Number(row.height),
-      });
+      regionsByLocation.set(row.location_id as string, polygonCentroid(parseRegionPoints(row.points)));
     }
   }
 

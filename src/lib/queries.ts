@@ -14,6 +14,7 @@ import type {
   MapEntity,
   MapPin,
   MapRegion,
+  MapRegionPoint,
   CharacterMapToken,
   Section,
   ArticleList,
@@ -647,17 +648,70 @@ export function rowToTimelineEvent(row: any): TimelineEvent {
 //   3. If neither resolves, the character has no token on this map at all.
 // ---------------------------------------------------------------------------
 
-export interface RegionRect {
+// A region's resolved anchor point (where a character's token renders) -
+// the polygon's area centroid, precomputed once per region so
+// resolveCharacterAnchor stays a cheap map lookup rather than recomputing
+// geometry per character.
+export interface RegionAnchor {
   x: number;
   y: number;
-  width: number;
-  height: number;
+}
+
+/**
+ * Area-weighted centroid of a polygon (shoelace-formula centroid), which is
+ * more representative of a region's "middle" than a plain vertex average for
+ * an irregular/lopsided shape - e.g. an L-shaped region's vertex average can
+ * fall outside the shape entirely, while the area centroid never does for a
+ * simple (non-self-intersecting) polygon. Falls back to a plain vertex
+ * average for degenerate input (fewer than 3 points, or a near-zero-area
+ * sliver/straight line) where the area-based formula would divide by ~0.
+ */
+export function polygonCentroid(points: MapRegionPoint[]): RegionAnchor {
+  if (points.length === 0) return { x: 0.5, y: 0.5 };
+  if (points.length < 3) {
+    return {
+      x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+      y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+    };
+  }
+  let areaSum = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < points.length; i++) {
+    const p0 = points[i];
+    const p1 = points[(i + 1) % points.length];
+    const cross = p0.x * p1.y - p1.x * p0.y;
+    areaSum += cross;
+    cx += (p0.x + p1.x) * cross;
+    cy += (p0.y + p1.y) * cross;
+  }
+  const area = areaSum / 2;
+  if (Math.abs(area) < 1e-9) {
+    return {
+      x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+      y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+    };
+  }
+  return { x: cx / (6 * area), y: cy / (6 * area) };
+}
+
+export function parseRegionPoints(raw: unknown): MapRegionPoint[] {
+  if (typeof raw !== "string" || !raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((p) => p && typeof p.x === "number" && typeof p.y === "number")
+      .map((p) => ({ x: p.x, y: p.y }));
+  } catch {
+    return [];
+  }
 }
 
 export function resolveCharacterAnchor(
   characterId: string,
   characterLocationId: string | null,
-  regionsByLocation: Map<string, RegionRect>,
+  regionsByLocation: Map<string, RegionAnchor>,
   overridesByCharacter: Map<string, { x: number; y: number }>,
   parentOf: Map<string, string | null>
 ): { x: number; y: number } | null {
@@ -669,7 +723,7 @@ export function resolveCharacterAnchor(
   while (current && !seen.has(current)) {
     seen.add(current);
     const region = regionsByLocation.get(current);
-    if (region) return { x: region.x + region.width / 2, y: region.y + region.height / 2 };
+    if (region) return region;
     current = parentOf.get(current) ?? null;
   }
   return null;
@@ -727,17 +781,12 @@ export async function getMapExplorerData(viewer: ViewerContext = ANONYMOUS): Pro
       sql: `SELECT * FROM map_regions WHERE map_id IN (${mapIds.map(() => "?").join(",")})`,
       args: mapIds,
     });
-    const regionsByMap = new Map<string, Map<string, RegionRect>>();
+    const regionsByMap = new Map<string, Map<string, RegionAnchor>>();
     for (const row of regionsResult.rows) {
       const mapId = row.map_id as string;
-      const byLoc = regionsByMap.get(mapId) ?? new Map<string, RegionRect>();
+      const byLoc = regionsByMap.get(mapId) ?? new Map<string, RegionAnchor>();
       if (!byLoc.has(row.location_id as string)) {
-        byLoc.set(row.location_id as string, {
-          x: Number(row.x),
-          y: Number(row.y),
-          width: Number(row.width),
-          height: Number(row.height),
-        });
+        byLoc.set(row.location_id as string, polygonCentroid(parseRegionPoints(row.points)));
       }
       regionsByMap.set(mapId, byLoc);
     }
@@ -755,7 +804,7 @@ export async function getMapExplorerData(viewer: ViewerContext = ANONYMOUS): Pro
     }
 
     for (const mapId of mapIds) {
-      const regionsByLocation = regionsByMap.get(mapId) ?? new Map<string, RegionRect>();
+      const regionsByLocation = regionsByMap.get(mapId) ?? new Map<string, RegionAnchor>();
       const overridesByCharacter = overridesByMap.get(mapId) ?? new Map<string, { x: number; y: number }>();
       const tokens: CharacterMapToken[] = [];
       for (const c of characters) {
@@ -815,10 +864,7 @@ export function rowToMapRegion(row: any): MapRegion {
     mapId: row.map_id,
     locationId: row.location_id,
     locationName: row.location_name ?? null,
-    x: Number(row.x),
-    y: Number(row.y),
-    width: Number(row.width),
-    height: Number(row.height),
+    points: parseRegionPoints(row.points),
   };
 }
 

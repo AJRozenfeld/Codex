@@ -279,6 +279,12 @@ export interface MapPin {
   targetMapName?: string | null;
 }
 
+// A single fractional (0..1) vertex of a map region polygon.
+export interface MapRegionPoint {
+  x: number;
+  y: number;
+}
+
 export interface MapEntity {
   id: string;
   slug: string;
@@ -294,7 +300,7 @@ export interface MapEntity {
   tokens?: CharacterMapToken[];
 }
 
-// Admin-only editing concept: a rectangular area (fractional 0..1 coords,
+// Admin-only editing concept: an arbitrary polygon (fractional 0..1 coords,
 // like pins) tied to a Location, used purely to auto-place character tokens.
 // Never sent to the public site - see MapRegionEditor.tsx / getMapRegions in
 // admin-queries.ts.
@@ -303,10 +309,7 @@ export interface MapRegion {
   mapId: string;
   locationId: string;
   locationName?: string | null;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  points: MapRegionPoint[];
 }
 
 // A resolved, ready-to-render character token for one specific map: either
