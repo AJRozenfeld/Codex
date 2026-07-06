@@ -19,6 +19,8 @@ const sections = [
   { href: "/admin/sections", label: "Sections" },
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/players", label: "Players" },
+  { href: "/admin/music", label: "Music" },
+  { href: "/admin/discord", label: "Discord" },
 ];
 
 async function logoutAction() {

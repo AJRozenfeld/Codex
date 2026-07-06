@@ -409,6 +409,8 @@ export interface CharacterInput {
   locationId?: string | null;
   factionIds?: string[];
   restrictedPlayerIds?: string[];
+  /** Discord bot bracket word, e.g. "Bramblefoot" for [[Bramblefoot]]:. Empty string/undefined clears it. */
+  mask?: string | null;
 }
 
 export async function adminUpsertCharacter(campaignId: string, input: CharacterInput, id?: string): Promise<string> {
@@ -420,22 +422,23 @@ export async function adminUpsertCharacter(campaignId: string, input: CharacterI
   if (input.imageFile && input.imageFile.size > 0) {
     portraitUrl = await uploadCharacterPortrait(input.imageFile);
   }
+  const mask = input.mask ? input.mask.trim() || null : null;
   if (id) {
     if (portraitUrl !== undefined) {
       await db.execute({
-        sql: `UPDATE characters SET name=?, slug=?, is_pc=?, is_alive=?, race=?, char_class=?, status=?, summary=?, bio=?, tags=?, portrait_path=?, revealed=?, location_id=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
-        args: [input.name, slug, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, portraitUrl ?? null, input.revealed ? 1 : 0, input.locationId ?? null, id, campaignId],
+        sql: `UPDATE characters SET name=?, slug=?, is_pc=?, is_alive=?, race=?, char_class=?, status=?, summary=?, bio=?, tags=?, portrait_path=?, revealed=?, location_id=?, mask=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
+        args: [input.name, slug, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, portraitUrl ?? null, input.revealed ? 1 : 0, input.locationId ?? null, mask, id, campaignId],
       });
     } else {
       await db.execute({
-        sql: `UPDATE characters SET name=?, slug=?, is_pc=?, is_alive=?, race=?, char_class=?, status=?, summary=?, bio=?, tags=?, revealed=?, location_id=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
-        args: [input.name, slug, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, input.revealed ? 1 : 0, input.locationId ?? null, id, campaignId],
+        sql: `UPDATE characters SET name=?, slug=?, is_pc=?, is_alive=?, race=?, char_class=?, status=?, summary=?, bio=?, tags=?, revealed=?, location_id=?, mask=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?`,
+        args: [input.name, slug, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, input.revealed ? 1 : 0, input.locationId ?? null, mask, id, campaignId],
       });
     }
   } else {
     await db.execute({
-      sql: `INSERT INTO characters (id, campaign_id, slug, name, is_pc, is_alive, race, char_class, status, summary, bio, tags, portrait_path, revealed, location_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      args: [charId, campaignId, slug, input.name, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, portraitUrl ?? null, input.revealed ? 1 : 0, input.locationId ?? null],
+      sql: `INSERT INTO characters (id, campaign_id, slug, name, is_pc, is_alive, race, char_class, status, summary, bio, tags, portrait_path, revealed, location_id, mask) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      args: [charId, campaignId, slug, input.name, input.isPc ? 1 : 0, input.isAlive ? 1 : 0, input.race ?? null, input.charClass ?? null, input.status ?? null, input.summary, input.bio, input.tags ?? null, portraitUrl ?? null, input.revealed ? 1 : 0, input.locationId ?? null, mask],
     });
   }
   if (input.factionIds) {
@@ -787,6 +790,7 @@ function rowToPlayer(row: any): Player {
     characterId: row.character_id ?? null,
     characterName: row.character_name ?? null,
     characterSlug: row.character_slug ?? null,
+    discordUserId: row.discord_user_id ?? null,
   };
 }
 

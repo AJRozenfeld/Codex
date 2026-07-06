@@ -18,25 +18,32 @@ async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
   const campaignId = await getCurrentCampaignId();
   const imageFile = formData.get("portrait");
-  await adminUpsertCharacter(
-    campaignId,
-    {
-      name: String(formData.get("name") ?? ""),
-      isPc: formData.get("isPc") === "on",
-      isAlive: formData.get("isAlive") === "on",
-      race: String(formData.get("race") ?? "") || undefined,
-      charClass: String(formData.get("charClass") ?? "") || undefined,
-      status: String(formData.get("status") ?? "") || undefined,
-      summary: String(formData.get("summary") ?? ""),
-      bio: String(formData.get("bio") ?? ""),
-      locationId: String(formData.get("locationId") ?? "") || null,
-      revealed: formData.get("revealed") === "on",
-      factionIds: formData.getAll("factionIds").map(String),
-      restrictedPlayerIds: formData.getAll("restrictedPlayerIds").map(String),
-      imageFile: imageFile instanceof File ? imageFile : null,
-    },
-    id
-  );
+  try {
+    await adminUpsertCharacter(
+      campaignId,
+      {
+        name: String(formData.get("name") ?? ""),
+        isPc: formData.get("isPc") === "on",
+        isAlive: formData.get("isAlive") === "on",
+        race: String(formData.get("race") ?? "") || undefined,
+        charClass: String(formData.get("charClass") ?? "") || undefined,
+        status: String(formData.get("status") ?? "") || undefined,
+        summary: String(formData.get("summary") ?? ""),
+        bio: String(formData.get("bio") ?? ""),
+        locationId: String(formData.get("locationId") ?? "") || null,
+        revealed: formData.get("revealed") === "on",
+        factionIds: formData.getAll("factionIds").map(String),
+        restrictedPlayerIds: formData.getAll("restrictedPlayerIds").map(String),
+        imageFile: imageFile instanceof File ? imageFile : null,
+        mask: String(formData.get("mask") ?? "") || null,
+      },
+      id
+    );
+  } catch (err) {
+    // Most likely idx_characters_mask - two characters in this campaign
+    // can't share a Discord mask word.
+    redirect(`/admin/characters/${id ?? "new"}?error=${encodeURIComponent((err as Error).message)}`);
+  }
   redirect("/admin/characters");
 }
 
@@ -47,7 +54,13 @@ async function deleteAction(id: string) {
   redirect("/admin/characters");
 }
 
-export default async function AdminCharacterEditPage({ params }: { params: { id: string } }) {
+export default async function AdminCharacterEditPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { error?: string };
+}) {
   const isNew = params.id === "new";
   const campaignId = await getCurrentCampaignId();
   const [character, locations, factions, players, selectedRestrictedIds] = await Promise.all([
@@ -90,6 +103,13 @@ export default async function AdminCharacterEditPage({ params }: { params: { id:
           <Field label="Class" name="charClass" defaultValue={character?.charClass ?? ""} />
         </div>
         <Field label="Status (e.g. Missing, Imprisoned, In Hiding)" name="status" defaultValue={character?.status ?? ""} />
+        {searchParams?.error && <p className="text-sm text-blood">{searchParams.error}</p>}
+        <Field
+          label="Discord Mask (bracket word, e.g. Bramblefoot)"
+          name="mask"
+          defaultValue={character?.mask ?? ""}
+          placeholder="Only the DM can use NPC masks; players set their own on /me/profile"
+        />
         <Select
           label="Location"
           name="locationId"

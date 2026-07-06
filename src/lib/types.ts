@@ -84,6 +84,8 @@ export interface Character {
   locationId: string | null;
   locationName?: string | null;
   locationSlug?: string | null;
+  /** Discord bot bracket word - [[mask]]: ... - null if unset. See db/schema.sql. */
+  mask: string | null;
 }
 
 export interface Faction {
@@ -163,6 +165,28 @@ export interface Player {
   characterId: string | null;
   characterName?: string | null;
   characterSlug?: string | null;
+  /** Linked Discord account (see /link + link_codes in db/schema.sql), null if not linked. */
+  discordUserId: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Discord bot (2026-07-06). See discord-io.ts for query functions and
+// discord-bot/ for the standalone bot process that consumes them.
+// ---------------------------------------------------------------------------
+
+export interface MusicTrack {
+  id: string;
+  slug: string;
+  name: string;
+  tags: string | null;
+  fileUrl: string;
+}
+
+export interface GuildLink {
+  id: string;
+  guildId: string;
+  campaignId: string;
+  linkedAt: string;
 }
 
 // ---------------------------------------------------------------------------

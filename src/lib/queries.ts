@@ -550,6 +550,7 @@ export function rowToCharacter(row: any): Character {
     locationId: row.location_id ?? null,
     locationName: row.location_name ?? null,
     locationSlug: row.location_slug ?? null,
+    mask: row.mask ?? null,
   };
 }
 

@@ -5,6 +5,7 @@ export function Field({
   required,
   type = "text",
   className = "",
+  placeholder,
 }: {
   label: string;
   name: string;
@@ -12,6 +13,7 @@ export function Field({
   required?: boolean;
   type?: string;
   className?: string;
+  placeholder?: string;
 }) {
   return (
     <label className={`block ${className}`}>
@@ -21,6 +23,7 @@ export function Field({
         name={name}
         defaultValue={defaultValue}
         required={required}
+        placeholder={placeholder}
         className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
       />
     </label>

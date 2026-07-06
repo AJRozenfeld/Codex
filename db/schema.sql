@@ -116,6 +116,13 @@ CREATE TABLE IF NOT EXISTS characters (
   portrait_path TEXT,
   revealed      INTEGER NOT NULL DEFAULT 1,
   location_id   TEXT REFERENCES locations(id) ON DELETE SET NULL,
+  -- Discord bot "mask" (2026-07-06): the bracket word - [[mask]]: message -
+  -- that lets the DM (any character) or a linked player (their own PC only)
+  -- speak/act as this character in Discord via webhook proxy. NULL = no mask
+  -- set yet. Uniqueness is per-campaign, not global, matching every other
+  -- name-ish field here - see idx_characters_mask below (SQLite allows any
+  -- number of NULLs through a UNIQUE index, so unset masks never collide).
+  mask          TEXT,
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (campaign_id, slug)
@@ -123,6 +130,7 @@ CREATE TABLE IF NOT EXISTS characters (
 CREATE INDEX IF NOT EXISTS idx_characters_location ON characters(location_id);
 CREATE INDEX IF NOT EXISTS idx_characters_name ON characters(name);
 CREATE INDEX IF NOT EXISTS idx_characters_campaign ON characters(campaign_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_characters_mask ON characters(campaign_id, mask);
 
 CREATE TABLE IF NOT EXISTS character_factions (
   id           TEXT PRIMARY KEY,
@@ -226,14 +234,19 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- (simplest, and fine at this scale) even though accounts are per-campaign.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS players (
-  id            TEXT PRIMARY KEY,
-  campaign_id   TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
-  username      TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  display_name  TEXT NOT NULL,
-  character_id  TEXT REFERENCES characters(id) ON DELETE SET NULL,
-  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+  id               TEXT PRIMARY KEY,
+  campaign_id      TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  username         TEXT NOT NULL UNIQUE,
+  password_hash    TEXT NOT NULL,
+  display_name     TEXT NOT NULL,
+  character_id     TEXT REFERENCES characters(id) ON DELETE SET NULL,
+  -- Discord bot account link (2026-07-06): set once the player redeems a
+  -- pairing code (generated on their /me/profile page) via /link in Discord.
+  -- Global UNIQUE, matching username - one Discord account is only ever tied
+  -- to one Codex player account across the whole install.
+  discord_user_id  TEXT UNIQUE,
+  created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_players_character ON players(character_id);
 CREATE INDEX IF NOT EXISTS idx_players_campaign ON players(campaign_id);
@@ -618,3 +631,63 @@ CREATE TABLE IF NOT EXISTS import_staging (
   data       TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ---------------------------------------------------------------------------
+-- Discord bot (Aviv's spec, 2026-07-06, discord-bot/). The bot is a separate
+-- always-on Node process (Vercel can't host a persistent gateway connection)
+-- that talks to this SAME database directly, so everything below is read and
+-- written by both the Next.js app and the bot - there is no sync step.
+--
+-- Account/server linking uses one shared mechanic: the website generates a
+-- short-lived, single-use pairing code, and the bot's /link command consumes
+-- it. 'player' codes (generated from /me/profile) attach a Discord user id to
+-- a players row; 'campaign' codes (generated from the admin DM Screen) attach
+-- a whole Discord server (guild) to a campaign. Rows are disposable scratch
+-- data once used or expired - same "cheap to regenerate, never worth
+-- preserving" spirit as import_staging above.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS link_codes (
+  id          TEXT PRIMARY KEY,
+  code        TEXT NOT NULL UNIQUE,
+  kind        TEXT NOT NULL CHECK (kind IN ('player', 'campaign')),
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  player_id   TEXT REFERENCES players(id) ON DELETE CASCADE, -- set only when kind='player'
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at  TEXT NOT NULL,
+  used_at     TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_link_codes_campaign ON link_codes(campaign_id);
+
+-- One Discord server (guild) maps to exactly one campaign, per Aviv's call
+-- (2026-07-06) - simplest starting model. A campaign could in principle be
+-- linked from more than one guild (no UNIQUE on campaign_id), just not the
+-- reverse.
+CREATE TABLE IF NOT EXISTS guild_links (
+  id          TEXT PRIMARY KEY,
+  guild_id    TEXT NOT NULL UNIQUE,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  linked_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_guild_links_campaign ON guild_links(campaign_id);
+
+-- ---------------------------------------------------------------------------
+-- Music library (2026-07-06): audio tracks the DM uploads from /admin/music,
+-- stored in the same Vercel Blob storage as portraits/maps (see
+-- uploadMusicTrack in blob-storage.ts). Browsed and played via the bot's
+-- /panel music menu, streamed into a voice channel with @discordjs/voice.
+-- tags is a plain comma-separated string, matching the existing convention
+-- on characters.tags, rather than a normalized tag table - track counts per
+-- campaign are small enough that free-text tags are simpler and sufficient.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS music_tracks (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  tags        TEXT,
+  file_url    TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_music_tracks_campaign ON music_tracks(campaign_id);

@@ -14,24 +14,29 @@ import { uploadCharacterPortrait } from "./blob-storage";
 
 export interface CharacterProfile {
   id: string;
+  campaignId: string;
   name: string;
   bio: string;
   portraitPath: string | null;
+  /** Discord bot bracket word - see db/schema.sql's characters.mask. */
+  mask: string | null;
 }
 
 export async function getCharacterProfile(characterId: string): Promise<CharacterProfile | null> {
   await ensureSchema();
   const r = await getDb().execute({
-    sql: "SELECT id, name, bio, portrait_path FROM characters WHERE id = ?",
+    sql: "SELECT id, campaign_id, name, bio, portrait_path, mask FROM characters WHERE id = ?",
     args: [characterId],
   });
   const row = r.rows[0];
   if (!row) return null;
   return {
     id: row.id as string,
+    campaignId: row.campaign_id as string,
     name: row.name as string,
     bio: row.bio as string,
     portraitPath: (row.portrait_path as string) ?? null,
+    mask: (row.mask as string) ?? null,
   };
 }
 
@@ -58,4 +63,21 @@ export async function updateCharacterProfile(
       args: [input.bio, characterId],
     });
   }
+}
+
+/**
+ * Sets or clears this character's Discord mask. Thin wrapper kept separate
+ * from updateCharacterProfile's bio/portrait save so the mask form on
+ * /me/profile can be its own small server action with its own error
+ * handling (a duplicate mask within the campaign throws - see the
+ * idx_characters_mask UNIQUE index in db/schema.sql - and the caller needs
+ * to catch that distinctly from a normal save).
+ */
+export async function setCharacterMask(characterId: string, mask: string): Promise<void> {
+  await ensureSchema();
+  const trimmed = mask.trim();
+  await getDb().execute({
+    sql: "UPDATE characters SET mask = ?, updated_at = datetime('now') WHERE id = ?",
+    args: [trimmed || null, characterId],
+  });
 }

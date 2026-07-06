@@ -465,5 +465,18 @@ async function runMigrations(db: Client): Promise<void> {
     );
   }
 
+  // Discord bot masks/account-linking (2026-07-06): plain ALTER TABLE ADD
+  // COLUMN is enough here - neither column had an inline UNIQUE in the old
+  // shipped schema to rework, so this doesn't need the drop/rebuild dance
+  // REBUILD_SPECS uses above. The corresponding UNIQUE indexes are declared
+  // in schema.sql and get created by ensureSchema()'s index pass right after
+  // this function returns, once these columns actually exist.
+  if (!(await hasColumn(db, "characters", "mask"))) {
+    await db.execute("ALTER TABLE characters ADD COLUMN mask TEXT");
+  }
+  if (!(await hasColumn(db, "players", "discord_user_id"))) {
+    await db.execute("ALTER TABLE players ADD COLUMN discord_user_id TEXT");
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }
