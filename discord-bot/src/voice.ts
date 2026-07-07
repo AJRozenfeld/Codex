@@ -26,11 +26,15 @@ function transcode(url: string) {
     // -re paces output at real playback speed instead of dumping the whole
     // file into the pipe as fast as possible; the rest converts whatever
     // format the track is in into raw PCM Discord's voice encoder expects.
+    // loglevel "error" (rather than fully silencing ffmpeg) so a bad/blocked
+    // URL surfaces as visible stderr output instead of just silent playback
+    // (2026-07-07 - "Now playing" showed but nothing was audible, and the
+    // fully-silenced ffmpeg gave no clue why).
     args: [
       "-re",
       "-i", url,
       "-analyzeduration", "0",
-      "-loglevel", "0",
+      "-loglevel", "error",
       "-f", "s16le",
       "-ar", "48000",
       "-ac", "2",
@@ -53,6 +57,17 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
       adapterCreator: channel.guild.voiceAdapterCreator as unknown as Parameters<typeof joinVoiceChannel>[0]["adapterCreator"],
       selfDeaf: true,
     });
+
+    // Diagnostics (2026-07-07): joining + playing can both "succeed" from
+    // this function's point of view (no thrown error, "Now playing" posted)
+    // while nothing is actually audible - e.g. the bot lacks the Speak
+    // permission in that channel, or the connection never reaches Ready.
+    // None of that surfaces unless we log the connection's own state
+    // transitions and errors.
+    connection.on("error", (err) => console.error("[voice] connection error:", err.message));
+    connection.on(VoiceConnectionStatus.Ready, () => console.log("[voice] connection ready"));
+    connection.on(VoiceConnectionStatus.Disconnected, () => console.log("[voice] connection disconnected"));
+    connection.on(VoiceConnectionStatus.Destroyed, () => console.log("[voice] connection destroyed"));
   }
 
   const player = createAudioPlayer();
@@ -64,13 +79,17 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
   connection.subscribe(player);
   player.play(resource);
 
+  player.on(AudioPlayerStatus.Playing, () => console.log("[voice] player state: Playing"));
+  player.on(AudioPlayerStatus.Buffering, () => console.log("[voice] player state: Buffering"));
   player.on(AudioPlayerStatus.Idle, () => {
+    console.log("[voice] player state: Idle (track ended or was cut off)");
     ffmpegStream.destroy();
   });
   player.on("error", (err) => {
     console.error("[voice] playback error:", err.message);
     ffmpegStream.destroy();
   });
+  ffmpegStream.on("error", (err) => console.error("[voice] ffmpeg stream error:", err.message));
 }
 
 export function stopPlayback(guildId: string): boolean {
