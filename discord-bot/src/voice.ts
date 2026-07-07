@@ -60,14 +60,19 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
 
     // Diagnostics (2026-07-07): joining + playing can both "succeed" from
     // this function's point of view (no thrown error, "Now playing" posted)
-    // while nothing is actually audible - e.g. the bot lacks the Speak
-    // permission in that channel, or the connection never reaches Ready.
-    // None of that surfaces unless we log the connection's own state
-    // transitions and errors.
+    // while nothing is actually audible. First round of logging (Ready/
+    // Disconnected/Destroyed only) never printed anything at all, which
+    // means the connection is getting stuck in an EARLIER transitional
+    // state (Signalling or Connecting) and never reaching Ready - the
+    // AudioPlayer's "Playing" status is independent of the connection
+    // actually being able to transmit audio, so it reports "Playing" even
+    // into a connection that's still stuck handshaking. Logging every
+    // stateChange (not just the 3 named ones) shows exactly where it stalls.
+    console.log("[voice] connection created, initial state:", connection.state.status);
     connection.on("error", (err) => console.error("[voice] connection error:", err.message));
-    connection.on(VoiceConnectionStatus.Ready, () => console.log("[voice] connection ready"));
-    connection.on(VoiceConnectionStatus.Disconnected, () => console.log("[voice] connection disconnected"));
-    connection.on(VoiceConnectionStatus.Destroyed, () => console.log("[voice] connection destroyed"));
+    connection.on("stateChange", (oldState, newState) => {
+      console.log(`[voice] connection state: ${oldState.status} -> ${newState.status}`);
+    });
   }
 
   const player = createAudioPlayer();
