@@ -59,17 +59,19 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
       // Root cause of the connection stuck cycling signalling <-> connecting
       // forever, identically on Aviv's home network AND on Railway (2026-07-07)
       // - Discord made DAVE end-to-end voice encryption mandatory on every
-      // voice channel starting March 2026. @discordjs/voice defaults
-      // daveEncryption to true, but our previous version (0.17.0) predated
-      // DAVE support entirely, so it could never negotiate the handshake
-      // Discord's voice servers now require - failing the same way
-      // regardless of network. Bumped to 0.19.2 (first version with the
-      // daveEncryption option) and explicitly opting OUT of it here: this
-      // bot only ever sends generated audio and never receives/decrypts
-      // anything, so it has no real use for E2E encryption, and 0.19.x's
-      // DAVE implementation still has open upstream bugs for anything
-      // beyond the simple send-only case (see discordjs/discord.js#11419).
-      daveEncryption: false,
+      // voice channel starting March 2026, and our previous @discordjs/voice
+      // (0.17.0) predated DAVE support entirely. Bumped to 0.19.2, which
+      // defaults daveEncryption to true - confirmed via debug logging that
+      // setting it to *false* was the wrong direction: our IDENTIFY was
+      // advertising "max_dave_protocol_version":0 (no DAVE support), and
+      // Discord's voice server was silently closing the WebSocket right
+      // after HELLO in response, since opting out isn't actually allowed
+      // anymore. Leaving this at the default (true) so the handshake
+      // actually completes. The known open bugs in 0.19.x's DAVE handling
+      // (discordjs/discord.js#11419) are specifically about *receiving* and
+      // decrypting incoming audio via VoiceReceiver - this bot only ever
+      // sends generated audio and never uses VoiceReceiver, so they
+      // shouldn't apply here.
       // (2026-07-07) The high-level state log alone (signalling/connecting)
       // wasn't enough to diagnose this past two attempts - it shows WHEN
       // the connection stalls but not WHY. debug:true makes @discordjs/voice
