@@ -70,6 +70,12 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
       // DAVE implementation still has open upstream bugs for anything
       // beyond the simple send-only case (see discordjs/discord.js#11419).
       daveEncryption: false,
+      // (2026-07-07) The high-level state log alone (signalling/connecting)
+      // wasn't enough to diagnose this past two attempts - it shows WHEN
+      // the connection stalls but not WHY. debug:true makes @discordjs/voice
+      // emit its full internal handshake log (WS frames, UDP discovery,
+      // exact failure/close reasons) via the 'debug' event below.
+      debug: true,
     });
 
     // Diagnostics (2026-07-07): joining + playing can both "succeed" from
@@ -87,6 +93,7 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
     connection.on("stateChange", (oldState, newState) => {
       console.log(`[voice] connection state: ${oldState.status} -> ${newState.status}`);
     });
+    connection.on("debug", (message) => console.log("[voice debug]", message));
   }
 
   const player = createAudioPlayer();
