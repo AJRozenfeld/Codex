@@ -17,11 +17,29 @@ import {
   listLocations,
   listMusicTracks,
   getMusicTrackById,
+  setGuildPlaybackTrackId,
   type BotCharacter,
 } from "./db.js";
 import { playTrackInChannel, stopPlayback } from "./voice.js";
+import { getActiveBattle, beginBattle, nextTurn, finishBattle } from "./battle.js";
 
 const GOLD = 0xd97706;
+
+/**
+ * DM-gate shared by every battle command and the campaign-linking branch of
+ * /link - same "Manage Server" permission concept used throughout the bot,
+ * not a new one. Extracted here (2026-07-06) so the battle commands below
+ * don't duplicate the inline check that used to live only in handleLink.
+ */
+function isDm(interaction: ChatInputCommandInteraction): boolean {
+  const member = interaction.member;
+  return !!(
+    member &&
+    "permissions" in member &&
+    typeof member.permissions !== "string" &&
+    member.permissions.has(PermissionsBitField.Flags.ManageGuild)
+  );
+}
 
 function characterEmbed(character: BotCharacter): EmbedBuilder {
   const embed = new EmbedBuilder()
@@ -60,12 +78,7 @@ async function handleLink(interaction: ChatInputCommandInteraction) {
     return;
   }
   if (result.kind === "campaign") {
-    const member = interaction.member;
-    const hasPerm =
-      member && "permissions" in member && typeof member.permissions !== "string"
-        ? member.permissions.has(PermissionsBitField.Flags.ManageGuild)
-        : false;
-    if (!hasPerm || !interaction.guildId) {
+    if (!isDm(interaction) || !interaction.guildId) {
       await interaction.editReply({ content: "Only a server admin (Manage Server permission) can link a campaign here." });
       return;
     }
@@ -158,7 +171,91 @@ async function handleStopMusic(interaction: ChatInputCommandInteraction) {
     return;
   }
   const stopped = stopPlayback(interaction.guildId);
+  if (stopped) await setGuildPlaybackTrackId(interaction.guildId, null);
   await interaction.editReply({ content: stopped ? "Stopped." : "Nothing is playing." });
+}
+
+/**
+ * Starts a battle: rolls-for-initiative prompt goes out via the tracker
+ * embed itself ("Waiting for rolls..."), battle music (a random track
+ * tagged "battle") starts if the DM is in a voice channel, and the previous
+ * track is snapshotted so /endbattle can restore it. Aviv's spec, 2026-07-06.
+ */
+async function handleStartBattle(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+  if (!isDm(interaction) || !interaction.guildId) {
+    await interaction.editReply({ content: "Only a DM (Manage Server permission) can start a battle." });
+    return;
+  }
+  const campaignId = await requireCampaign(interaction);
+  if (!campaignId) return;
+  if (!interaction.channel || !interaction.channel.isTextBased() || interaction.channel.isDMBased()) {
+    await interaction.editReply({ content: "This only works in a server text channel." });
+    return;
+  }
+  const existing = await getActiveBattle(interaction.guildId);
+  if (existing) {
+    await interaction.editReply({ content: "A battle is already in progress here - use /endbattle first." });
+    return;
+  }
+  const member = interaction.member;
+  const voiceChannel =
+    member && "voice" in member && member.voice && "channel" in member.voice ? member.voice.channel : null;
+  const { musicStarted } = await beginBattle(
+    interaction.guildId,
+    campaignId,
+    interaction.channel as import("discord.js").TextChannel,
+    voiceChannel
+  );
+  await interaction.editReply({
+    content: musicStarted
+      ? "Battle started! Roll for initiative with `[[YourMask]]: *init*`."
+      : "Battle started! Roll for initiative with `[[YourMask]]: *init*`. (No battle music played - join a voice channel and tag a track \"battle\" to enable it.)",
+  });
+}
+
+/** DM-only: advances to the next turn in the sorted initiative order. */
+async function handleNext(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+  if (!isDm(interaction) || !interaction.guildId) {
+    await interaction.editReply({ content: "Only a DM (Manage Server permission) can advance the turn." });
+    return;
+  }
+  if (!interaction.channel || !interaction.channel.isTextBased() || interaction.channel.isDMBased()) {
+    await interaction.editReply({ content: "This only works in a server text channel." });
+    return;
+  }
+  const battle = await getActiveBattle(interaction.guildId);
+  if (!battle) {
+    await interaction.editReply({ content: "No battle is in progress - use /startbattle first." });
+    return;
+  }
+  const result = await nextTurn(interaction.channel as import("discord.js").TextChannel, battle);
+  if (!result) {
+    await interaction.editReply({ content: "Nobody has rolled for initiative yet." });
+    return;
+  }
+  await interaction.editReply({ content: `Round ${result.roundNumber} - advanced.` });
+}
+
+/** DM-only: ends the battle, restores the previous track, and removes the tracker. */
+async function handleEndBattle(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+  if (!isDm(interaction) || !interaction.guildId) {
+    await interaction.editReply({ content: "Only a DM (Manage Server permission) can end a battle." });
+    return;
+  }
+  if (!interaction.channel || !interaction.channel.isTextBased() || interaction.channel.isDMBased()) {
+    await interaction.editReply({ content: "This only works in a server text channel." });
+    return;
+  }
+  const battle = await getActiveBattle(interaction.guildId);
+  if (!battle) {
+    await interaction.editReply({ content: "No battle is in progress." });
+    return;
+  }
+  await finishBattle(interaction.guildId, interaction.channel as import("discord.js").TextChannel, battle);
+  await interaction.editReply({ content: "Battle ended." });
 }
 
 async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
@@ -226,6 +323,7 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
       return;
     }
     playTrackInChannel(voiceChannel, track.fileUrl);
+    if (interaction.guildId) await setGuildPlaybackTrackId(interaction.guildId, track.id);
     await interaction.editReply({ content: `Now playing **${track.name}** in ${voiceChannel.name}.`, components: [] });
     return;
   }
@@ -236,6 +334,9 @@ export async function handleInteraction(interaction: Interaction): Promise<void>
     if (interaction.isChatInputCommand()) {
       if (interaction.commandName === "link") return void (await handleLink(interaction));
       if (interaction.commandName === "stopmusic") return void (await handleStopMusic(interaction));
+      if (interaction.commandName === "startbattle") return void (await handleStartBattle(interaction));
+      if (interaction.commandName === "next") return void (await handleNext(interaction));
+      if (interaction.commandName === "endbattle") return void (await handleEndBattle(interaction));
       if (interaction.commandName === "panel") {
         const sub = interaction.options.getSubcommand();
         if (sub === "npcs") return void (await handlePanelNpcs(interaction));

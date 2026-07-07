@@ -1,6 +1,7 @@
 import { Message, PermissionsBitField, TextChannel } from "discord.js";
 import { getCampaignIdForGuild, getCharacterByMask, getOwnedCharacterId, getCharacterSheetData } from "./db.js";
-import { findRollTrigger, computeRoll } from "./rolls.js";
+import { findRollTrigger, computeRoll, computeInitiative } from "./rolls.js";
+import { getActiveBattle, recordRollAndRefresh } from "./battle.js";
 
 // ---------------------------------------------------------------------------
 // The mask/proxy mechanic (Aviv's spec, 2026-07-06): [[mask]]: message in any
@@ -10,6 +11,13 @@ import { findRollTrigger, computeRoll } from "./rolls.js";
 // ---------------------------------------------------------------------------
 
 const MASK_PATTERN = /^\[\[([^\]]+)\]\]:\s*([\s\S]*)$/;
+
+// Initiative (2026-07-06): a bare *init*/*initiative* trigger, deliberately
+// separate from the generic *roll <ability/skill>* pattern in rolls.ts -
+// see computeInitiative's doc comment for why this can't just be another
+// ability alias. Checked BEFORE the generic roll trigger below so a message
+// never double-fires as both.
+const INIT_PATTERN = /\*init(?:iative)?\*/i;
 const WEBHOOK_NAME = "Erendyl Codex Masks";
 
 const webhookCache = new Map<string, import("discord.js").Webhook>();
@@ -81,6 +89,17 @@ export async function handleMessage(message: Message): Promise<void> {
   } catch (err) {
     console.error("[mask] proxy failed:", err);
     await replyAndForget(message, "I need Manage Messages and Manage Webhooks permissions in this channel to do that.");
+    return;
+  }
+
+  if (INIT_PATTERN.test(spoken)) {
+    const sheet = await getCharacterSheetData(character.id);
+    const roll = computeInitiative(sheet);
+    await message.channel.send(`🎲 **${character.name}** rolls Initiative: **${roll.total}** (${roll.breakdown})`);
+    const battle = await getActiveBattle(message.guild.id);
+    if (battle) {
+      await recordRollAndRefresh(message.channel, battle, character.id, roll.total);
+    }
     return;
   }
 

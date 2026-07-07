@@ -38,3 +38,12 @@ Discord bots hold a persistent, always-open connection to Discord (the "gateway"
 - Add `*roll strength*` (or any ability/skill name) anywhere inside a masked message to roll using that character's sheet - it posts as a separate bot message so it can't be faked.
 - `/panel npcs`, `/panel locations`, `/panel music` browse the library right in Discord (visible only to you).
 - `/stopmusic` stops whatever's currently playing.
+
+## Initiative tracker / battle mode
+
+- The DM runs `/startbattle` to open a fight. If the DM is in a voice channel, the bot picks a random track tagged `battle` (see below) and starts it; either way, an initiative tracker embed appears in the channel and stays pinned to the latest state.
+- Players roll for initiative the same way they trigger any other roll - inside a masked message: `[[YourMask]]: *init*` (or `*initiative*`). Each roll (d20 + Dex modifier) posts as its own message and adds that character to the tracker, sorted highest-to-lowest; rolling again updates your existing entry instead of adding a duplicate. Late arrivals can roll mid-fight and slot into the current round automatically.
+- The DM runs `/next` to advance to the next character in turn order, wrapping around (and incrementing the round number) after the last one.
+- The DM runs `/endbattle` to close the fight: the tracker message is deleted, and whatever track was playing before `/startbattle` resumes from the top (not mid-song - restarting the previous track, not truly "unpausing" it).
+- **Battle music convention:** tag any track with the word `battle` anywhere in its Tags field (from `/admin/music` on the website) to make it eligible for random selection at `/startbattle`. No separate "battle music" flag - just reuses the existing free-text Tags field.
+- All three commands are DM-only (Manage Server permission), same as every other admin-style bot action.

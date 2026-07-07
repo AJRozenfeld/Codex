@@ -21,6 +21,15 @@ const commands = [
     .addSubcommand((sub) => sub.setName("locations").setDescription("Browse locations"))
     .addSubcommand((sub) => sub.setName("music").setDescription("Browse and play music tracks")),
   new SlashCommandBuilder().setName("stopmusic").setDescription("Stop the current music track"),
+  new SlashCommandBuilder()
+    .setName("startbattle")
+    .setDescription("Start a battle: prompts for initiative rolls and starts battle music (DM only)"),
+  new SlashCommandBuilder()
+    .setName("next")
+    .setDescription("Advance to the next turn in the initiative order (DM only)"),
+  new SlashCommandBuilder()
+    .setName("endbattle")
+    .setDescription("End the current battle, restore the previous music, and remove the tracker (DM only)"),
 ].map((c) => c.toJSON());
 
 async function main() {

@@ -691,3 +691,57 @@ CREATE TABLE IF NOT EXISTS music_tracks (
   UNIQUE (campaign_id, slug)
 );
 CREATE INDEX IF NOT EXISTS idx_music_tracks_campaign ON music_tracks(campaign_id);
+
+-- ---------------------------------------------------------------------------
+-- Initiative tracker / battle mode (Aviv's spec, 2026-07-06). Entirely
+-- bot-owned state - the website never reads or writes these tables itself,
+-- but they still live here (rather than being created by the bot) to keep
+-- ONE source of schema truth, matching every other Discord table above.
+--
+-- guild_playback_state remembers whatever track was last selected for a
+-- guild (updated whenever /panel music plays something, or /stopmusic
+-- clears it), purely so /startbattle can snapshot "what was playing before"
+-- into battle_state.previous_track_id and /endbattle can put it back. This
+-- is track-level memory only (resumes from the top, not a mid-song
+-- position) - deliberately simple.
+--
+-- One battle per guild at a time (UNIQUE on guild_id). current_character_id
+-- is the single source of truth for whose turn it is - not a per-combatant
+-- flag - so /next just needs to look up that character's position in the
+-- freshly-sorted combatant list and step forward by one, wrapping (and
+-- incrementing round_number) past the end. A late-joining combatant simply
+-- gets inserted at their sorted position and is naturally picked up next
+-- time the turn order passes their spot - no special-casing needed.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS guild_playback_state (
+  guild_id   TEXT PRIMARY KEY REFERENCES guild_links(guild_id) ON DELETE CASCADE,
+  track_id   TEXT REFERENCES music_tracks(id) ON DELETE SET NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS battle_state (
+  id                    TEXT PRIMARY KEY,
+  guild_id              TEXT NOT NULL UNIQUE,
+  campaign_id           TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  channel_id            TEXT NOT NULL, -- text channel the live tracker message lives in
+  tracker_message_id    TEXT,          -- set once the tracker embed is first posted
+  round_number          INTEGER NOT NULL DEFAULT 1,
+  current_character_id  TEXT REFERENCES characters(id) ON DELETE SET NULL,
+  previous_track_id     TEXT REFERENCES music_tracks(id) ON DELETE SET NULL,
+  created_at            TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_battle_state_campaign ON battle_state(campaign_id);
+
+-- One row per character who has rolled initiative in the current battle -
+-- deleted wholesale via ON DELETE CASCADE when the battle ends. Re-rolling
+-- (a character sends [[mask]]: *init* again) just updates their existing
+-- row rather than duplicating it - see the UNIQUE constraint below.
+CREATE TABLE IF NOT EXISTS battle_combatants (
+  id               TEXT PRIMARY KEY,
+  battle_id        TEXT NOT NULL REFERENCES battle_state(id) ON DELETE CASCADE,
+  character_id     TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  initiative_score INTEGER NOT NULL,
+  rolled_at        TEXT NOT NULL DEFAULT (datetime('now')), -- tie-break: earliest roll goes first
+  UNIQUE (battle_id, character_id)
+);
+CREATE INDEX IF NOT EXISTS idx_battle_combatants_battle ON battle_combatants(battle_id);

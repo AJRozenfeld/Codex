@@ -117,3 +117,15 @@ export function computeRoll(sheet: Record<string, unknown> | null, trigger: Roll
 
   return { d20, modifier, total: d20 + modifier, breakdown };
 }
+
+/**
+ * Initiative (2026-07-06): d20 + Dexterity modifier, no proficiency bonus -
+ * base 5e initiative. Triggered by a bare `[[mask]]: *init*` (or
+ * `*initiative*`), deliberately a SEPARATE pattern from `*roll <ability>*`
+ * (see messageHandler.ts) rather than just another ability alias, because a
+ * matched initiative roll also needs to feed the battle tracker - a plain
+ * `*roll dexterity*` should never do that.
+ */
+export function computeInitiative(sheet: Record<string, unknown> | null): RollComputation {
+  return computeRoll(sheet, { raw: "*init*", target: "dex", isSkill: false, label: "Initiative" });
+}
