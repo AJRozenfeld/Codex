@@ -1,21 +1,24 @@
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { listMusicTracks, upsertMusicTrack, deleteMusicTrack } from "@/lib/discord-io";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
-import { Field } from "@/components/AdminForm";
+import { MusicUploadForm } from "@/components/MusicUploadForm";
 
 export const dynamic = "force-dynamic";
 
-async function uploadAction(formData: FormData) {
+// Called by the client-side MusicUploadForm AFTER the audio file itself has
+// already gone straight from the browser to Vercel Blob (see
+// /api/blob/music-upload/route.ts) - only the resulting URL passes through
+// here, never the raw file, so this never touches the Server Actions body
+// size limit that made uploads of real audio files silently fail before.
+async function saveTrackAction(input: { name: string; tags?: string; fileUrl: string }) {
   "use server";
-  const campaignId = await getCurrentCampaignId();
-  const name = String(formData.get("name") ?? "");
-  const tags = String(formData.get("tags") ?? "") || undefined;
-  const file = formData.get("file");
-  if (!name || !(file instanceof File) || file.size === 0) {
-    redirect("/admin/music?error=missing");
+  if (!input.name || !input.fileUrl) {
+    throw new Error("Name and an audio file are both required.");
   }
-  await upsertMusicTrack(campaignId, { name, tags, file });
-  redirect("/admin/music");
+  const campaignId = await getCurrentCampaignId();
+  await upsertMusicTrack(campaignId, { name: input.name, tags: input.tags, fileUrl: input.fileUrl });
+  revalidatePath("/admin/music");
 }
 
 async function deleteAction(id: string) {
@@ -25,7 +28,7 @@ async function deleteAction(id: string) {
   redirect("/admin/music");
 }
 
-export default async function AdminMusicPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function AdminMusicPage() {
   const campaignId = await getCurrentCampaignId();
   const tracks = await listMusicTracks(campaignId);
 
@@ -40,29 +43,7 @@ export default async function AdminMusicPage({ searchParams }: { searchParams: {
         </p>
       </div>
 
-      {searchParams?.error === "missing" && (
-        <p className="text-sm text-blood mb-4">Name and an audio file are both required.</p>
-      )}
-
-      <form action={uploadAction} className="space-y-4 mb-8 rounded-lg border border-gold/15 p-4">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Name" name="name" required />
-          <Field label="Tags (comma-separated)" name="tags" placeholder="combat, tense" />
-        </div>
-        <label className="block">
-          <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Audio File</span>
-          <input
-            type="file"
-            name="file"
-            accept="audio/*"
-            required
-            className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment text-sm file:mr-3 file:rounded-full file:border-0 file:bg-gold/90 file:text-ink file:px-3 file:py-1.5 file:text-xs file:font-medium"
-          />
-        </label>
-        <button type="submit" className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold">
-          Upload Track
-        </button>
-      </form>
+      <MusicUploadForm saveTrackAction={saveTrackAction} />
 
       <div className="rounded-lg border border-gold/15 overflow-hidden">
         <table className="w-full text-sm">
