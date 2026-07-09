@@ -12,6 +12,8 @@ import {
 import type { VoiceBasedChannel } from "discord.js";
 import prism from "prism-media";
 import ffmpegPath from "ffmpeg-static";
+import { execFileSync } from "node:child_process";
+import { statSync } from "node:fs";
 
 // (2026-07-08) @discordjs/voice never fully recovers from every disconnect on
 // its own - see the reconnect handler below. To retry a track after one of
@@ -69,6 +71,44 @@ function transcode(url: string) {
 }
 
 if (ffmpegPath) process.env.FFMPEG_PATH = ffmpegPath;
+
+// (2026-07-08) Confirmed via a real playback attempt: ffmpeg's process
+// exits with signal=SIGSEGV and pcmBytesReceived=0 - it crashes before
+// decoding a single byte, on every track, regardless of the -re flag or
+// the source file (already verified via the Vercel Blob dashboard to be a
+// complete, valid, correctly-tagged MP3). A segfault this consistent and
+// this early points at the ffmpeg-static binary itself, not our command-
+// line args or the network fetch - most likely a CPU-architecture
+// mismatch or a corrupted/incomplete download during Railway's own
+// npm install (ffmpeg-static downloads a real prebuilt binary from GitHub
+// releases in a postinstall step; if that step ran against a different
+// arch than the container actually runs on, or got truncated, the
+// resulting binary can crash immediately on exec).
+//
+// This one-time startup check runs `ffmpeg -version` synchronously as
+// soon as the bot boots (not per-track) so the very next restart's logs
+// show, immediately and unambiguously: whether ffmpegPath even resolved,
+// the binary's file size on disk (a real static ffmpeg build is roughly
+// 70-80MB - anything drastically smaller points at a truncated/corrupted
+// download), and whether invoking it AT ALL (with no input file, no
+// network involved) also segfaults - which would conclusively prove the
+// binary itself is broken, rather than anything specific to transcoding.
+if (ffmpegPath) {
+  try {
+    const size = statSync(ffmpegPath).size;
+    console.log(`[voice] ffmpeg binary at ${ffmpegPath}, size=${size} bytes`);
+  } catch (err) {
+    console.error(`[voice] ffmpeg binary missing at ${ffmpegPath}:`, (err as Error).message);
+  }
+  try {
+    const version = execFileSync(ffmpegPath, ["-version"], { timeout: 5_000 }).toString().split("\n")[0];
+    console.log(`[voice] ffmpeg -version OK: ${version}`);
+  } catch (err) {
+    console.error(`[voice] ffmpeg -version FAILED (binary itself is broken):`, (err as Error).message);
+  }
+} else {
+  console.error("[voice] ffmpeg-static resolved no binary path for this platform/arch");
+}
 
 export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retryCount = 0): void {
   // (2026-07-08) Log every call so a duplicate/double-fired interaction
