@@ -160,15 +160,31 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
   // prism.FFmpeg is itself the readable stream to consume - it has no
   // separate .output property (that was a mistaken assumption).
   const ffmpegStream = transcode(url);
+
+  // (2026-07-08) prism-media's FFmpeg wrapper only ever reads process.stdout
+  // (the actual audio) - it never touches process.stderr, so the earlier
+  // "-loglevel error" change never actually surfaced anything: ffmpeg's own
+  // diagnostic output was going into an unread pipe the whole time. This is
+  // the real reason "Now playing" -> near-instant "Idle" gave us zero clues.
+  // Reading stderr ourselves is the only way to see whether ffmpeg is
+  // hitting a genuine error (bad/blocked/truncated fetch of the Blob URL,
+  // unsupported format, etc.) versus a track that's just legitimately short.
+  ffmpegStream.process.stderr?.on("data", (chunk: Buffer) => {
+    const text = chunk.toString().trim();
+    if (text) console.error("[voice] ffmpeg:", text);
+  });
+
   const resource = createAudioResource(ffmpegStream, { inputType: StreamType.Raw });
 
   connection.subscribe(player);
   player.play(resource);
 
+  const playbackStartedAt = Date.now();
   player.on(AudioPlayerStatus.Playing, () => console.log("[voice] player state: Playing"));
   player.on(AudioPlayerStatus.Buffering, () => console.log("[voice] player state: Buffering"));
   player.on(AudioPlayerStatus.Idle, () => {
-    console.log("[voice] player state: Idle (track ended or was cut off)");
+    const elapsedMs = Date.now() - playbackStartedAt;
+    console.log(`[voice] player state: Idle after ${elapsedMs}ms (track ended or was cut off)`);
     ffmpegStream.destroy();
   });
   player.on("error", (err) => {
