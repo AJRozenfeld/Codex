@@ -14,6 +14,9 @@ import prism from "prism-media";
 import ffmpegPath from "ffmpeg-static";
 import { execFileSync } from "node:child_process";
 import { statSync } from "node:fs";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // (2026-07-08) @discordjs/voice never fully recovers from every disconnect on
 // its own - see the reconnect handler below. To retry a track after one of
@@ -108,6 +111,37 @@ if (ffmpegPath) {
   }
 } else {
   console.error("[voice] ffmpeg-static resolved no binary path for this platform/arch");
+}
+
+// (2026-07-09) The startup diagnostic above proved the ffmpeg-static binary
+// itself is fine - correct size (79.8MB), `ffmpeg -version` runs cleanly with
+// no input and no network involved. So the SIGSEGV only happens when ffmpeg
+// is actually asked to fetch+demux a remote https:// URL itself. Static
+// ffmpeg builds (this one is johnvansickle's) are known to be less robust
+// at their own network/TLS input handling than a real HTTP client - as
+// opposed to a crash in decoding the audio content itself, which the
+// standalone -version check can't rule out either way.
+//
+// Rather than have ffmpeg negotiate the HTTPS connection to Vercel Blob
+// directly, download the track to a local temp file first (using Node's
+// own fetch, which has no history of segfaulting) and point ffmpeg at that
+// local path instead. This removes an entire class of failure modes
+// (redirects, chunked transfer, TLS handshake quirks, connection resets)
+// from ffmpeg's job, leaving it to do only what it's given a clean local
+// file to do: decode. If this fixes the crash, it confirms the bug was in
+// ffmpeg's own network fetch path, not the file's content or a general
+// binary problem - if it still segfaults from a local file, that instead
+// points at the actual audio content/encoding as the next thing to check.
+async function downloadToTemp(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok || !response.body) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`);
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const dir = await mkdtemp(join(tmpdir(), "erendyl-track-"));
+  const filePath = join(dir, "track.mp3");
+  await writeFile(filePath, buffer);
+  return filePath;
 }
 
 export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retryCount = 0): void {
@@ -217,67 +251,100 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
     });
   }
 
-  const player = createAudioPlayer();
-  // prism.FFmpeg is itself the readable stream to consume - it has no
-  // separate .output property (that was a mistaken assumption).
-  const ffmpegStream = transcode(url);
+  // (2026-07-09) Download-then-decode, not stream-and-decode - see
+  // downloadToTemp's comment above. This is why the rest of this function
+  // has to run inside an async block: joining the voice channel and wiring
+  // up its listeners above stays synchronous (so a second call for the same
+  // guild while a download is in flight still finds/reuses the connection),
+  // but ffmpeg can't start until the file is actually on disk. Capturing
+  // `connection` in a local const before the closure keeps TypeScript's
+  // narrowing (it can't narrow a `let` inside a nested function, since the
+  // outer variable could theoretically be reassigned before the closure runs).
+  const activeConnection = connection;
+  void (async () => {
+    let localPath: string | null = null;
+    let sourceForFfmpeg = url;
+    try {
+      localPath = await downloadToTemp(url);
+      sourceForFfmpeg = localPath;
+      console.log(`[voice] downloaded track to local temp file (${localPath}), handing that to ffmpeg instead of the remote URL`);
+    } catch (err) {
+      console.error(
+        `[voice] track download failed, falling back to letting ffmpeg fetch the URL directly (may reproduce the SIGSEGV):`,
+        (err as Error).message,
+      );
+    }
 
-  // (2026-07-08) prism-media's FFmpeg wrapper only ever reads process.stdout
-  // (the actual audio) - it never touches process.stderr, so the earlier
-  // "-loglevel error" change never actually surfaced anything: ffmpeg's own
-  // diagnostic output was going into an unread pipe the whole time. This is
-  // the real reason "Now playing" -> near-instant "Idle" gave us zero clues.
-  // Reading stderr ourselves is the only way to see whether ffmpeg is
-  // hitting a genuine error (bad/blocked/truncated fetch of the Blob URL,
-  // unsupported format, etc.) versus a track that's just legitimately short.
-  ffmpegStream.process.stderr?.on("data", (chunk: Buffer) => {
-    const text = chunk.toString().trim();
-    if (text) console.error("[voice] ffmpeg:", text);
-  });
+    const player = createAudioPlayer();
+    // prism.FFmpeg is itself the readable stream to consume - it has no
+    // separate .output property (that was a mistaken assumption).
+    const ffmpegStream = transcode(sourceForFfmpeg);
 
-  // (2026-07-08) Neither the -re nor the no -re attempt produced any ffmpeg
-  // stderr output, yet both cut off after a small fraction of a 2:58 track
-  // with no error anywhere - meaning ffmpeg's own process is exiting
-  // "successfully" (code 0) having decoded only a tiny amount of audio.
-  // These two extra signals narrow down why: the process exit event tells
-  // us definitively whether ffmpeg thinks it finished cleanly vs was killed
-  // by something (a non-zero/signal exit would point at a crash instead of
-  // a truncated-input theory), and the byte counter tells us how much PCM
-  // was actually produced - at 48000Hz/16-bit/stereo that's 192,000
-  // bytes/sec, so a real 2:58 track fully decoded would be roughly 33.4MB;
-  // a suspiciously tiny number here would strongly confirm ffmpeg only
-  // ever received a small truncated chunk of the source file over the
-  // network, rather than genuinely reaching the end of a full decode.
-  let pcmBytesReceived = 0;
-  ffmpegStream.on("data", (chunk: Buffer) => {
-    pcmBytesReceived += chunk.length;
-  });
-  ffmpegStream.process.on("exit", (code, signal) => {
-    console.log(
-      `[voice] ffmpeg process exited (code=${code}, signal=${signal}, pcmBytesReceived=${pcmBytesReceived})`,
-    );
-  });
+    const cleanupTempFile = () => {
+      if (localPath) {
+        void rm(localPath, { force: true, recursive: true }).catch(() => {});
+      }
+    };
 
-  const resource = createAudioResource(ffmpegStream, { inputType: StreamType.Raw });
+    // (2026-07-08) prism-media's FFmpeg wrapper only ever reads process.stdout
+    // (the actual audio) - it never touches process.stderr, so the earlier
+    // "-loglevel error" change never actually surfaced anything: ffmpeg's own
+    // diagnostic output was going into an unread pipe the whole time. This is
+    // the real reason "Now playing" -> near-instant "Idle" gave us zero clues.
+    // Reading stderr ourselves is the only way to see whether ffmpeg is
+    // hitting a genuine error (unsupported format, bad local file, etc.)
+    // versus a track that's just legitimately short.
+    ffmpegStream.process.stderr?.on("data", (chunk: Buffer) => {
+      const text = chunk.toString().trim();
+      if (text) console.error("[voice] ffmpeg:", text);
+    });
 
-  connection.subscribe(player);
-  player.play(resource);
+    // (2026-07-08) Neither the -re nor the no -re attempt produced any ffmpeg
+    // stderr output, yet both cut off after a small fraction of a 2:58 track
+    // with no error anywhere - meaning ffmpeg's own process is exiting
+    // "successfully" (code 0) having decoded only a tiny amount of audio.
+    // These two extra signals narrow down why: the process exit event tells
+    // us definitively whether ffmpeg thinks it finished cleanly vs was killed
+    // by something (a non-zero/signal exit would point at a crash instead of
+    // a truncated-input theory), and the byte counter tells us how much PCM
+    // was actually produced - at 48000Hz/16-bit/stereo that's 192,000
+    // bytes/sec, so a real 2:58 track fully decoded would be roughly 33.4MB;
+    // a suspiciously tiny number here would strongly confirm ffmpeg only
+    // ever received a small truncated chunk, rather than genuinely reaching
+    // the end of a full decode.
+    let pcmBytesReceived = 0;
+    ffmpegStream.on("data", (chunk: Buffer) => {
+      pcmBytesReceived += chunk.length;
+    });
+    ffmpegStream.process.on("exit", (code, signal) => {
+      console.log(
+        `[voice] ffmpeg process exited (code=${code}, signal=${signal}, pcmBytesReceived=${pcmBytesReceived}, source=${localPath ? "local temp file" : "remote URL (download fallback)"})`,
+      );
+    });
 
-  const playbackStartedAt = Date.now();
-  player.on(AudioPlayerStatus.Playing, () => console.log("[voice] player state: Playing"));
-  player.on(AudioPlayerStatus.Buffering, () => console.log("[voice] player state: Buffering"));
-  player.on(AudioPlayerStatus.Idle, () => {
-    const elapsedMs = Date.now() - playbackStartedAt;
-    console.log(
-      `[voice] player state: Idle after ${elapsedMs}ms, pcmBytesReceived=${pcmBytesReceived} (track ended or was cut off)`,
-    );
-    ffmpegStream.destroy();
-  });
-  player.on("error", (err) => {
-    console.error("[voice] playback error:", err.message);
-    ffmpegStream.destroy();
-  });
-  ffmpegStream.on("error", (err) => console.error("[voice] ffmpeg stream error:", err.message));
+    const resource = createAudioResource(ffmpegStream, { inputType: StreamType.Raw });
+
+    activeConnection.subscribe(player);
+    player.play(resource);
+
+    const playbackStartedAt = Date.now();
+    player.on(AudioPlayerStatus.Playing, () => console.log("[voice] player state: Playing"));
+    player.on(AudioPlayerStatus.Buffering, () => console.log("[voice] player state: Buffering"));
+    player.on(AudioPlayerStatus.Idle, () => {
+      const elapsedMs = Date.now() - playbackStartedAt;
+      console.log(
+        `[voice] player state: Idle after ${elapsedMs}ms, pcmBytesReceived=${pcmBytesReceived} (track ended or was cut off)`,
+      );
+      ffmpegStream.destroy();
+      cleanupTempFile();
+    });
+    player.on("error", (err) => {
+      console.error("[voice] playback error:", err.message);
+      ffmpegStream.destroy();
+      cleanupTempFile();
+    });
+    ffmpegStream.on("error", (err) => console.error("[voice] ffmpeg stream error:", err.message));
+  })();
 }
 
 export function stopPlayback(guildId: string): boolean {
