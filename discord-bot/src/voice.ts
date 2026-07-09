@@ -34,15 +34,30 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 
 function transcode(url: string) {
   return new prism.FFmpeg({
-    // -re paces output at real playback speed instead of dumping the whole
-    // file into the pipe as fast as possible; the rest converts whatever
-    // format the track is in into raw PCM Discord's voice encoder expects.
+    // (2026-07-08) Removed -re. It paces ffmpeg's OWN read/write to match
+    // real playback speed, which is meant for live-broadcast scenarios -
+    // it's redundant here since @discordjs/voice's AudioPlayer already
+    // paces delivery to Discord on its own 20ms-frame timer regardless of
+    // how fast upstream data arrives. Confirmed via a Vercel Blob dashboard
+    // check that a track reported as cutting off after ~2s (with zero
+    // ffmpeg errors, so not a decode/format issue) was in fact a complete,
+    // valid, correctly-tagged 2:58 MP3 - the file itself was fine. The
+    // prime remaining suspect is that -re's deliberately slow, paced reads
+    // of the remote Blob URL (small bursts spread over real time, rather
+    // than one fast continuous fetch) were hitting some connection-idle
+    // timeout on Railway's network path to the Blob CDN, cutting the fetch
+    // short well before the track's real duration. Without -re, ffmpeg
+    // reads+decodes the whole file as fast as the network allows; Node's
+    // own stream backpressure plus the AudioPlayer's pacing downstream
+    // keep this safe (excess decoded audio just waits in the stream
+    // buffer, it isn't sent to Discord early).
     // loglevel "error" (rather than fully silencing ffmpeg) so a bad/blocked
     // URL surfaces as visible stderr output instead of just silent playback
     // (2026-07-07 - "Now playing" showed but nothing was audible, and the
-    // fully-silenced ffmpeg gave no clue why).
+    // fully-silenced ffmpeg gave no clue why - though it turned out
+    // prism-media never actually piped stderr anywhere; see the stderr
+    // listener added in playTrackInChannel below, 2026-07-08).
     args: [
-      "-re",
       "-i", url,
       "-analyzeduration", "0",
       "-loglevel", "error",
