@@ -6,11 +6,22 @@ import {
   AudioPlayerStatus,
   VoiceConnectionStatus,
   getVoiceConnection,
+  entersState,
   type VoiceConnection,
 } from "@discordjs/voice";
 import type { VoiceBasedChannel } from "discord.js";
 import prism from "prism-media";
 import ffmpegPath from "ffmpeg-static";
+
+// (2026-07-08) @discordjs/voice never fully recovers from every disconnect on
+// its own - see the reconnect handler below. To retry a track after one of
+// those disconnects without also retrying forever if something is genuinely
+// wrong (or racing a legitimate /stopmusic), we track which url is the
+// "current" one per guild. A retry only fires if the disconnected connection
+// was still playing the track this guild is supposed to be on; stopPlayback()
+// clears the entry so a manual stop never triggers a retry.
+const activeTrackByGuild = new Map<string, string>();
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 // ---------------------------------------------------------------------------
 // Music playback (2026-07-06). The hardest single piece of the whole bot
@@ -44,8 +55,11 @@ function transcode(url: string) {
 
 if (ffmpegPath) process.env.FFMPEG_PATH = ffmpegPath;
 
-export function playTrackInChannel(channel: VoiceBasedChannel, url: string): void {
-  let connection = getVoiceConnection(channel.guild.id);
+export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retryCount = 0): void {
+  const guildId = channel.guild.id;
+  activeTrackByGuild.set(guildId, url);
+
+  let connection = getVoiceConnection(guildId);
   if (!connection || connection.state.status === VoiceConnectionStatus.Destroyed) {
     connection = joinVoiceChannel({
       channelId: channel.id,
@@ -96,6 +110,50 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
       console.log(`[voice] connection state: ${oldState.status} -> ${newState.status}`);
     });
     connection.on("debug", (message) => console.log("[voice debug]", message));
+
+    // Reconnect handling (2026-07-08). Confirmed via debug logs: even after
+    // DAVE fully negotiates and the connection reaches Ready, Discord's voice
+    // server can tear down BOTH the websocket and UDP socket simultaneously
+    // after only a few packets - observed right as a second DAVE MLS
+    // epoch/transition fires for a human already in the channel (their own
+    // client briefly re-joining the E2EE group, e.g. a voice-server region
+    // reroute triggered by the bot joining). This is a known-unstable area of
+    // @discordjs/voice 0.19.x's DAVE handling (discordjs/discord.js#11419;
+    // no stable fix released as of 2026-07-08, only unreleased 0.19.3/1.0.0
+    // dev builds actively working on it) - @discordjs/voice does NOT recover
+    // from every disconnect type on its own, so without this handler the
+    // connection just sits dead in "disconnected" forever (confirmed: no
+    // further stateChange logged after it happens).
+    //
+    // Standard discord.js-recommended pattern: give the library a few
+    // seconds to resume on its own (Signalling/Connecting); if that doesn't
+    // happen, the connection is truly dead - destroy it and, if this guild is
+    // still supposed to be playing this exact track (i.e. no one has since
+    // called /stopmusic or picked a different track), rejoin + replay it
+    // from the start. Capped at MAX_RECONNECT_ATTEMPTS so a persistently
+    // broken connection fails loudly instead of retrying forever.
+    connection.on(VoiceConnectionStatus.Disconnected, async () => {
+      try {
+        await Promise.race([
+          entersState(connection!, VoiceConnectionStatus.Signalling, 5_000),
+          entersState(connection!, VoiceConnectionStatus.Connecting, 5_000),
+        ]);
+        // Recovering on its own - nothing more to do.
+      } catch {
+        connection!.destroy();
+        const stillActive = activeTrackByGuild.get(guildId) === url;
+        if (stillActive && retryCount < MAX_RECONNECT_ATTEMPTS) {
+          console.log(
+            `[voice] connection dropped mid-track, reconnecting (attempt ${retryCount + 1}/${MAX_RECONNECT_ATTEMPTS})`,
+          );
+          setTimeout(() => playTrackInChannel(channel, url, retryCount + 1), 1_500);
+        } else if (stillActive) {
+          console.error(
+            `[voice] gave up after ${MAX_RECONNECT_ATTEMPTS} reconnect attempts - connection keeps dropping (likely the @discordjs/voice DAVE bug above, not a code issue on our end)`,
+          );
+        }
+      }
+    });
   }
 
   const player = createAudioPlayer();
@@ -121,6 +179,10 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string): voi
 }
 
 export function stopPlayback(guildId: string): boolean {
+  // Clear this first so the Disconnected handler above (which fires as a
+  // side effect of connection.destroy() below) sees this guild as no longer
+  // "supposed to be playing" this track and skips its auto-reconnect retry.
+  activeTrackByGuild.delete(guildId);
   const connection = getVoiceConnection(guildId);
   if (!connection) return false;
   connection.destroy();
