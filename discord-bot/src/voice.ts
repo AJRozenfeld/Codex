@@ -71,6 +71,12 @@ function transcode(url: string) {
 if (ffmpegPath) process.env.FFMPEG_PATH = ffmpegPath;
 
 export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retryCount = 0): void {
+  // (2026-07-08) Log every call so a duplicate/double-fired interaction
+  // (e.g. a select-menu handler running twice) shows up as two of these
+  // lines for what should be one user action - ruling out "two competing
+  // players stealing the same connection subscription" as a cause of the
+  // still-unexplained early cutoffs.
+  console.log(`[voice] playTrackInChannel called (guild=${channel.guild.id}, retryCount=${retryCount}, url=${url})`);
   const guildId = channel.guild.id;
   activeTrackByGuild.set(guildId, url);
 
@@ -189,6 +195,29 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
     if (text) console.error("[voice] ffmpeg:", text);
   });
 
+  // (2026-07-08) Neither the -re nor the no -re attempt produced any ffmpeg
+  // stderr output, yet both cut off after a small fraction of a 2:58 track
+  // with no error anywhere - meaning ffmpeg's own process is exiting
+  // "successfully" (code 0) having decoded only a tiny amount of audio.
+  // These two extra signals narrow down why: the process exit event tells
+  // us definitively whether ffmpeg thinks it finished cleanly vs was killed
+  // by something (a non-zero/signal exit would point at a crash instead of
+  // a truncated-input theory), and the byte counter tells us how much PCM
+  // was actually produced - at 48000Hz/16-bit/stereo that's 192,000
+  // bytes/sec, so a real 2:58 track fully decoded would be roughly 33.4MB;
+  // a suspiciously tiny number here would strongly confirm ffmpeg only
+  // ever received a small truncated chunk of the source file over the
+  // network, rather than genuinely reaching the end of a full decode.
+  let pcmBytesReceived = 0;
+  ffmpegStream.on("data", (chunk: Buffer) => {
+    pcmBytesReceived += chunk.length;
+  });
+  ffmpegStream.process.on("exit", (code, signal) => {
+    console.log(
+      `[voice] ffmpeg process exited (code=${code}, signal=${signal}, pcmBytesReceived=${pcmBytesReceived})`,
+    );
+  });
+
   const resource = createAudioResource(ffmpegStream, { inputType: StreamType.Raw });
 
   connection.subscribe(player);
@@ -199,7 +228,9 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
   player.on(AudioPlayerStatus.Buffering, () => console.log("[voice] player state: Buffering"));
   player.on(AudioPlayerStatus.Idle, () => {
     const elapsedMs = Date.now() - playbackStartedAt;
-    console.log(`[voice] player state: Idle after ${elapsedMs}ms (track ended or was cut off)`);
+    console.log(
+      `[voice] player state: Idle after ${elapsedMs}ms, pcmBytesReceived=${pcmBytesReceived} (track ended or was cut off)`,
+    );
     ffmpegStream.destroy();
   });
   player.on("error", (err) => {
