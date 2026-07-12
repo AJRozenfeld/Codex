@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { listCreatures, upsertCreature } from "@/lib/discord-io";
+import { listCreatureSummaries, upsertCreature } from "@/lib/creature-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
-import { Field, TextArea } from "@/components/AdminForm";
+import { Field } from "@/components/AdminForm";
 
 export const dynamic = "force-dynamic";
 
@@ -11,45 +11,38 @@ async function createAction(formData: FormData) {
   const campaignId = await getCurrentCampaignId();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  const hpRaw = String(formData.get("hp") ?? "").trim();
-  const acRaw = String(formData.get("ac") ?? "").trim();
-  const initBonusRaw = String(formData.get("initBonus") ?? "").trim();
-  const id = await upsertCreature(campaignId, {
-    name,
-    hp: hpRaw ? Number(hpRaw) : null,
-    ac: acRaw ? Number(acRaw) : null,
-    initBonus: initBonusRaw ? Number(initBonusRaw) : 0,
-    notes: String(formData.get("notes") ?? "").trim() || undefined,
-  });
+  const id = await upsertCreature(campaignId, { name, source: "Homebrew" });
   redirect(`/admin/creatures/${id}`);
 }
 
 export default async function AdminCreaturesPage() {
   const campaignId = await getCurrentCampaignId();
-  const creatures = await listCreatures(campaignId);
+  const creatures = await listCreatureSummaries(campaignId);
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl text-gold">Creature Library</h1>
-        <p className="text-sm text-parchment/40 mt-1">
-          Stat block a monster once (HP, AC, initiative bonus), then reuse it across as many{" "}
-          <Link href="/admin/scenes" className="text-gold hover:underline">Scenes</Link>{" "}
-          as you like without retyping it. Scenes can also add one-off creatures that never touch this library.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-2xl text-gold">Bestiary</h1>
+          <p className="text-sm text-parchment/40 mt-1 max-w-2xl">
+            A monster library with full stat blocks - reuse any of these across as many{" "}
+            <Link href="/admin/scenes" className="text-gold hover:underline">Scenes</Link>{" "}
+            as you like. Create one from a blank template below, or{" "}
+            <Link href="/admin/creatures/import" className="text-gold hover:underline">bulk-import a whole list at once</Link>.
+          </p>
+        </div>
+        <Link
+          href="/admin/creatures/import"
+          className="rounded-full border border-gold/40 text-gold px-4 py-2 text-sm font-medium hover:bg-gold/10 whitespace-nowrap"
+        >
+          Bulk Import
+        </Link>
       </div>
 
-      <form action={createAction} className="mb-8 space-y-4 rounded-lg border border-gold/15 p-4 max-w-xl">
-        <h2 className="font-display text-lg text-gold">New Creature</h2>
-        <Field label="Name" name="name" required />
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="HP" name="hp" type="number" />
-          <Field label="AC" name="ac" type="number" />
-          <Field label="Initiative Bonus" name="initBonus" type="number" defaultValue="0" />
-        </div>
-        <TextArea label="Notes (attacks, abilities, anything worth having on hand)" name="notes" rows={3} />
-        <button type="submit" className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold">
-          + Add Creature
+      <form action={createAction} className="mb-8 flex flex-wrap items-end gap-3 rounded-lg border border-gold/15 p-4 max-w-xl">
+        <Field label="New Creature Name" name="name" required className="flex-1 min-w-[14rem]" />
+        <button type="submit" className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold h-fit">
+          + Create From Blank Template
         </button>
       </form>
 
@@ -57,27 +50,40 @@ export default async function AdminCreaturesPage() {
         <table className="w-full text-sm">
           <thead className="bg-void/70 text-ember/70 text-left text-xs uppercase tracking-widest border-b border-gold/15">
             <tr>
+              <th className="px-4 py-2"></th>
               <th className="px-4 py-2">Name</th>
+              <th className="px-4 py-2">Type</th>
+              <th className="px-4 py-2">CR</th>
               <th className="px-4 py-2">HP</th>
               <th className="px-4 py-2">AC</th>
-              <th className="px-4 py-2">Init Bonus</th>
+              <th className="px-4 py-2">Source</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
             {creatures.map((c) => (
               <tr key={c.id} className="border-t border-gold/10 hover:bg-void/30 transition-colors">
+                <td className="px-4 py-2">
+                  {c.portraitPath ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.portraitPath} alt="" className="h-8 w-8 rounded-full object-cover border border-gold/20" />
+                  ) : (
+                    <span className="block h-8 w-8 rounded-full bg-void/60 border border-gold/10" />
+                  )}
+                </td>
                 <td className="px-4 py-2 text-parchment">{c.name}</td>
+                <td className="px-4 py-2 text-parchment/50">{c.creatureType || "—"}</td>
+                <td className="px-4 py-2 text-parchment/50">{c.challengeRating || "—"}</td>
                 <td className="px-4 py-2 text-parchment/50">{c.hp ?? ""}</td>
                 <td className="px-4 py-2 text-parchment/50">{c.ac ?? ""}</td>
-                <td className="px-4 py-2 text-parchment/50">{c.initBonus >= 0 ? `+${c.initBonus}` : c.initBonus}</td>
+                <td className="px-4 py-2 text-parchment/40 text-xs">{c.source || "—"}</td>
                 <td className="px-4 py-2 text-right">
                   <Link href={`/admin/creatures/${c.id}`} className="text-gold hover:underline">Edit</Link>
                 </td>
               </tr>
             ))}
             {creatures.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-parchment/40">No creatures yet.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-parchment/40">No creatures yet.</td></tr>
             )}
           </tbody>
         </table>

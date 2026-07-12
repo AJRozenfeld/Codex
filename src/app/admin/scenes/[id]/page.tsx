@@ -3,7 +3,6 @@ import {
   getSceneDetail,
   updateSceneSettings,
   deleteScene,
-  listCreatures,
   addLibraryCreatureToScene,
   addAdHocCreatureToScene,
   removeSceneCreature,
@@ -12,6 +11,7 @@ import {
   listMusicTracks,
   listPlaylists,
 } from "@/lib/discord-io";
+import { listCreatures } from "@/lib/creature-queries";
 import { adminGetCharacters } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { Field, TextArea, Select, Checkbox, FormActions } from "@/components/AdminForm";

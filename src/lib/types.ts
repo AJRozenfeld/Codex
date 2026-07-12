@@ -223,6 +223,47 @@ export interface GuildLink {
 // for the full design. Activated from the bot's /panel scenes.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Full 5e monster stat block (2026-07-12, "Bestiary" expansion of the
+// creature library). Stored as one JSON blob (creatures.stat_block) rather
+// than one column per field, same rationale as CharacterSheetData /
+// ArticleData - a stat block has a lot of interrelated, semi-optional
+// sections (traits/actions/legendary actions especially) that don't map well
+// onto a flat table. hp/ac/initBonus stay as their own top-level Creature
+// columns (unchanged) since Scenes' combatant-rolling logic only ever needs
+// those three - everything else here is purely for display/reference in the
+// Bestiary and homebrew-monster template.
+// ---------------------------------------------------------------------------
+
+/** One named trait/action/reaction/legendary-action entry - free text, not further structured. */
+export interface MonsterFeature {
+  name: string;
+  text: string;
+}
+
+export interface MonsterStatBlock {
+  size: string; // Tiny | Small | Medium | Large | Huge | Gargantuan
+  creatureType: string; // aberration, beast, celestial, construct, dragon, elemental, fey, fiend, giant, humanoid, monstrosity, ooze, plant, undead
+  alignment: string;
+  speed: string; // free text, e.g. "30 ft., fly 60 ft."
+  abilityScores: Record<AbilityKey, number>;
+  savingThrows: string; // free text, e.g. "Dex +4, Con +5" - blank if none
+  skills: string; // free text, e.g. "Perception +4, Stealth +3" - blank if none
+  damageVulnerabilities: string;
+  damageResistances: string;
+  damageImmunities: string;
+  conditionImmunities: string;
+  senses: string; // e.g. "darkvision 60 ft., passive Perception 13"
+  languages: string;
+  challengeRating: string; // "0", "1/8", "1/4", "1/2", "1".."30"
+  xp: number;
+  traits: MonsterFeature[];
+  actions: MonsterFeature[];
+  bonusActions: MonsterFeature[];
+  reactions: MonsterFeature[];
+  legendaryActions: MonsterFeature[];
+}
+
 /** A reusable monster/creature library entry (Aviv's call: reusable AND ad-hoc, both supported). */
 export interface Creature {
   id: string;
@@ -232,6 +273,11 @@ export interface Creature {
   ac: number | null;
   initBonus: number;
   notes: string | null;
+  /** Portrait/token art - see blob-storage.ts. Null until generated/uploaded. */
+  portraitPath: string | null;
+  /** Attribution, e.g. "SRD 5.1 (CC BY 4.0)" or "Homebrew" - shown in the Bestiary for license compliance. */
+  source: string | null;
+  statBlock: MonsterStatBlock;
 }
 
 /** One creature TYPE in a scene - `quantity` spawns that many separately-tracked combatants at activation. */

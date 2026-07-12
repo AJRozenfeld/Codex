@@ -820,17 +820,34 @@ CREATE INDEX IF NOT EXISTS idx_battle_combatants_battle ON battle_combatants(bat
 -- Reusable monster/creature library (Aviv's call: "both" reusable AND
 -- ad-hoc, 2026-07-12) - stat block a monster type once, reuse it across many
 -- scenes without retyping HP/AC/initiative bonus every time.
+--
+-- Expanded into a full "Bestiary" (2026-07-12, same day): hp/ac/init_bonus
+-- stay top-level columns since that's all Scenes' combatant-rolling logic
+-- ever reads (see addLibraryCreatureToScene in discord-io.ts and
+-- activateScene in the bot's battle.ts) - everything else a full 5e stat
+-- block needs (ability scores, saves, skills, resistances, senses,
+-- languages, CR/XP, traits/actions/legendary actions) lives in stat_block as
+-- one JSON blob, same rationale as character_sheets.data and articles.data
+-- above: too many interrelated, semi-optional sections for a flat table.
+-- `source` is a plain attribution string (e.g. "SRD 5.1 (CC BY 4.0)" or
+-- "Homebrew") shown in the Bestiary for license compliance on imported
+-- open-content monsters. See MonsterStatBlock in types.ts for the JSON shape,
+-- monster-stat-block-shared.ts for defaults, and creature-queries.ts for the
+-- bulk-import path used to seed the SRD monster list.
 CREATE TABLE IF NOT EXISTS creatures (
-  id          TEXT PRIMARY KEY,
-  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
-  slug        TEXT NOT NULL,
-  name        TEXT NOT NULL,
-  hp          INTEGER,
-  ac          INTEGER,
-  init_bonus  INTEGER NOT NULL DEFAULT 0,
-  notes       TEXT, -- freeform: attacks, abilities, anything else worth having on hand mid-fight
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  id            TEXT PRIMARY KEY,
+  campaign_id   TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug          TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  hp            INTEGER,
+  ac            INTEGER,
+  init_bonus    INTEGER NOT NULL DEFAULT 0,
+  notes         TEXT, -- freeform: DM-only reminders, distinct from the structured stat_block below
+  portrait_path TEXT,
+  source        TEXT,
+  stat_block    TEXT NOT NULL DEFAULT '{}',
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (campaign_id, slug)
 );
 CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creatures(campaign_id);

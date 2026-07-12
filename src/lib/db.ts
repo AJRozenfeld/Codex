@@ -542,5 +542,15 @@ async function runMigrations(db: Client): Promise<void> {
     await db.execute("ALTER TABLE battle_state ADD COLUMN current_combatant_id TEXT REFERENCES battle_combatants(id) ON DELETE SET NULL");
   }
 
+  // Bestiary expansion (2026-07-12, same day as Scenes): creatures gained a
+  // full stat_block JSON blob plus portrait_path/source - all three are
+  // plain nullable(-ish) ADD COLUMNs, no constraint to rework, so no
+  // drop-and-rebuild needed here (unlike battle_combatants above).
+  if (!(await hasColumn(db, "creatures", "stat_block"))) {
+    await db.execute("ALTER TABLE creatures ADD COLUMN portrait_path TEXT");
+    await db.execute("ALTER TABLE creatures ADD COLUMN source TEXT");
+    await db.execute("ALTER TABLE creatures ADD COLUMN stat_block TEXT NOT NULL DEFAULT '{}'");
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

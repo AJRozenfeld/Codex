@@ -1,12 +1,12 @@
 import { getDb, ensureSchema, newId } from "./db";
 import { uploadImage } from "./blob-storage";
+import { getCreature } from "./creature-queries";
 import type {
   MusicTrack,
   GuildLink,
   Playlist,
   PlaylistDetail,
   PlaylistTrackItem,
-  Creature,
   Scene,
   SceneDetail,
   SceneCreatureItem,
@@ -331,84 +331,12 @@ export async function movePlaylistTrack(playlistId: string, playlistTrackId: str
   );
 }
 
-// ---- Creature library --------------------------------------------------
-// Reusable monster stat blocks (2026-07-12) - see db/schema.sql's `creatures`
-// comment. Scenes below can pull from this library AND/OR add ad-hoc
-// creatures typed fresh, per Aviv's "both" call.
-
-async function uniqueCreatureSlug(campaignId: string, name: string, excludeId?: string): Promise<string> {
-  const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "creature";
-  let slug = base;
-  let n = 2;
-  const db = getDb();
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const r = await db.execute({ sql: "SELECT id FROM creatures WHERE campaign_id = ? AND slug = ?", args: [campaignId, slug] });
-    const hit = r.rows[0];
-    if (!hit || hit.id === excludeId) return slug;
-    slug = `${base}-${n++}`;
-  }
-}
-
-function rowToCreature(row: Record<string, unknown>): Creature {
-  return {
-    id: row.id as string,
-    slug: row.slug as string,
-    name: row.name as string,
-    hp: row.hp === null || row.hp === undefined ? null : Number(row.hp),
-    ac: row.ac === null || row.ac === undefined ? null : Number(row.ac),
-    initBonus: Number(row.init_bonus ?? 0),
-    notes: (row.notes as string) ?? null,
-  };
-}
-
-export async function listCreatures(campaignId: string): Promise<Creature[]> {
-  await ensureSchema();
-  const r = await getDb().execute({ sql: "SELECT * FROM creatures WHERE campaign_id = ? ORDER BY name ASC", args: [campaignId] });
-  return r.rows.map(rowToCreature);
-}
-
-export async function getCreature(campaignId: string, id: string): Promise<Creature | null> {
-  await ensureSchema();
-  const r = await getDb().execute({ sql: "SELECT * FROM creatures WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
-  const row = r.rows[0];
-  return row ? rowToCreature(row) : null;
-}
-
-export interface CreatureInput {
-  name: string;
-  hp?: number | null;
-  ac?: number | null;
-  initBonus?: number;
-  notes?: string;
-}
-
-export async function upsertCreature(campaignId: string, input: CreatureInput, id?: string): Promise<string> {
-  await ensureSchema();
-  const db = getDb();
-  const slug = await uniqueCreatureSlug(campaignId, input.name, id);
-  const creatureId = id ?? newId();
-  const args = [input.name, slug, input.hp ?? null, input.ac ?? null, input.initBonus ?? 0, input.notes ?? null];
-  if (id) {
-    await db.execute({
-      sql: "UPDATE creatures SET name=?, slug=?, hp=?, ac=?, init_bonus=?, notes=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
-      args: [...args, id, campaignId],
-    });
-  } else {
-    await db.execute({
-      sql: "INSERT INTO creatures (id, campaign_id, name, slug, hp, ac, init_bonus, notes) VALUES (?,?,?,?,?,?,?,?)",
-      args: [creatureId, campaignId, ...args],
-    });
-  }
-  return creatureId;
-}
-
-export async function deleteCreature(campaignId: string, id: string): Promise<void> {
-  await ensureSchema();
-  await getDb().execute({ sql: "DELETE FROM creatures WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
-}
-
 // ---- Scenes --------------------------------------------------------------
+// Creature library CRUD (listCreatures/getCreature/upsertCreature/
+// deleteCreature/bulkImportCreatures) moved to creature-queries.ts
+// (2026-07-12, same day) once it grew into a full Bestiary independent of
+// Scenes - this file keeps only the scene_creatures/scene_characters
+// membership functions below, which are Scenes-specific.
 // A DM-defined "hotkey" for battle setup (2026-07-12) - see db/schema.sql's
 // scenes/scene_creatures/scene_characters comment for the full design.
 // Activated from the bot's /panel scenes (discord-bot/src/battle.ts).
