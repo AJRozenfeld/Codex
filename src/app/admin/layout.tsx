@@ -45,7 +45,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-6 flex-wrap">
             <span className="flex items-center gap-2 font-display text-gold shrink-0">
-              <span aria-hidden className="inline-block h-2 w-2 rotate-45 bg-gold shadow-glow" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/sigil.png"
+                alt=""
+                aria-hidden
+                className="h-6 w-6 object-contain drop-shadow-[0_0_5px_rgba(218,185,98,0.5)]"
+              />
               DM Console
             </span>
             <nav className="flex flex-wrap gap-4 text-sm text-parchment/70">

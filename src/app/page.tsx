@@ -19,12 +19,13 @@ export default async function HomePage() {
   return (
     <div className="space-y-20">
       <section className="relative text-center py-14 sm:py-20 overflow-hidden">
+        <div aria-hidden className="hero-backdrop pointer-events-none absolute inset-0 -z-20" />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.10), transparent 70%)",
+              "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(218,185,98,0.14), transparent 70%)",
           }}
         />
         <div className="text-xs uppercase tracking-[0.35em] text-ember mb-4 animate-fade-in">
