@@ -685,12 +685,51 @@ CREATE TABLE IF NOT EXISTS music_tracks (
   slug        TEXT NOT NULL,
   name        TEXT NOT NULL,
   tags        TEXT,
+  -- Free-text link to a future "Scenes/Encounters" feature (2026-07-10, not
+  -- built yet - see project memory). Same plain-string convention as `tags`
+  -- rather than a foreign key, since the `scenes` table doesn't exist yet -
+  -- the DM can start tagging tracks with a scene name now, and once Scenes
+  -- ships it can match tracks/playlists by this name. Nullable/optional.
+  scene       TEXT,
   file_url    TEXT NOT NULL,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (campaign_id, slug)
 );
 CREATE INDEX IF NOT EXISTS idx_music_tracks_campaign ON music_tracks(campaign_id);
+
+-- ---------------------------------------------------------------------------
+-- Music playlists (2026-07-10). An ordered set of existing music_tracks,
+-- browsable from the bot's /panel music menu alongside individual tracks
+-- (Aviv's spec: choose a single track OR a playlist, and if a playlist,
+-- choose to play it in order or shuffled). playlist_tracks is the join table
+-- carrying the STORED order (sort_order) - shuffle is applied at playback
+-- time only (see discord-bot/src/voice.ts's queue), never persisted, so the
+-- same playlist can be replayed in-order or shuffled on a per-play basis
+-- without mutating the saved order. No `revealed` column - like music_tracks,
+-- this is a DM/bot-only tool, never shown on the player-facing public site.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS playlists (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_playlists_campaign ON playlists(campaign_id);
+
+CREATE TABLE IF NOT EXISTS playlist_tracks (
+  id          TEXT PRIMARY KEY,
+  playlist_id TEXT NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+  track_id    TEXT NOT NULL REFERENCES music_tracks(id) ON DELETE CASCADE,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (playlist_id, track_id)
+);
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_track ON playlist_tracks(track_id);
 
 -- ---------------------------------------------------------------------------
 -- Initiative tracker / battle mode (Aviv's spec, 2026-07-06). Entirely

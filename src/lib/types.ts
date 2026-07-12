@@ -179,7 +179,35 @@ export interface MusicTrack {
   slug: string;
   name: string;
   tags: string | null;
+  // Free-text link to a future "Scenes/Encounters" feature - see the `scene`
+  // column comment in db/schema.sql. Not consumed by anything yet.
+  scene: string | null;
   fileUrl: string;
+}
+
+// ---------------------------------------------------------------------------
+// Playlists (2026-07-10): an ordered set of existing MusicTracks, browsable
+// from the bot's /panel music menu alongside individual tracks. See
+// db/schema.sql's playlists/playlist_tracks comment for the full design.
+// ---------------------------------------------------------------------------
+export interface Playlist {
+  id: string;
+  slug: string;
+  name: string;
+  trackCount: number;
+}
+
+export interface PlaylistTrackItem {
+  id: string; // playlist_tracks row id (used for remove/reorder)
+  trackId: string;
+  name: string;
+  tags: string | null;
+  fileUrl: string;
+  sortOrder: number;
+}
+
+export interface PlaylistDetail extends Playlist {
+  tracks: PlaylistTrackItem[];
 }
 
 export interface GuildLink {

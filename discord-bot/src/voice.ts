@@ -28,6 +28,21 @@ import { join } from "node:path";
 const activeTrackByGuild = new Map<string, string>();
 const MAX_RECONNECT_ATTEMPTS = 3;
 
+// (2026-07-10) Playlist queue state, one entry per guild currently playing a
+// playlist (as opposed to a single track - those never get an entry here).
+// `tracks` is already in final playback order by the time it's stored -
+// shuffling (if requested) happens once in playPlaylistInChannel, not on
+// every advance - so this is just "what's left to play and where we are".
+// stopPlayback() clears a guild's entry so a manual stop can't leave a
+// stale queue that resumes into an unrelated later track. See the Idle
+// handler in playTrackInChannel below for how a finished track advances to
+// the next queued one automatically.
+interface GuildQueue {
+  tracks: { name: string; fileUrl: string }[];
+  index: number;
+}
+const guildQueues = new Map<string, GuildQueue>();
+
 // ---------------------------------------------------------------------------
 // Music playback (2026-07-06). The hardest single piece of the whole bot
 // feature - see project_erendyl_discord_bot memory. Tracks live in Vercel
@@ -337,6 +352,25 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
       );
       ffmpegStream.destroy();
       cleanupTempFile();
+
+      // Playlist auto-advance (2026-07-10). Only fires if this guild has an
+      // active playlist queue AND the track that just went Idle is still
+      // the one this guild is "supposed" to be playing - the same
+      // stillActive guard the reconnect handler above uses, so a manual
+      // /stopmusic or picking something else entirely (both of which clear
+      // activeTrackByGuild/guildQueues) never resurrects a stale queue.
+      const queue = guildQueues.get(guildId);
+      const stillActive = activeTrackByGuild.get(guildId) === url;
+      if (queue && stillActive && queue.index + 1 < queue.tracks.length) {
+        queue.index += 1;
+        const next = queue.tracks[queue.index];
+        console.log(`[voice] playlist advancing to track ${queue.index + 1}/${queue.tracks.length}: ${next.name}`);
+        playTrackInChannel(channel, next.fileUrl, 0);
+      } else if (queue && stillActive) {
+        console.log("[voice] playlist finished");
+        guildQueues.delete(guildId);
+        activeTrackByGuild.delete(guildId);
+      }
     });
     player.on("error", (err) => {
       console.error("[voice] playback error:", err.message);
@@ -347,11 +381,45 @@ export function playTrackInChannel(channel: VoiceBasedChannel, url: string, retr
   })();
 }
 
+// (2026-07-10) Fisher-Yates - only used for the "shuffle" play mode; "normal"
+// mode passes the playlist's stored order straight through unmodified.
+function shuffled<T>(items: T[]): T[] {
+  const arr = items.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Plays a whole playlist in a voice channel, one track after another,
+ * auto-advancing on each track's Idle event (see playTrackInChannel's Idle
+ * handler above) until the queue is exhausted or /stopmusic is called.
+ * `shuffle` only affects the ORDER tracks are queued in here - it never
+ * touches the playlist's own stored order on the website.
+ */
+export function playPlaylistInChannel(
+  channel: VoiceBasedChannel,
+  tracks: { name: string; fileUrl: string }[],
+  shuffle: boolean,
+): void {
+  if (tracks.length === 0) return;
+  const ordered = shuffle ? shuffled(tracks) : tracks;
+  guildQueues.set(channel.guild.id, { tracks: ordered, index: 0 });
+  console.log(
+    `[voice] starting playlist playback (guild=${channel.guild.id}, tracks=${ordered.length}, shuffle=${shuffle})`,
+  );
+  playTrackInChannel(channel, ordered[0].fileUrl);
+}
+
 export function stopPlayback(guildId: string): boolean {
-  // Clear this first so the Disconnected handler above (which fires as a
-  // side effect of connection.destroy() below) sees this guild as no longer
-  // "supposed to be playing" this track and skips its auto-reconnect retry.
+  // Clear these first so the Disconnected handler and the Idle auto-advance
+  // handler above (both of which fire as a side effect of connection.destroy()
+  // below, or of whatever was already mid-playback) see this guild as no
+  // longer "supposed to be playing" anything, and skip their retry/advance.
   activeTrackByGuild.delete(guildId);
+  guildQueues.delete(guildId);
   const connection = getVoiceConnection(guildId);
   if (!connection) return false;
   connection.destroy();

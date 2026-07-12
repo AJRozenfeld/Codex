@@ -1,6 +1,6 @@
 import { getDb, ensureSchema, newId } from "./db";
 import { uploadImage } from "./blob-storage";
-import type { MusicTrack, GuildLink } from "./types";
+import type { MusicTrack, GuildLink, Playlist, PlaylistDetail, PlaylistTrackItem } from "./types";
 
 // ---------------------------------------------------------------------------
 // Discord bot support (2026-07-06). Shared by the website (which generates
@@ -114,6 +114,7 @@ export async function listMusicTracks(campaignId: string): Promise<MusicTrack[]>
     slug: row.slug as string,
     name: row.name as string,
     tags: (row.tags as string) ?? null,
+    scene: (row.scene as string) ?? null,
     fileUrl: row.file_url as string,
   }));
 }
@@ -142,6 +143,7 @@ async function uniqueTrackSlug(campaignId: string, name: string, excludeId?: str
 export interface MusicTrackInput {
   name: string;
   tags?: string;
+  scene?: string;
   file?: File | null;
   fileUrl?: string;
 }
@@ -158,20 +160,20 @@ export async function upsertMusicTrack(campaignId: string, input: MusicTrackInpu
   if (id) {
     if (fileUrl) {
       await db.execute({
-        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, file_url=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
-        args: [input.name, slug, input.tags ?? null, fileUrl, id, campaignId],
+        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, file_url=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
+        args: [input.name, slug, input.tags ?? null, input.scene ?? null, fileUrl, id, campaignId],
       });
     } else {
       await db.execute({
-        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
-        args: [input.name, slug, input.tags ?? null, id, campaignId],
+        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
+        args: [input.name, slug, input.tags ?? null, input.scene ?? null, id, campaignId],
       });
     }
   } else {
     if (!fileUrl) throw new Error("A track file is required.");
     await db.execute({
-      sql: "INSERT INTO music_tracks (id, campaign_id, slug, name, tags, file_url) VALUES (?,?,?,?,?,?)",
-      args: [trackId, campaignId, slug, input.name, input.tags ?? null, fileUrl],
+      sql: "INSERT INTO music_tracks (id, campaign_id, slug, name, tags, scene, file_url) VALUES (?,?,?,?,?,?,?)",
+      args: [trackId, campaignId, slug, input.name, input.tags ?? null, input.scene ?? null, fileUrl],
     });
   }
   return trackId;
@@ -180,4 +182,140 @@ export async function upsertMusicTrack(campaignId: string, input: MusicTrackInpu
 export async function deleteMusicTrack(campaignId: string, id: string): Promise<void> {
   await ensureSchema();
   await getDb().execute({ sql: "DELETE FROM music_tracks WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
+}
+
+// ---- Playlists --------------------------------------------------------
+// See db/schema.sql's playlists/playlist_tracks comment for the design.
+// Follows the same admin CRUD shape as article_lists/article_list_items in
+// admin-queries.ts (append-at-end add, swap-neighbor-sort_order reorder).
+
+async function uniquePlaylistSlug(campaignId: string, name: string, excludeId?: string): Promise<string> {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "playlist";
+  let slug = base;
+  let n = 2;
+  const db = getDb();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const r = await db.execute({
+      sql: "SELECT id FROM playlists WHERE campaign_id = ? AND slug = ?",
+      args: [campaignId, slug],
+    });
+    const hit = r.rows[0];
+    if (!hit || hit.id === excludeId) return slug;
+    slug = `${base}-${n++}`;
+  }
+}
+
+export async function listPlaylists(campaignId: string): Promise<Playlist[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: `SELECT p.id, p.slug, p.name, COUNT(pt.id) AS track_count
+          FROM playlists p LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
+          WHERE p.campaign_id = ? GROUP BY p.id ORDER BY p.name ASC`,
+    args: [campaignId],
+  });
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    slug: row.slug as string,
+    name: row.name as string,
+    trackCount: Number(row.track_count ?? 0),
+  }));
+}
+
+export async function getPlaylistDetail(campaignId: string, playlistId: string): Promise<PlaylistDetail | null> {
+  await ensureSchema();
+  const db = getDb();
+  const playlistRow = await db.execute({
+    sql: "SELECT id, slug, name FROM playlists WHERE id = ? AND campaign_id = ?",
+    args: [playlistId, campaignId],
+  });
+  const p = playlistRow.rows[0];
+  if (!p) return null;
+  const tracksResult = await db.execute({
+    sql: `SELECT pt.id, pt.sort_order, mt.id AS track_id, mt.name, mt.tags, mt.file_url
+          FROM playlist_tracks pt JOIN music_tracks mt ON mt.id = pt.track_id
+          WHERE pt.playlist_id = ? ORDER BY pt.sort_order ASC`,
+    args: [playlistId],
+  });
+  const tracks: PlaylistTrackItem[] = tracksResult.rows.map((row) => ({
+    id: row.id as string,
+    trackId: row.track_id as string,
+    name: row.name as string,
+    tags: (row.tags as string) ?? null,
+    fileUrl: row.file_url as string,
+    sortOrder: Number(row.sort_order ?? 0),
+  }));
+  return { id: p.id as string, slug: p.slug as string, name: p.name as string, trackCount: tracks.length, tracks };
+}
+
+export async function createPlaylist(campaignId: string, name: string): Promise<string> {
+  await ensureSchema();
+  const db = getDb();
+  const slug = await uniquePlaylistSlug(campaignId, name);
+  const id = newId();
+  await db.execute({
+    sql: "INSERT INTO playlists (id, campaign_id, slug, name) VALUES (?,?,?,?)",
+    args: [id, campaignId, slug, name],
+  });
+  return id;
+}
+
+export async function renamePlaylist(campaignId: string, playlistId: string, name: string): Promise<void> {
+  await ensureSchema();
+  const slug = await uniquePlaylistSlug(campaignId, name, playlistId);
+  await getDb().execute({
+    sql: "UPDATE playlists SET name=?, slug=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
+    args: [name, slug, playlistId, campaignId],
+  });
+}
+
+export async function deletePlaylist(campaignId: string, playlistId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM playlists WHERE id = ? AND campaign_id = ?", args: [playlistId, campaignId] });
+}
+
+export async function addTrackToPlaylist(playlistId: string, trackId: string): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const existing = await db.execute({
+    sql: "SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM playlist_tracks WHERE playlist_id = ?",
+    args: [playlistId],
+  });
+  const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO playlist_tracks (id, playlist_id, track_id, sort_order) VALUES (?,?,?,?)",
+    args: [newId(), playlistId, trackId, nextOrder],
+  });
+}
+
+export async function removeTrackFromPlaylist(playlistTrackId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM playlist_tracks WHERE id = ?", args: [playlistTrackId] });
+}
+
+/** Swaps this track's sort_order with its neighbor in the given direction, scoped to its own playlist. */
+export async function movePlaylistTrack(playlistId: string, playlistTrackId: string, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, sort_order FROM playlist_tracks WHERE playlist_id = ? ORDER BY sort_order ASC",
+    args: [playlistId],
+  });
+  const rows = r.rows.map((row) => ({ id: row.id as string, sortOrder: Number(row.sort_order ?? 0) }));
+  const index = rows.findIndex((row) => row.id === playlistTrackId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= rows.length) return;
+  const a = rows[index];
+  const b = rows[swapIndex];
+  await db.batch(
+    [
+      { sql: "UPDATE playlist_tracks SET sort_order = ? WHERE id = ?", args: [b.sortOrder, a.id] },
+      { sql: "UPDATE playlist_tracks SET sort_order = ? WHERE id = ?", args: [a.sortOrder, b.id] },
+    ],
+    "write"
+  );
 }

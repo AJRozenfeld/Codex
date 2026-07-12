@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 export function MusicUploadForm({
   saveTrackAction,
 }: {
-  saveTrackAction: (input: { name: string; tags?: string; fileUrl: string }) => Promise<void>;
+  saveTrackAction: (input: { name: string; tags?: string; scene?: string; fileUrl: string }) => Promise<void>;
 }) {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
@@ -30,6 +30,7 @@ export function MusicUploadForm({
     const formData = new FormData(form);
     const name = String(formData.get("name") ?? "").trim();
     const tags = String(formData.get("tags") ?? "").trim() || undefined;
+    const scene = String(formData.get("scene") ?? "").trim() || undefined;
     const fileInput = form.elements.namedItem("file") as HTMLInputElement | null;
     const file = fileInput?.files?.[0];
 
@@ -44,7 +45,7 @@ export function MusicUploadForm({
         access: "public",
         handleUploadUrl: "/api/blob/music-upload",
       });
-      await saveTrackAction({ name, tags, fileUrl: blob.url });
+      await saveTrackAction({ name, tags, scene, fileUrl: blob.url });
       form.reset();
       startTransition(() => router.refresh());
     } catch (err) {
@@ -75,6 +76,16 @@ export function MusicUploadForm({
           />
         </label>
       </div>
+      <label className="block">
+        <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">
+          Scene (optional - for the upcoming Scenes/Encounters feature)
+        </span>
+        <input
+          name="scene"
+          placeholder="e.g. Ambush at the Old Bridge"
+          className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
+        />
+      </label>
       <label className="block">
         <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Audio File</span>
         <input

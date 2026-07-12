@@ -37,7 +37,8 @@ Discord bots hold a persistent, always-open connection to Discord (the "gateway"
 - In the linked server: `[[mask]]: some message` deletes your message and reposts it as that character.
 - Add `*roll strength*` (or any ability/skill name) anywhere inside a masked message to roll using that character's sheet - it posts as a separate bot message so it can't be faked.
 - `/panel npcs`, `/panel locations`, `/panel music` browse the library right in Discord (visible only to you).
-- `/stopmusic` stops whatever's currently playing.
+- `/panel music` asks Track or Playlist first. A playlist (create/edit under `/admin/playlists` on the website) then asks In Order or Shuffle, and the bot plays every track in it back-to-back, automatically advancing to the next one when each finishes.
+- `/stopmusic` stops whatever's currently playing (single track or playlist).
 
 ## Initiative tracker / battle mode
 

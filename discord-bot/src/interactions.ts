@@ -18,9 +18,11 @@ import {
   listMusicTracks,
   getMusicTrackById,
   setGuildPlaybackTrackId,
+  listPlaylists,
+  getPlaylistTracks,
   type BotCharacter,
 } from "./db.js";
-import { playTrackInChannel, stopPlayback } from "./voice.js";
+import { playTrackInChannel, playPlaylistInChannel, stopPlayback } from "./voice.js";
 import { getActiveBattle, beginBattle, nextTurn, finishBattle } from "./battle.js";
 
 const GOLD = 0xd97706;
@@ -145,21 +147,30 @@ async function handlePanelLocations(interaction: ChatInputCommandInteraction) {
   });
 }
 
+/**
+ * Entry point for /panel music (2026-07-10). First asks Track vs Playlist -
+ * see panel:music:mode in handleSelectMenu below for the rest of the flow
+ * (playlist -> pick which one -> normal/shuffle -> playback starts).
+ */
 async function handlePanelMusic(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply({ ephemeral: true });
   const campaignId = await requireCampaign(interaction);
   if (!campaignId) return;
-  const tracks = await listMusicTracks(campaignId);
+  const [tracks, playlists] = await Promise.all([listMusicTracks(campaignId), listPlaylists(campaignId)]);
   if (tracks.length === 0) {
     await interaction.editReply({ content: "No tracks uploaded yet - add some from /admin/music on the website." });
     return;
   }
+  const options = [{ label: "A single track", value: "track", description: `${tracks.length} available` }];
+  if (playlists.length > 0) {
+    options.push({ label: "A playlist", value: "playlist", description: `${playlists.length} available` });
+  }
   const menu = new StringSelectMenuBuilder()
-    .setCustomId("panel:music:pick")
-    .setPlaceholder("Choose a track")
-    .addOptions(tracks.slice(0, 25).map((t) => ({ label: t.name.slice(0, 100), value: t.id, description: t.tags ?? undefined })));
+    .setCustomId("panel:music:mode")
+    .setPlaceholder("Track or playlist?")
+    .addOptions(options);
   await interaction.editReply({
-    content: "Play a track (you must be in a voice channel):",
+    content: "Play music (you must be in a voice channel):",
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
   });
 }
@@ -262,7 +273,12 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
   // Component (select-menu) interactions use deferUpdate()/editReply()
   // rather than deferReply()/editReply() - same 3-second-ack rule, same fix.
   await interaction.deferUpdate();
-  const [, kind, step] = interaction.customId.split(":");
+  // ...rest carries extra state through multi-step flows (currently just the
+  // playlist id for panel:music:playmode:<playlistId>) - see handlePanelMusic
+  // above for why a plain customId can't hold it any other way (Discord
+  // select-menu values only round-trip the OPTION the user picked, not any
+  // context from earlier steps).
+  const [, kind, step, ...rest] = interaction.customId.split(":");
   const campaignId = await requireCampaign(interaction);
   if (!campaignId) return;
 
@@ -306,6 +322,85 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
       { name: "Type", value: location.type, inline: true },
     ]);
     await interaction.editReply({ content: "", embeds: [embed], components: [] });
+    return;
+  }
+
+  // (2026-07-10) Step 1 of the playlist flow: Track vs Playlist, chosen from
+  // handlePanelMusic's initial menu. "track" reuses the exact single-track
+  // menu/handler that already existed (panel:music:pick, below); "playlist"
+  // branches into the two new steps that follow.
+  if (kind === "music" && step === "mode") {
+    if (interaction.values[0] === "track") {
+      const tracks = await listMusicTracks(campaignId);
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId("panel:music:pick")
+        .setPlaceholder("Choose a track")
+        .addOptions(tracks.slice(0, 25).map((t) => ({ label: t.name.slice(0, 100), value: t.id, description: t.tags ?? undefined })));
+      await interaction.editReply({
+        content: "Play a track (you must be in a voice channel):",
+        components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
+      });
+      return;
+    }
+    const playlists = await listPlaylists(campaignId);
+    if (playlists.length === 0) {
+      await interaction.editReply({ content: "No playlists yet - create one from /admin/playlists on the website.", components: [] });
+      return;
+    }
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId("panel:music:playlist")
+      .setPlaceholder("Choose a playlist")
+      .addOptions(playlists.slice(0, 25).map((p) => ({ label: p.name.slice(0, 100), value: p.id, description: `${p.trackCount} track${p.trackCount === 1 ? "" : "s"}` })));
+    await interaction.editReply({
+      content: "Choose a playlist:",
+      components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
+    });
+    return;
+  }
+
+  // Step 2 of the playlist flow: which playlist, then ask normal vs shuffle.
+  // The chosen playlist id has to ride along in the NEXT menu's customId
+  // (panel:music:playmode:<playlistId>) since a select-menu interaction only
+  // ever reports back the option the user just picked, not anything from an
+  // earlier step - see the `rest` destructuring above.
+  if (kind === "music" && step === "playlist") {
+    const playlistId = interaction.values[0];
+    const menu = new StringSelectMenuBuilder()
+      .setCustomId(`panel:music:playmode:${playlistId}`)
+      .setPlaceholder("Play in order or shuffled?")
+      .addOptions([
+        { label: "In order", value: "normal", description: "Play from the top, as listed on the website" },
+        { label: "Shuffle", value: "shuffle", description: "Play in a random order" },
+      ]);
+    await interaction.editReply({
+      content: "Normal or shuffle?",
+      components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
+    });
+    return;
+  }
+
+  // Step 3 of the playlist flow: normal/shuffle chosen - start playback.
+  if (kind === "music" && step === "playmode") {
+    const playlistId = rest[0];
+    const shuffle = interaction.values[0] === "shuffle";
+    const tracks = await getPlaylistTracks(playlistId);
+    if (tracks.length === 0) {
+      await interaction.editReply({ content: "That playlist has no tracks (or no longer exists).", components: [] });
+      return;
+    }
+    const member = interaction.member;
+    const voiceChannel =
+      member && "voice" in member && member.voice && "channel" in member.voice ? member.voice.channel : null;
+    if (!voiceChannel) {
+      await interaction.editReply({ content: "Join a voice channel first, then try again.", components: [] });
+      return;
+    }
+    playPlaylistInChannel(voiceChannel, tracks, shuffle);
+    if (interaction.guildId) await setGuildPlaybackTrackId(interaction.guildId, tracks[0].id);
+    await interaction.editReply({
+      content: `Now playing **${tracks.length}-track playlist** (${shuffle ? "shuffled" : "in order"}) in ${voiceChannel.name}.`,
+      components: [],
+    });
     return;
   }
 

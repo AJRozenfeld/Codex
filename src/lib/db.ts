@@ -495,5 +495,14 @@ async function runMigrations(db: Client): Promise<void> {
     await db.execute("ALTER TABLE players ADD COLUMN discord_user_id TEXT");
   }
 
+  // Playlists / scene-tagging (2026-07-10): music_tracks already existed in
+  // production, so its new `scene` column needs the same hasColumn-guarded
+  // ALTER TABLE as the mask/discord_user_id columns above - playlists and
+  // playlist_tracks are brand new tables and don't need migrating, since
+  // ensureSchema()'s CREATE TABLE IF NOT EXISTS pass already handles them.
+  if (!(await hasColumn(db, "music_tracks", "scene"))) {
+    await db.execute("ALTER TABLE music_tracks ADD COLUMN scene TEXT");
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

@@ -20,6 +20,7 @@ const sections = [
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/players", label: "Players" },
   { href: "/admin/music", label: "Music" },
+  { href: "/admin/playlists", label: "Playlists" },
   { href: "/admin/discord", label: "Discord" },
 ];
 

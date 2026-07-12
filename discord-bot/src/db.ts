@@ -212,6 +212,50 @@ export async function getMusicTrackById(id: string): Promise<BotMusicTrack | nul
   return { id: row.id as string, name: row.name as string, tags: (row.tags as string) ?? null, fileUrl: row.file_url as string };
 }
 
+// ---------------------------------------------------------------------------
+// Playlists (2026-07-10). See db/schema.sql's playlists/playlist_tracks
+// comment for the full design - website admin owns creating/editing them
+// (src/lib/discord-io.ts), the bot only ever reads. /panel music lets Aviv
+// choose a single track OR a playlist; shuffle (if chosen) is applied here,
+// at read time, never persisted - see voice.ts's playPlaylistInChannel.
+// ---------------------------------------------------------------------------
+
+export interface BotPlaylist {
+  id: string;
+  name: string;
+  trackCount: number;
+}
+
+export async function listPlaylists(campaignId: string): Promise<BotPlaylist[]> {
+  const r = await getDb().execute({
+    sql: `SELECT p.id, p.name, COUNT(pt.id) AS track_count
+          FROM playlists p LEFT JOIN playlist_tracks pt ON pt.playlist_id = p.id
+          WHERE p.campaign_id = ? GROUP BY p.id ORDER BY p.name ASC`,
+    args: [campaignId],
+  });
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    trackCount: Number(row.track_count ?? 0),
+  }));
+}
+
+/** Ordered tracks (stored play order) for a playlist - callers shuffle themselves if needed. */
+export async function getPlaylistTracks(playlistId: string): Promise<BotMusicTrack[]> {
+  const r = await getDb().execute({
+    sql: `SELECT mt.id, mt.name, mt.tags, mt.file_url
+          FROM playlist_tracks pt JOIN music_tracks mt ON mt.id = pt.track_id
+          WHERE pt.playlist_id = ? ORDER BY pt.sort_order ASC`,
+    args: [playlistId],
+  });
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    tags: (row.tags as string) ?? null,
+    fileUrl: row.file_url as string,
+  }));
+}
+
 /** Raw character_sheets.data JSON blob, parsed - see rolls.ts for how it's used. */
 export async function getCharacterSheetData(characterId: string): Promise<Record<string, unknown> | null> {
   const r = await getDb().execute({
