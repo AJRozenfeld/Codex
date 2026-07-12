@@ -286,12 +286,16 @@ export interface BattleState {
   channelId: string;
   trackerMessageId: string | null;
   roundNumber: number;
-  currentCharacterId: string | null;
+  /** Whose turn it is, by battle_combatants row id - see BattleCombatant.id below (2026-07-12, Scenes feature). */
+  currentCombatantId: string | null;
   previousTrackId: string | null;
 }
 
 export interface BattleCombatant {
-  characterId: string;
+  /** battle_combatants row id - the stable identity used for turn order, since a monster combatant has no character_id. */
+  id: string;
+  /** Set only for a real Codex character (a PC self-rolling, or an NPC added via a Scene) - null for a monster/ad-hoc combatant. */
+  characterId: string | null;
   name: string;
   portraitPath: string | null;
   initiativeScore: number;
@@ -306,7 +310,7 @@ function rowToBattleState(row: Record<string, unknown>): BattleState {
     channelId: row.channel_id as string,
     trackerMessageId: (row.tracker_message_id as string) ?? null,
     roundNumber: Number(row.round_number),
-    currentCharacterId: (row.current_character_id as string) ?? null,
+    currentCombatantId: (row.current_combatant_id as string) ?? null,
     previousTrackId: (row.previous_track_id as string) ?? null,
   };
 }
@@ -328,7 +332,7 @@ export async function startBattle(
     sql: "INSERT INTO battle_state (id, guild_id, campaign_id, channel_id, previous_track_id) VALUES (?, ?, ?, ?, ?)",
     args: [id, guildId, campaignId, channelId, previousTrackId],
   });
-  return { id, guildId, campaignId, channelId, trackerMessageId: null, roundNumber: 1, currentCharacterId: null, previousTrackId };
+  return { id, guildId, campaignId, channelId, trackerMessageId: null, roundNumber: 1, currentCombatantId: null, previousTrackId };
 }
 
 export async function setTrackerMessageId(battleId: string, messageId: string): Promise<void> {
@@ -337,15 +341,21 @@ export async function setTrackerMessageId(battleId: string, messageId: string): 
 
 /** Sorted turn order: highest initiative first, earliest roll breaking ties. */
 export async function getBattleCombatants(battleId: string): Promise<BattleCombatant[]> {
+  // LEFT JOIN (not JOIN) since a monster/ad-hoc combatant has no characters
+  // row at all (2026-07-12, Scenes feature) - COALESCE falls back to the
+  // stored creature_name (already suffixed "Goblin 1"/"Goblin 2" etc. for
+  // quantity>1 by beginSceneBattle in battle.ts) whenever character_id is NULL.
   const r = await getDb().execute({
-    sql: `SELECT bc.character_id, bc.initiative_score, bc.rolled_at, c.name, c.portrait_path
-          FROM battle_combatants bc JOIN characters c ON c.id = bc.character_id
+    sql: `SELECT bc.id, bc.character_id, bc.creature_name, bc.initiative_score, bc.rolled_at,
+                 COALESCE(c.name, bc.creature_name) AS name, c.portrait_path
+          FROM battle_combatants bc LEFT JOIN characters c ON c.id = bc.character_id
           WHERE bc.battle_id = ?
           ORDER BY bc.initiative_score DESC, bc.rolled_at ASC`,
     args: [battleId],
   });
   return r.rows.map((row) => ({
-    characterId: row.character_id as string,
+    id: row.id as string,
+    characterId: (row.character_id as string) ?? null,
     name: row.name as string,
     portraitPath: (row.portrait_path as string) ?? null,
     initiativeScore: Number(row.initiative_score),
@@ -353,7 +363,7 @@ export async function getBattleCombatants(battleId: string): Promise<BattleComba
   }));
 }
 
-/** Records or updates a character's initiative roll for the current battle - re-rolling replaces the old value. */
+/** Records or updates a character's initiative roll for the current battle - re-rolling replaces the old value. Characters only - see insertCreatureCombatant for monster/ad-hoc entries. */
 export async function recordInitiativeRoll(battleId: string, characterId: string, score: number): Promise<void> {
   await getDb().execute({
     sql: `INSERT INTO battle_combatants (id, battle_id, character_id, initiative_score)
@@ -364,19 +374,34 @@ export async function recordInitiativeRoll(battleId: string, characterId: string
 }
 
 /**
+ * Inserts a monster/ad-hoc combatant (character_id NULL, a plain display
+ * name instead) with an already-computed initiative score - used by
+ * beginSceneBattle in battle.ts, which auto-rolls every scene creature at
+ * activation time since they can't self-report *init* in chat the way a
+ * player can. No ON CONFLICT/upsert here (unlike recordInitiativeRoll) since
+ * each call is a brand-new combatant, never a re-roll of an existing one.
+ */
+export async function insertCreatureCombatant(battleId: string, name: string, score: number): Promise<void> {
+  await getDb().execute({
+    sql: "INSERT INTO battle_combatants (id, battle_id, character_id, creature_name, initiative_score) VALUES (?, ?, NULL, ?, ?)",
+    args: [crypto.randomUUID(), battleId, name, score],
+  });
+}
+
+/**
  * Advances to the next combatant in sorted turn order, wrapping to the top
  * (and incrementing round_number) past the end. If no one currently has the
  * turn (the very first /next of the battle), starts at the top of the order
  * without advancing the round. Returns null if nobody has rolled yet.
  */
-export async function advanceBattleTurn(battleId: string): Promise<{ roundNumber: number; currentCharacterId: string } | null> {
+export async function advanceBattleTurn(battleId: string): Promise<{ roundNumber: number; currentCombatantId: string } | null> {
   const battleRow = await getDb().execute({ sql: "SELECT * FROM battle_state WHERE id = ?", args: [battleId] });
   const battle = rowToBattleState(battleRow.rows[0]);
   const combatants = await getBattleCombatants(battleId);
   if (combatants.length === 0) return null;
 
-  const currentIndex = battle.currentCharacterId
-    ? combatants.findIndex((c) => c.characterId === battle.currentCharacterId)
+  const currentIndex = battle.currentCombatantId
+    ? combatants.findIndex((c) => c.id === battle.currentCombatantId)
     : -1;
   let nextIndex: number;
   let nextRound = battle.roundNumber;
@@ -389,12 +414,12 @@ export async function advanceBattleTurn(battleId: string): Promise<{ roundNumber
       nextRound += 1;
     }
   }
-  const nextCharacterId = combatants[nextIndex].characterId;
+  const nextCombatantId = combatants[nextIndex].id;
   await getDb().execute({
-    sql: "UPDATE battle_state SET round_number = ?, current_character_id = ? WHERE id = ?",
-    args: [nextRound, nextCharacterId, battleId],
+    sql: "UPDATE battle_state SET round_number = ?, current_combatant_id = ? WHERE id = ?",
+    args: [nextRound, nextCombatantId, battleId],
   });
-  return { roundNumber: nextRound, currentCharacterId: nextCharacterId };
+  return { roundNumber: nextRound, currentCombatantId: nextCombatantId };
 }
 
 export async function endBattle(battleId: string): Promise<void> {
@@ -424,4 +449,71 @@ export async function setGuildPlaybackTrackId(guildId: string, trackId: string |
           ON CONFLICT(guild_id) DO UPDATE SET track_id = excluded.track_id, updated_at = datetime('now')`,
     args: [guildId, trackId],
   });
+}
+
+// ---------------------------------------------------------------------------
+// Scenes (2026-07-12) - a DM-defined "hotkey" for battle setup. Created/edited
+// on the website (src/lib/discord-io.ts); the bot only ever reads, then hands
+// the result to beginSceneBattle in battle.ts to actually start the fight.
+// See db/schema.sql's scenes/scene_creatures/scene_characters comment for the
+// full design.
+// ---------------------------------------------------------------------------
+
+export interface BotScene {
+  id: string;
+  name: string;
+}
+
+/** One creature TYPE from a scene - `quantity` still un-expanded here; beginSceneBattle spawns that many separately-tracked combatants. */
+export interface BotSceneCreatureInstance {
+  name: string;
+  initBonus: number;
+  quantity: number;
+}
+
+export interface BotSceneDetail {
+  id: string;
+  name: string;
+  creatures: BotSceneCreatureInstance[];
+  /** Existing Codex characters (almost always NPCs) to include - these still roll their own *init* normally, see beginSceneBattle. */
+  characterIds: string[];
+  trackId: string | null;
+  playlistId: string | null;
+  shuffle: boolean;
+}
+
+export async function listScenes(campaignId: string): Promise<BotScene[]> {
+  const r = await getDb().execute({
+    sql: "SELECT id, name FROM scenes WHERE campaign_id = ? ORDER BY sort_order ASC, name ASC",
+    args: [campaignId],
+  });
+  return r.rows.map((row) => ({ id: row.id as string, name: row.name as string }));
+}
+
+export async function getSceneForActivation(sceneId: string): Promise<BotSceneDetail | null> {
+  const db = getDb();
+  const sceneRow = await db.execute({ sql: "SELECT * FROM scenes WHERE id = ?", args: [sceneId] });
+  const s = sceneRow.rows[0];
+  if (!s) return null;
+  const creaturesResult = await db.execute({
+    sql: "SELECT name, init_bonus, quantity FROM scene_creatures WHERE scene_id = ? ORDER BY sort_order ASC",
+    args: [sceneId],
+  });
+  const characterResult = await db.execute({
+    sql: "SELECT character_id FROM scene_characters WHERE scene_id = ? ORDER BY sort_order ASC",
+    args: [sceneId],
+  });
+  return {
+    id: s.id as string,
+    name: s.name as string,
+    creatures: creaturesResult.rows.map((row) => ({
+      name: row.name as string,
+      initBonus: Number(row.init_bonus ?? 0),
+      quantity: Number(row.quantity ?? 1),
+    })),
+    characterIds: characterResult.rows.map((row) => row.character_id as string),
+    trackId: (s.track_id as string) ?? null,
+    playlistId: (s.playlist_id as string) ?? null,
+    shuffle: !!s.shuffle,
+  };
 }

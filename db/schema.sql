@@ -765,22 +765,131 @@ CREATE TABLE IF NOT EXISTS battle_state (
   channel_id            TEXT NOT NULL, -- text channel the live tracker message lives in
   tracker_message_id    TEXT,          -- set once the tracker embed is first posted
   round_number          INTEGER NOT NULL DEFAULT 1,
-  current_character_id  TEXT REFERENCES characters(id) ON DELETE SET NULL,
+  current_character_id  TEXT REFERENCES characters(id) ON DELETE SET NULL, -- superseded by current_combatant_id below (2026-07-12), kept only so an old row never dangles on a dropped column
+  -- Whose turn it is, by battle_combatants row id rather than character_id
+  -- (2026-07-12, Scenes feature): a monster/ad-hoc combatant has no
+  -- characters row to point at, so "current turn" has to key off the
+  -- combatant's own identity instead. See feedback in project memory for
+  -- why this replaced current_character_id rather than reusing it.
+  current_combatant_id  TEXT REFERENCES battle_combatants(id) ON DELETE SET NULL,
   previous_track_id     TEXT REFERENCES music_tracks(id) ON DELETE SET NULL,
   created_at            TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_battle_state_campaign ON battle_state(campaign_id);
 
--- One row per character who has rolled initiative in the current battle -
--- deleted wholesale via ON DELETE CASCADE when the battle ends. Re-rolling
--- (a character sends [[mask]]: *init* again) just updates their existing
--- row rather than duplicating it - see the UNIQUE constraint below.
+-- One row per combatant (character OR monster/ad-hoc creature) in the
+-- current battle - deleted wholesale via ON DELETE CASCADE when the battle
+-- ends. A player character re-rolling (sending [[mask]]: *init* again) just
+-- updates their existing row rather than duplicating it - see the UNIQUE
+-- constraint below (only meaningfully enforced when character_id is set;
+-- SQLite treats every NULL as distinct for uniqueness purposes, so any
+-- number of monster/ad-hoc rows with character_id NULL coexist freely).
+--
+-- Exactly one of character_id / creature_name is set, never neither
+-- (enforced at the application layer, not a DB CHECK - see the "at most one
+-- title field" precedent on template_fields above for why this schema
+-- generally leans on app-level guarantees for cross-column invariants
+-- SQLite can't express cleanly). character_id combatants are real Codex
+-- characters (PCs rolling their own *init*, or NPCs included via
+-- scene_characters); creature_name combatants come from a Scene's
+-- scene_creatures (already-suffixed "Name 1"/"Name 2" for quantity>1 - see
+-- beginSceneBattle in the bot's battle.ts) and are auto-rolled at scene
+-- activation time rather than self-reported in chat.
 CREATE TABLE IF NOT EXISTS battle_combatants (
   id               TEXT PRIMARY KEY,
   battle_id        TEXT NOT NULL REFERENCES battle_state(id) ON DELETE CASCADE,
-  character_id     TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  character_id     TEXT REFERENCES characters(id) ON DELETE CASCADE,
+  creature_name    TEXT,
   initiative_score INTEGER NOT NULL,
   rolled_at        TEXT NOT NULL DEFAULT (datetime('now')), -- tie-break: earliest roll goes first
   UNIQUE (battle_id, character_id)
 );
 CREATE INDEX IF NOT EXISTS idx_battle_combatants_battle ON battle_combatants(battle_id);
+
+-- ---------------------------------------------------------------------------
+-- Scenes (Aviv's spec, 2026-07-12): a DM-defined "hotkey" for battle setup.
+-- Activating a scene (from the bot's /panel scenes, per Aviv's call) starts a
+-- battle, auto-rolls initiative for every creature/NPC listed below (they
+-- can't self-report *init* in chat the way a player can), and starts
+-- whatever music is linked - a single track OR a playlist, matching the
+-- existing /panel music choice (see the CHECK below; `shuffle` only applies
+-- when playlist_id is set). DM/bot-only, never shown on the public site,
+-- matching music_tracks/playlists (no `revealed` column).
+-- ---------------------------------------------------------------------------
+
+-- Reusable monster/creature library (Aviv's call: "both" reusable AND
+-- ad-hoc, 2026-07-12) - stat block a monster type once, reuse it across many
+-- scenes without retyping HP/AC/initiative bonus every time.
+CREATE TABLE IF NOT EXISTS creatures (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  hp          INTEGER,
+  ac          INTEGER,
+  init_bonus  INTEGER NOT NULL DEFAULT 0,
+  notes       TEXT, -- freeform: attacks, abilities, anything else worth having on hand mid-fight
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creatures(campaign_id);
+
+CREATE TABLE IF NOT EXISTS scenes (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  notes       TEXT,
+  track_id    TEXT REFERENCES music_tracks(id) ON DELETE SET NULL,
+  playlist_id TEXT REFERENCES playlists(id) ON DELETE SET NULL,
+  shuffle     INTEGER NOT NULL DEFAULT 0,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug),
+  CHECK (track_id IS NULL OR playlist_id IS NULL)
+);
+CREATE INDEX IF NOT EXISTS idx_scenes_campaign ON scenes(campaign_id);
+
+-- One row per creature TYPE in a scene - quantity handles multiples (see
+-- beginSceneBattle in the bot's battle.ts, which spawns `quantity`
+-- separately-tracked combatants named "Name 1"/"Name 2"/... for quantity>1,
+-- or a bare "Name" for quantity=1, each with its own auto-rolled initiative -
+-- Aviv's call, 2026-07-12, so a group fight tracks and can "kill" each
+-- creature independently rather than as one lumped line). creature_id is
+-- optional provenance back to the reusable library - name/hp/ac/init_bonus
+-- are always stored inline here (copied from the library pick, or typed
+-- ad-hoc directly), so a scene's stat block stays stable even if the source
+-- library creature is later edited or deleted (ON DELETE SET NULL only drops
+-- the "sourced from" link, never the scene's own copied data).
+CREATE TABLE IF NOT EXISTS scene_creatures (
+  id          TEXT PRIMARY KEY,
+  scene_id    TEXT NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,
+  creature_id TEXT REFERENCES creatures(id) ON DELETE SET NULL,
+  name        TEXT NOT NULL,
+  hp          INTEGER,
+  ac          INTEGER,
+  init_bonus  INTEGER NOT NULL DEFAULT 0,
+  quantity    INTEGER NOT NULL DEFAULT 1,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_scene_creatures_scene ON scene_creatures(scene_id);
+CREATE INDEX IF NOT EXISTS idx_scene_creatures_creature ON scene_creatures(creature_id);
+
+-- Existing Codex characters (almost always NPCs - e.g. a named boss villain
+-- who already has a character page) included in a scene alongside generic
+-- creatures, per Aviv's call (2026-07-12). Unlike scene_creatures, these
+-- still roll their own Dexterity-based initiative the normal way
+-- (computeInitiative in rolls.ts) rather than a stored init_bonus, exactly as
+-- if the DM had typed `[[mask]]: *init*` for them by hand.
+CREATE TABLE IF NOT EXISTS scene_characters (
+  id           TEXT PRIMARY KEY,
+  scene_id     TEXT NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  sort_order   INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (scene_id, character_id)
+);
+CREATE INDEX IF NOT EXISTS idx_scene_characters_scene ON scene_characters(scene_id);
+CREATE INDEX IF NOT EXISTS idx_scene_characters_character ON scene_characters(character_id);

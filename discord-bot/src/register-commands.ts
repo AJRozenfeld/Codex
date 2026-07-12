@@ -19,7 +19,8 @@ const commands = [
     .setDescription("Browse this campaign's Codex library")
     .addSubcommand((sub) => sub.setName("npcs").setDescription("Browse NPCs by faction"))
     .addSubcommand((sub) => sub.setName("locations").setDescription("Browse locations"))
-    .addSubcommand((sub) => sub.setName("music").setDescription("Browse and play music tracks")),
+    .addSubcommand((sub) => sub.setName("music").setDescription("Browse and play music tracks"))
+    .addSubcommand((sub) => sub.setName("scenes").setDescription("Activate a scene: starts a battle + music (DM only)")),
   new SlashCommandBuilder().setName("stopmusic").setDescription("Stop the current music track"),
   new SlashCommandBuilder()
     .setName("startbattle")

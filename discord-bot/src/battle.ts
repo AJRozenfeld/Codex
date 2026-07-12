@@ -6,16 +6,21 @@ import {
   setTrackerMessageId,
   getBattleCombatants,
   recordInitiativeRoll,
+  insertCreatureCombatant,
   advanceBattleTurn,
   endBattle,
   getRandomBattleTrack,
   getGuildPlaybackTrackId,
   setGuildPlaybackTrackId,
   getMusicTrackById,
+  getPlaylistTracks,
+  getSceneForActivation,
+  getCharacterSheetData,
   type BattleState,
   type BattleCombatant,
 } from "./db.js";
-import { playTrackInChannel, stopPlayback } from "./voice.js";
+import { playTrackInChannel, playPlaylistInChannel, stopPlayback } from "./voice.js";
+import { rollD20, computeInitiative } from "./rolls.js";
 
 // ---------------------------------------------------------------------------
 // Discord-facing orchestration for the initiative tracker / battle mode
@@ -33,7 +38,7 @@ function renderTrackerEmbed(battle: BattleState, combatants: BattleCombatant[]):
     embed.setDescription("_Waiting for rolls - use `[[YourMask]]: *init*` to roll initiative._");
   } else {
     const lines = combatants.map((c) => {
-      const marker = c.characterId === battle.currentCharacterId ? "▶" : "•";
+      const marker = c.id === battle.currentCombatantId ? "▶" : "•";
       return `${marker} **${c.name}** — ${c.initiativeScore}`;
     });
     embed.setDescription(lines.join("\n"));
@@ -106,11 +111,85 @@ export async function recordRollAndRefresh(
 export async function nextTurn(
   channel: TextChannel,
   battle: BattleState
-): Promise<{ roundNumber: number; currentCharacterId: string } | null> {
+): Promise<{ roundNumber: number; currentCombatantId: string } | null> {
   const result = await advanceBattleTurn(battle.id);
   if (!result) return null;
-  await refreshTracker(channel, { ...battle, roundNumber: result.roundNumber, currentCharacterId: result.currentCharacterId });
+  await refreshTracker(channel, { ...battle, roundNumber: result.roundNumber, currentCombatantId: result.currentCombatantId });
   return result;
+}
+
+/**
+ * Activates a Scene (Aviv's spec, 2026-07-12): starts a battle exactly like
+ * /startbattle, then auto-rolls initiative for every creature/character
+ * listed on the scene and starts whatever music it links - all in one call,
+ * since the whole point is a "hotkey" that replaces the manual
+ * /startbattle -> wait for *init* rolls -> pick a track dance.
+ *
+ * Creatures can't type `[[mask]]: *init*` themselves, so each instance gets
+ * a d20 + its stored init_bonus rolled right here via insertCreatureCombatant
+ * (character_id NULL, a plain display name instead - see db/schema.sql's
+ * battle_combatants comment). `quantity` expands into that many separately
+ * numbered combatants ("Goblin 1"/"Goblin 2"/...) per Aviv's call, so each
+ * can be tracked and "killed" independently rather than as one lumped line;
+ * quantity=1 gets a bare name with no suffix.
+ *
+ * Existing Codex characters attached to the scene (scene_characters) are
+ * NOT auto-suffixed or hand-waved the same way - they still roll their own
+ * Dexterity-based initiative via computeInitiative, exactly as if the DM had
+ * typed `[[mask]]: *init*` for them, since a named NPC (or, unusually, a PC)
+ * already has a real character sheet to roll against.
+ */
+export async function activateScene(
+  guildId: string,
+  campaignId: string,
+  channel: TextChannel,
+  voiceChannel: VoiceBasedChannel | null,
+  sceneId: string
+): Promise<{ battle: BattleState; musicStarted: boolean; combatantCount: number } | null> {
+  const scene = await getSceneForActivation(sceneId);
+  if (!scene) return null;
+
+  const previousTrackId = await getGuildPlaybackTrackId(guildId);
+  const battle = await startBattle(guildId, campaignId, channel.id, previousTrackId);
+
+  let combatantCount = 0;
+  for (const creature of scene.creatures) {
+    const quantity = Math.max(1, creature.quantity);
+    for (let i = 1; i <= quantity; i++) {
+      const instanceName = quantity > 1 ? `${creature.name} ${i}` : creature.name;
+      const score = rollD20() + creature.initBonus;
+      await insertCreatureCombatant(battle.id, instanceName, score);
+      combatantCount++;
+    }
+  }
+  for (const characterId of scene.characterIds) {
+    const sheet = await getCharacterSheetData(characterId);
+    const roll = computeInitiative(sheet);
+    await recordInitiativeRoll(battle.id, characterId, roll.total);
+    combatantCount++;
+  }
+
+  let musicStarted = false;
+  if (voiceChannel) {
+    if (scene.playlistId) {
+      const tracks = await getPlaylistTracks(scene.playlistId);
+      if (tracks.length > 0) {
+        playPlaylistInChannel(voiceChannel, tracks, scene.shuffle);
+        await setGuildPlaybackTrackId(guildId, tracks[0].id);
+        musicStarted = true;
+      }
+    } else if (scene.trackId) {
+      const track = await getMusicTrackById(scene.trackId);
+      if (track) {
+        playTrackInChannel(voiceChannel, track.fileUrl);
+        await setGuildPlaybackTrackId(guildId, track.id);
+        musicStarted = true;
+      }
+    }
+  }
+
+  await refreshTracker(channel, battle);
+  return { battle, musicStarted, combatantCount };
 }
 
 /**

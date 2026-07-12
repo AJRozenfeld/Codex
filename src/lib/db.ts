@@ -504,5 +504,43 @@ async function runMigrations(db: Client): Promise<void> {
     await db.execute("ALTER TABLE music_tracks ADD COLUMN scene TEXT");
   }
 
+  // Scenes feature (2026-07-12): battle_combatants.character_id was NOT NULL
+  // in the original initiative-tracker schema (every combatant was assumed
+  // to be a real Codex character self-reporting *init* in chat), which can't
+  // represent a monster/ad-hoc creature spawned by a Scene. SQLite can't
+  // ALTER a column to drop NOT NULL in place, so this needs the same
+  // drop-and-rebuild dance as template_fields/map_regions above rather than
+  // a plain ALTER TABLE ADD COLUMN - foreign_keys is already OFF from the
+  // top of this function, so no extra pragma toggle is needed here either.
+  if (!(await hasColumn(db, "battle_combatants", "creature_name"))) {
+    await db.batch(
+      [
+        `CREATE TABLE battle_combatants_new (
+          id               TEXT PRIMARY KEY,
+          battle_id        TEXT NOT NULL REFERENCES battle_state(id) ON DELETE CASCADE,
+          character_id     TEXT REFERENCES characters(id) ON DELETE CASCADE,
+          creature_name    TEXT,
+          initiative_score INTEGER NOT NULL,
+          rolled_at        TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (battle_id, character_id)
+        )`,
+        `INSERT INTO battle_combatants_new (id, battle_id, character_id, initiative_score, rolled_at)
+         SELECT id, battle_id, character_id, initiative_score, rolled_at FROM battle_combatants`,
+        "DROP TABLE battle_combatants",
+        "ALTER TABLE battle_combatants_new RENAME TO battle_combatants",
+        "CREATE INDEX IF NOT EXISTS idx_battle_combatants_battle ON battle_combatants(battle_id)",
+      ],
+      "write"
+    );
+  }
+
+  // battle_state.current_combatant_id (2026-07-12): plain ALTER TABLE ADD
+  // COLUMN is enough here, same as template_id on article_lists above - it's
+  // nullable with an implicit NULL default, so SQLite allows the REFERENCES
+  // clause even with existing rows in the table.
+  if (!(await hasColumn(db, "battle_state", "current_combatant_id"))) {
+    await db.execute("ALTER TABLE battle_state ADD COLUMN current_combatant_id TEXT REFERENCES battle_combatants(id) ON DELETE SET NULL");
+  }
+
   await db.execute("PRAGMA foreign_keys = ON");
 }

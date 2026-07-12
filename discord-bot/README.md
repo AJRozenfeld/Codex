@@ -39,6 +39,7 @@ Discord bots hold a persistent, always-open connection to Discord (the "gateway"
 - `/panel npcs`, `/panel locations`, `/panel music` browse the library right in Discord (visible only to you).
 - `/panel music` asks Track or Playlist first. A playlist (create/edit under `/admin/playlists` on the website) then asks In Order or Shuffle, and the bot plays every track in it back-to-back, automatically advancing to the next one when each finishes.
 - `/stopmusic` stops whatever's currently playing (single track or playlist).
+- If music ever throws "Cannot find module '@discordjs/opus'" (or similar) in the terminal, run `npm install` again from `discord-bot/` to pick up the `opusscript` dependency (added 2026-07-07) - Discord requires audio to be Opus-encoded, and none of the encoder libraries ship with `@discordjs/voice` itself.
 
 ## Initiative tracker / battle mode
 
@@ -48,3 +49,10 @@ Discord bots hold a persistent, always-open connection to Discord (the "gateway"
 - The DM runs `/endbattle` to close the fight: the tracker message is deleted, and whatever track was playing before `/startbattle` resumes from the top (not mid-song - restarting the previous track, not truly "unpausing" it).
 - **Battle music convention:** tag any track with the word `battle` anywhere in its Tags field (from `/admin/music` on the website) to make it eligible for random selection at `/startbattle`. No separate "battle music" flag - just reuses the existing free-text Tags field.
 - All three commands are DM-only (Manage Server permission), same as every other admin-style bot action.
+
+## Scenes (a hotkey for battle setup)
+
+- Build a reusable monster stat block (name, HP, AC, initiative bonus, notes) once from `/admin/creatures` on the website, then compose a Scene from `/admin/scenes`: pick creatures from that library (with a quantity - e.g. 3 goblins), add one-off ad-hoc creatures that skip the library entirely, optionally include existing NPCs (or PCs) already in the Codex, and link a single track or a whole playlist to play.
+- `/panel scenes` lists your scenes; picking one starts a battle exactly like `/startbattle`, but automatically rolls initiative for every creature and character on the list and starts the linked music - no manual `*init*` typing or track-picking needed. Existing characters still roll their own Dexterity-based initiative (same as always); creatures get a d20 + their stored initiative bonus rolled on their behalf, since they can't type in chat.
+- A creature with quantity > 1 becomes that many separately-tracked combatants ("Goblin 1", "Goblin 2", ...), each trackable and "killable" independently, not one lumped line.
+- `/panel scenes` is DM-only and blocked while a battle is already in progress, same as `/startbattle`.

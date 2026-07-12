@@ -21,6 +21,8 @@ const sections = [
   { href: "/admin/players", label: "Players" },
   { href: "/admin/music", label: "Music" },
   { href: "/admin/playlists", label: "Playlists" },
+  { href: "/admin/creatures", label: "Creatures" },
+  { href: "/admin/scenes", label: "Scenes" },
   { href: "/admin/discord", label: "Discord" },
 ];
 

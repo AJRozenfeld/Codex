@@ -218,6 +218,58 @@ export interface GuildLink {
 }
 
 // ---------------------------------------------------------------------------
+// Scenes (2026-07-12): a DM-defined "hotkey" for battle setup - see
+// db/schema.sql's scenes/creatures/scene_creatures/scene_characters comment
+// for the full design. Activated from the bot's /panel scenes.
+// ---------------------------------------------------------------------------
+
+/** A reusable monster/creature library entry (Aviv's call: reusable AND ad-hoc, both supported). */
+export interface Creature {
+  id: string;
+  slug: string;
+  name: string;
+  hp: number | null;
+  ac: number | null;
+  initBonus: number;
+  notes: string | null;
+}
+
+/** One creature TYPE in a scene - `quantity` spawns that many separately-tracked combatants at activation. */
+export interface SceneCreatureItem {
+  id: string; // scene_creatures row id (used for remove)
+  creatureId: string | null; // sourced-from library creature, if any - stats below are always a local copy
+  name: string;
+  hp: number | null;
+  ac: number | null;
+  initBonus: number;
+  quantity: number;
+  sortOrder: number;
+}
+
+/** An existing Codex character (almost always an NPC) included in a scene. */
+export interface SceneCharacterItem {
+  id: string; // scene_characters row id (used for remove)
+  characterId: string;
+  name: string;
+  portraitPath: string | null;
+}
+
+export interface Scene {
+  id: string;
+  slug: string;
+  name: string;
+  notes: string | null;
+  trackId: string | null;
+  playlistId: string | null;
+  shuffle: boolean;
+}
+
+export interface SceneDetail extends Scene {
+  creatures: SceneCreatureItem[];
+  characters: SceneCharacterItem[];
+}
+
+// ---------------------------------------------------------------------------
 // Full 2014 5e character sheet (see character-sheet.ts for defaults / load /
 // save). Stored as one JSON blob per character rather than one column per
 // stat - the sheet has too many interrelated repeatable fields (skills,

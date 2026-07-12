@@ -20,10 +20,11 @@ import {
   setGuildPlaybackTrackId,
   listPlaylists,
   getPlaylistTracks,
+  listScenes,
   type BotCharacter,
 } from "./db.js";
 import { playTrackInChannel, playPlaylistInChannel, stopPlayback } from "./voice.js";
-import { getActiveBattle, beginBattle, nextTurn, finishBattle } from "./battle.js";
+import { getActiveBattle, beginBattle, nextTurn, finishBattle, activateScene } from "./battle.js";
 
 const GOLD = 0xd97706;
 
@@ -171,6 +172,46 @@ async function handlePanelMusic(interaction: ChatInputCommandInteraction) {
     .addOptions(options);
   await interaction.editReply({
     content: "Play music (you must be in a voice channel):",
+    components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
+  });
+}
+
+/**
+ * Entry point for /panel scenes (Aviv's spec, 2026-07-12) - a "hotkey" for
+ * battle setup. DM-gated and blocked while a battle is already in progress,
+ * same as /startbattle - the actual work (auto-rolling every creature/
+ * character, starting music) happens in activateScene once a scene is
+ * picked from the menu below (see the "scenes":"pick" branch in
+ * handleSelectMenu).
+ */
+async function handlePanelScenes(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+  if (!isDm(interaction) || !interaction.guildId) {
+    await interaction.editReply({ content: "Only a DM (Manage Server permission) can activate a scene." });
+    return;
+  }
+  const campaignId = await requireCampaign(interaction);
+  if (!campaignId) return;
+  if (!interaction.channel || !interaction.channel.isTextBased() || interaction.channel.isDMBased()) {
+    await interaction.editReply({ content: "This only works in a server text channel." });
+    return;
+  }
+  const existing = await getActiveBattle(interaction.guildId);
+  if (existing) {
+    await interaction.editReply({ content: "A battle is already in progress here - use /endbattle first." });
+    return;
+  }
+  const scenes = await listScenes(campaignId);
+  if (scenes.length === 0) {
+    await interaction.editReply({ content: "No scenes yet - create one from /admin/scenes on the website." });
+    return;
+  }
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId("panel:scenes:pick")
+    .setPlaceholder("Choose a scene to activate")
+    .addOptions(scenes.slice(0, 25).map((s) => ({ label: s.name.slice(0, 100), value: s.id })));
+  await interaction.editReply({
+    content: "Activate a scene (starts a battle and music):",
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
   });
 }
@@ -422,6 +463,44 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
     await interaction.editReply({ content: `Now playing **${track.name}** in ${voiceChannel.name}.`, components: [] });
     return;
   }
+
+  // Scene activation (2026-07-12) - the actual "hotkey" moment. Re-checks for
+  // a since-started battle (a race is unlikely but cheap to guard against,
+  // same spirit as the other battle commands' upfront checks) before handing
+  // off to activateScene, which does all the real work.
+  if (kind === "scenes" && step === "pick") {
+    if (!interaction.guildId || !interaction.channel || !interaction.channel.isTextBased() || interaction.channel.isDMBased()) {
+      await interaction.editReply({ content: "This only works in a server text channel.", components: [] });
+      return;
+    }
+    const existing = await getActiveBattle(interaction.guildId);
+    if (existing) {
+      await interaction.editReply({ content: "A battle is already in progress here - use /endbattle first.", components: [] });
+      return;
+    }
+    const member = interaction.member;
+    const voiceChannel =
+      member && "voice" in member && member.voice && "channel" in member.voice ? member.voice.channel : null;
+    const result = await activateScene(
+      interaction.guildId,
+      campaignId,
+      interaction.channel as import("discord.js").TextChannel,
+      voiceChannel,
+      interaction.values[0]
+    );
+    if (!result) {
+      await interaction.editReply({ content: "That scene no longer exists.", components: [] });
+      return;
+    }
+    const musicNote = result.musicStarted
+      ? ""
+      : " (No music started - join a voice channel first, or link a track/playlist to this scene on the website.)";
+    await interaction.editReply({
+      content: `Scene activated! Rolled initiative for ${result.combatantCount} combatant${result.combatantCount === 1 ? "" : "s"}.${musicNote} Existing characters still roll their own with \`[[YourMask]]: *init*\`.`,
+      components: [],
+    });
+    return;
+  }
 }
 
 export async function handleInteraction(interaction: Interaction): Promise<void> {
@@ -437,6 +516,7 @@ export async function handleInteraction(interaction: Interaction): Promise<void>
         if (sub === "npcs") return void (await handlePanelNpcs(interaction));
         if (sub === "locations") return void (await handlePanelLocations(interaction));
         if (sub === "music") return void (await handlePanelMusic(interaction));
+        if (sub === "scenes") return void (await handlePanelScenes(interaction));
       }
     } else if (interaction.isStringSelectMenu()) {
       await handleSelectMenu(interaction);
