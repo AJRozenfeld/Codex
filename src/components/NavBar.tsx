@@ -87,7 +87,7 @@ export default async function NavBar() {
                 {displayName}
               </Link>
               <form action={logoutAction}>
-                <button type="submit" className="text-xs text-parchment/40 hover:text-blood transition-colors">
+                <button type="submit" className="text-xs text-parchment/55 hover:text-blood transition-colors">
                   Log out
                 </button>
               </form>

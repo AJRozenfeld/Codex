@@ -62,7 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               currentCampaignId={currentCampaignId}
               switchAction={switchCampaignAction}
             />
-            <Link href="/admin/campaigns" className="text-xs text-parchment/50 hover:text-gold transition-colors">
+            <Link href="/admin/campaigns" className="text-xs text-parchment/65 hover:text-gold transition-colors">
               Manage
             </Link>
             <Link
@@ -71,11 +71,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             >
               + New Campaign
             </Link>
-            <Link href="/" className="text-xs text-parchment/40 hover:text-gold transition-colors">
+            <Link href="/" className="text-xs text-parchment/55 hover:text-gold transition-colors">
               View public site
             </Link>
             <form action={logoutAction}>
-              <button type="submit" className="text-xs text-parchment/50 hover:text-blood transition-colors">
+              <button type="submit" className="text-xs text-parchment/65 hover:text-blood transition-colors">
                 Log out
               </button>
             </form>

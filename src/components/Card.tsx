@@ -37,11 +37,11 @@ export function EntityCard({
           <h3 className="font-display text-lg text-parchment group-hover:text-gold transition-colors">
             {title}
           </h3>
-          {subtitle && <div className="text-sm text-parchment/50 mt-0.5">{subtitle}</div>}
+          {subtitle && <div className="text-sm text-parchment/65 mt-0.5">{subtitle}</div>}
         </div>
       </div>
       {description && (
-        <p className="text-sm text-parchment/70 mt-3 line-clamp-3">{description}</p>
+        <p className="text-sm text-parchment/80 mt-3 line-clamp-3">{description}</p>
       )}
     </Link>
   );
@@ -64,8 +64,8 @@ export function SectionHeading({ eyebrow, title, children }: { eyebrow?: string;
 
 export function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-gold/20 p-10 text-center text-parchment/50">
-      <div className="mb-2 text-gold/50 text-lg" aria-hidden>
+    <div className="rounded-lg border border-dashed border-gold/25 p-10 text-center text-parchment/65">
+      <div className="mb-2 text-gold/60 text-lg" aria-hidden>
         &#10022;
       </div>
       {message}

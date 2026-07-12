@@ -111,7 +111,7 @@ export default async function HomePage() {
                   {e.inWorldDate ?? "Undated"} {e.sessionNumber ? `· Session ${e.sessionNumber}` : ""}
                 </div>
                 <h4 className="font-display text-parchment mt-1">{e.title}</h4>
-                <p className="text-sm text-parchment/60 mt-1 line-clamp-2">{e.description}</p>
+                <p className="text-sm text-parchment/75 mt-1 line-clamp-2">{e.description}</p>
               </li>
             ))}
           </ul>

@@ -101,7 +101,7 @@ export function RevealedToggle({ defaultChecked }: { defaultChecked?: boolean })
       <input type="checkbox" name="revealed" defaultChecked={defaultChecked} className="accent-ember" />
       <span className="text-parchment">
         Revealed to players
-        <span className="block text-xs text-parchment/40">Uncheck to keep this hidden from the public site.</span>
+        <span className="block text-xs text-parchment/55">Uncheck to keep this hidden from the public site.</span>
       </span>
     </label>
   );
@@ -122,7 +122,7 @@ export function CheckboxGroup({
     <fieldset className="block">
       <span className="block text-xs uppercase tracking-widest text-ember/80 mb-2">{label}</span>
       <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto rounded-lg border border-gold/20 bg-void/40 p-3">
-        {options.length === 0 && <span className="text-xs text-parchment/40">Nothing available yet.</span>}
+        {options.length === 0 && <span className="text-xs text-parchment/55">Nothing available yet.</span>}
         {options.map((o) => (
           <label key={o.value} className="flex items-center gap-1.5 text-xs text-parchment/70">
             <input type="checkbox" name={name} value={o.value} defaultChecked={selected.includes(o.value)} className="accent-gold" />
@@ -161,7 +161,7 @@ export function BulkActionsBar({
       >
         Delete Selected
       </button>
-      <span className="text-xs text-parchment/30">Check rows below, then choose an action.</span>
+      <span className="text-xs text-parchment/45">Check rows below, then choose an action.</span>
     </div>
   );
 }

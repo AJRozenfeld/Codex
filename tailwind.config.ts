@@ -10,13 +10,13 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#0d0b10",
-        "ink-raised": "#19151c",
-        parchment: "#e9dfc7",
-        ember: "#c77c3f",
-        gold: "#c9a84c",
-        "gold-dim": "#8a7233",
-        blood: "#7a2b2b",
-        void: "#171320",
+        "ink-raised": "#221d29",
+        parchment: "#f1e8d4",
+        ember: "#d1854a",
+        gold: "#dab962",
+        "gold-dim": "#a08544",
+        blood: "#9a4040",
+        void: "#221d29",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
