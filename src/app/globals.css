@@ -4,7 +4,7 @@
 
 :root {
   --font-display: Georgia, "Times New Roman", serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: Georgia, "Times New Roman", serif;
 }
 
 html {
@@ -12,16 +12,31 @@ html {
 }
 
 body {
-  background-color: #14100d;
+  background-color: #100d0a;
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(139, 94, 52, 0.08), transparent 40%),
-    radial-gradient(circle at 80% 60%, rgba(120, 20, 20, 0.06), transparent 45%);
+    radial-gradient(circle at 15% 10%, rgba(201, 168, 76, 0.07), transparent 38%),
+    radial-gradient(circle at 85% 0%, rgba(122, 43, 43, 0.08), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(139, 94, 52, 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 6%, transparent 94%, rgba(0, 0, 0, 0.45) 100%);
+  background-attachment: fixed;
   color: #ecdfc8;
+}
+
+/* subtle film-grain texture, CSS-only so no image asset is required */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .prose-erendyl {
   color: #ecdfc8;
-  line-height: 1.75;
+  line-height: 1.8;
 }
 
 .prose-erendyl p + p {
@@ -29,18 +44,86 @@ body {
 }
 
 ::selection {
-  background-color: rgba(196, 155, 60, 0.35);
+  background-color: rgba(201, 168, 76, 0.35);
   color: #fff;
 }
 
+:focus-visible {
+  outline: 2px solid rgba(201, 168, 76, 0.6);
+  outline-offset: 2px;
+}
+
+/* themed scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0b10;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.25);
+  border-radius: 999px;
+  border: 2px solid #0d0b10;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.45);
+}
+
+/* plain gradient hairline, still used in a few tight spots */
 .divider-rule {
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(196, 155, 60, 0.5), transparent);
+  background: linear-gradient(to right, transparent, rgba(201, 168, 76, 0.5), transparent);
+}
+
+/* ornamental divider with a centered rotated glyph - the signature "chronicle" flourish */
+.ornate-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(201, 168, 76, 0.55);
+}
+.ornate-divider::before,
+.ornate-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 76, 0.45));
+}
+.ornate-divider::after {
+  background: linear-gradient(to left, transparent, rgba(201, 168, 76, 0.45));
+}
+.ornate-divider > .glyph {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: currentColor;
+  flex: none;
+}
+
+/* shared "card" surface treatment, layered on top of Tailwind utility classes */
+.card-surface {
+  background-image: linear-gradient(160deg, rgba(201, 168, 76, 0.05), transparent 40%);
+  background-color: rgba(23, 19, 32, 0.6);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+.card-surface:hover {
+  transform: translateY(-2px);
+}
+
+.text-glow {
+  text-shadow: 0 0 18px rgba(201, 168, 76, 0.25);
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {

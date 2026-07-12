@@ -41,10 +41,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen bg-ink text-parchment">
-      <div className="border-b border-gold/20 bg-void/60">
+      <div className="relative border-b border-gold/20 bg-void/70 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-6 flex-wrap">
-            <span className="font-display text-gold">DM Console</span>
+            <span className="flex items-center gap-2 font-display text-gold shrink-0">
+              <span aria-hidden className="inline-block h-2 w-2 rotate-45 bg-gold shadow-glow" />
+              DM Console
+            </span>
             <nav className="flex flex-wrap gap-4 text-sm text-parchment/70">
               {sections.map((s) => (
                 <Link key={s.href} href={s.href} className="hover:text-gold transition-colors">
@@ -59,19 +62,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               currentCampaignId={currentCampaignId}
               switchAction={switchCampaignAction}
             />
-            <Link href="/admin/campaigns" className="text-xs text-parchment/50 hover:text-gold">Manage</Link>
+            <Link href="/admin/campaigns" className="text-xs text-parchment/50 hover:text-gold transition-colors">
+              Manage
+            </Link>
             <Link
               href="/admin/campaigns/new"
-              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10"
+              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10 hover:border-gold/70 transition-colors"
             >
               + New Campaign
             </Link>
-            <Link href="/" className="text-xs text-parchment/40 hover:text-gold">View public site</Link>
+            <Link href="/" className="text-xs text-parchment/40 hover:text-gold transition-colors">
+              View public site
+            </Link>
             <form action={logoutAction}>
-              <button type="submit" className="text-xs text-parchment/50 hover:text-blood">Log out</button>
+              <button type="submit" className="text-xs text-parchment/50 hover:text-blood transition-colors">
+                Log out
+              </button>
             </form>
           </div>
         </div>
+        <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
       </div>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">{children}</div>
     </div>

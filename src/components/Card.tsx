@@ -19,7 +19,7 @@ export function EntityCard({
   return (
     <Link
       href={href}
-      className="group block rounded-lg border border-gold/15 bg-void/60 p-5 transition-colors hover:border-gold/50 hover:bg-void animate-fade-in"
+      className="card-surface group block rounded-lg border border-gold/15 p-5 shadow-card hover:shadow-card-hover hover:border-gold/45 animate-fade-in"
     >
       <div className="flex items-start gap-4">
         {imageUrl && (
@@ -27,7 +27,7 @@ export function EntityCard({
           <img
             src={imageUrl}
             alt={title}
-            className="h-14 w-14 rounded-full object-cover border border-gold/20 flex-shrink-0"
+            className="h-14 w-14 rounded-full object-cover border border-gold/25 flex-shrink-0 group-hover:border-gold/60 transition-colors"
           />
         )}
         <div className="min-w-0">
@@ -50,9 +50,13 @@ export function EntityCard({
 export function SectionHeading({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: ReactNode }) {
   return (
     <div className="mb-8">
-      {eyebrow && <div className="text-xs uppercase tracking-[0.2em] text-ember mb-2">{eyebrow}</div>}
-      <h1 className="font-display text-3xl sm:text-4xl text-gold">{title}</h1>
-      <div className="divider-rule mt-4" />
+      {eyebrow && (
+        <div className="text-xs uppercase tracking-[0.2em] text-ember mb-2">{eyebrow}</div>
+      )}
+      <h1 className="font-display text-3xl sm:text-4xl text-gold text-glow">{title}</h1>
+      <div className="ornate-divider mt-4">
+        <span className="glyph" />
+      </div>
       {children}
     </div>
   );
@@ -61,6 +65,9 @@ export function SectionHeading({ eyebrow, title, children }: { eyebrow?: string;
 export function EmptyState({ message }: { message: string }) {
   return (
     <div className="rounded-lg border border-dashed border-gold/20 p-10 text-center text-parchment/50">
+      <div className="mb-2 text-gold/50 text-lg" aria-hidden>
+        &#10022;
+      </div>
       {message}
     </div>
   );

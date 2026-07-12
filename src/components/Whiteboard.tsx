@@ -237,7 +237,7 @@ export function Whiteboard({
         <span className="text-xs text-parchment/30">Drag by the top strip &middot; resize from the corner</span>
       </div>
 
-      <div className="rounded-lg border border-gold/15 bg-void/40 overflow-auto" style={{ height: "70vh" }}>
+      <div className="card-static rounded-lg border border-gold/15 shadow-card overflow-auto" style={{ height: "70vh" }}>
         <div className="relative" style={{ width: canvasWidth, height: canvasHeight }}>
           {items.map((item) => (
             <div

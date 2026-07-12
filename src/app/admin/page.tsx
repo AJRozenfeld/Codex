@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
       </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {rows.map((r) => (
-          <Link key={r.href} href={r.href} className="rounded-lg border border-gold/15 bg-void/60 p-5 hover:border-gold/50 transition-colors">
+          <Link key={r.href} href={r.href} className="card-surface rounded-lg border border-gold/15 shadow-card hover:shadow-card-hover hover:border-gold/45 transition-colors">
             <div className="text-xs uppercase tracking-widest text-ember/80 mb-1">{r.label}</div>
             <div className="font-display text-2xl text-parchment">{r.count}</div>
             <div className="text-xs text-parchment/40 mt-1">{r.revealed} revealed to players</div>

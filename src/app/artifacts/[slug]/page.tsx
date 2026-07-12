@@ -39,7 +39,7 @@ export default async function ArtifactDetailPage({ params }: { params: { slug: s
       <div className="prose-erendyl mb-8 whitespace-pre-line">{artifact.description}</div>
 
       {artifact.mechanics && (
-        <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-2">Mechanics</h2>
           <p className="text-parchment/80 whitespace-pre-line">{artifact.mechanics}</p>
         </section>

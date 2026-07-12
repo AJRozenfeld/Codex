@@ -49,7 +49,7 @@ export default async function FactionDetailPage({ params }: { params: { slug: st
               <li key={m.id}>
                 <Link
                   href={`/characters/${m.slug}`}
-                  className="block rounded-lg border border-gold/15 bg-void/60 px-4 py-2 hover:border-gold/50 transition-colors"
+                  className="card-static block rounded-lg border border-gold/15 shadow-card px-4 py-2 hover:border-gold/50 transition-colors"
                 >
                   <div className="text-parchment">{m.name}</div>
                   {m.role && <div className="text-xs text-parchment/50">{m.role}</div>}

@@ -49,7 +49,7 @@ export default async function StorylineDetailPage({ params }: { params: { slug: 
       )}
 
       {storyline.nextStep && (
-        <section className="mb-8 rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static mb-8 rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-2">What's Next</h2>
           <p className="text-parchment/80 whitespace-pre-line">{storyline.nextStep}</p>
         </section>
@@ -65,7 +65,7 @@ export default async function StorylineDetailPage({ params }: { params: { slug: 
               <li key={c.id}>
                 <Link
                   href={`/characters/${c.slug}`}
-                  className="block rounded-lg border border-gold/15 bg-void/60 px-4 py-2 hover:border-gold/50 transition-colors"
+                  className="card-static block rounded-lg border border-gold/15 shadow-card px-4 py-2 hover:border-gold/50 transition-colors"
                 >
                   <div className="text-parchment">{c.name}</div>
                   {c.role && <div className="text-xs text-parchment/50">{c.role}</div>}

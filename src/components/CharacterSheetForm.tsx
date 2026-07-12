@@ -79,7 +79,7 @@ export function CharacterSheetForm({
     <form action={saveAction} className="space-y-8">
       <input type="hidden" name="sheetData" value={JSON.stringify(sheet)} />
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-xl text-gold mb-4">{characterName}</h2>
         <div className="grid sm:grid-cols-3 gap-4">
           <label className="block">
@@ -114,7 +114,7 @@ export function CharacterSheetForm({
         </div>
       </section>
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-lg text-gold mb-4">Ability Scores</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {ABILITIES.map(({ key, label }) => (
@@ -154,7 +154,7 @@ export function CharacterSheetForm({
       </section>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Saving Throws</h2>
           <div className="space-y-2">
             {ABILITIES.map(({ key, label }) => {
@@ -171,7 +171,7 @@ export function CharacterSheetForm({
           </div>
         </section>
 
-        <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Skills</h2>
           <div className="space-y-1.5 max-h-96 overflow-y-auto pr-2">
             {(Object.keys(SKILL_LABELS) as SkillKey[]).map((key) => {
@@ -204,7 +204,7 @@ export function CharacterSheetForm({
         </section>
       </div>
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-lg text-gold mb-4">Combat</h2>
         <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <label className="block">
@@ -307,7 +307,7 @@ export function CharacterSheetForm({
         </div>
       </section>
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg text-gold">Attacks &amp; Cantrips</h2>
           <button type="button" onClick={addAttack} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
@@ -330,7 +330,7 @@ export function CharacterSheetForm({
       </section>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Equipment</h2>
           <textarea
             rows={6}
@@ -353,7 +353,7 @@ export function CharacterSheetForm({
           </div>
         </section>
 
-        <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Proficiencies, Languages &amp; Features</h2>
           <label className="block mb-4">
             <span className={labelCls}>Other Proficiencies &amp; Languages</span>
@@ -376,7 +376,7 @@ export function CharacterSheetForm({
         </section>
       </div>
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-lg text-gold mb-4">Personality</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="block">
@@ -398,7 +398,7 @@ export function CharacterSheetForm({
         </div>
       </section>
 
-      <section className="rounded-lg border border-gold/20 bg-void/50 p-5">
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-lg text-gold mb-4">Spellcasting</h2>
         <div className="grid sm:grid-cols-4 gap-4 mb-4">
           <label className="block">

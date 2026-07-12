@@ -261,7 +261,7 @@ export function JournalBoard({
               + New Event
             </button>
           ) : (
-            <div className="rounded-lg border border-gold/20 bg-void/50 p-4 space-y-3">
+            <div className="card-static rounded-lg border border-gold/20 shadow-card p-4 space-y-3">
               <div className="grid sm:grid-cols-2 gap-3">
                 <input
                   className="rounded-lg bg-void border border-gold/30 px-3 py-2 text-sm text-parchment"
@@ -297,7 +297,7 @@ export function JournalBoard({
 
           {events.length === 0 && <p className="text-sm text-parchment/40">No events logged yet.</p>}
           {events.map((entry) => (
-            <div key={entry.id} className="rounded-lg border border-gold/15 bg-void/40 p-4">
+            <div key={entry.id} className="card-static rounded-lg border border-gold/15 shadow-card p-4">
               {editingId === entry.id ? (
                 <div className="space-y-3">
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -383,7 +383,7 @@ export function JournalBoard({
                 + Add Contact
               </button>
             ) : (
-              <div className="rounded-lg border border-gold/20 bg-void/50 p-3 space-y-2">
+              <div className="card-static rounded-lg border border-gold/20 shadow-card p-3 space-y-2">
                 <select
                   className="w-full rounded bg-void border border-gold/30 px-2 py-1.5 text-xs text-parchment"
                   value={newContactSubjectId}
@@ -436,7 +436,7 @@ export function JournalBoard({
                   <h3 className="font-display text-lg text-gold">{activeSubjectMeta?.name}</h3>
                 </div>
 
-                <div className="rounded-lg border border-gold/20 bg-void/50 p-4 space-y-2">
+                <div className="card-static rounded-lg border border-gold/20 shadow-card p-4 space-y-2">
                   <div className="text-xs text-parchment/50">Add entry &middot; Trust</div>
                   <TrustDial value={newContactTrust} onChange={setNewContactTrust} />
                   <input
@@ -463,7 +463,7 @@ export function JournalBoard({
                 </div>
 
                 {activeEntries.map((entry) => (
-                  <div key={entry.id} className="rounded-lg border border-gold/15 bg-void/40 p-4">
+                  <div key={entry.id} className="card-static rounded-lg border border-gold/15 shadow-card p-4">
                     {editingId === entry.id ? (
                       <div className="space-y-3">
                         <TrustDial value={editTrust} onChange={setEditTrust} />

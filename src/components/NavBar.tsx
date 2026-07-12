@@ -39,25 +39,46 @@ export default async function NavBar() {
   const allLinks = [...links, ...sectionLinks.map((s) => ({ href: `/sections/${s.slug}`, label: s.name }))];
 
   return (
-    <header className="border-b border-gold/20 bg-ink/80 backdrop-blur sticky top-0 z-40">
+    <header className="relative border-b border-gold/20 bg-ink/85 backdrop-blur sticky top-0 z-40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="font-display text-xl tracking-wide text-gold hover:text-parchment transition-colors">
-          Erendyl Codex
+        <Link href="/" className="group flex items-center gap-2.5 shrink-0">
+          <span
+            aria-hidden
+            className="inline-block h-2 w-2 rotate-45 bg-gold shadow-glow group-hover:bg-parchment transition-colors"
+          />
+          <span className="font-display text-xl tracking-wide text-gold group-hover:text-parchment transition-colors">
+            Erendyl Codex
+          </span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm text-parchment/80">
           {allLinks.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-gold transition-colors">
+            <Link
+              key={l.href}
+              href={l.href}
+              className="relative py-1 hover:text-gold transition-colors after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-0 after:bg-gold after:transition-all hover:after:w-full"
+            >
               {l.label}
             </Link>
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <form action="/search" className="flex items-center">
+          <form action="/search" className="relative flex items-center">
+            <svg
+              aria-hidden
+              viewBox="0 0 20 20"
+              className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-parchment/40"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <circle cx="8.5" cy="8.5" r="6" />
+              <path d="M13 13l4.5 4.5" strokeLinecap="round" />
+            </svg>
             <input
               type="text"
               name="q"
               placeholder="Search the codex..."
-              className="w-36 sm:w-56 rounded-full bg-void border border-gold/30 px-3 py-1.5 text-sm text-parchment placeholder:text-parchment/40 focus:outline-none focus:border-gold/70"
+              className="w-36 sm:w-56 rounded-full bg-void border border-gold/30 pl-8 pr-3 py-1.5 text-sm text-parchment placeholder:text-parchment/40 focus:outline-none focus:border-gold/70 transition-colors"
             />
           </form>
           {displayName ? (
@@ -66,13 +87,15 @@ export default async function NavBar() {
                 {displayName}
               </Link>
               <form action={logoutAction}>
-                <button type="submit" className="text-xs text-parchment/40 hover:text-blood">Log out</button>
+                <button type="submit" className="text-xs text-parchment/40 hover:text-blood transition-colors">
+                  Log out
+                </button>
               </form>
             </div>
           ) : (
             <Link
               href="/login"
-              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium hover:bg-gold/10 whitespace-nowrap"
+              className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs font-medium tracking-wide hover:bg-gold/10 hover:border-gold/70 transition-colors whitespace-nowrap"
             >
               Log In
             </Link>
@@ -86,6 +109,7 @@ export default async function NavBar() {
           </Link>
         ))}
       </nav>
+      <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
     </header>
   );
 }

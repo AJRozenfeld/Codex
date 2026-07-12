@@ -31,7 +31,7 @@ export default async function MyCharacterPage() {
     <div>
       <SectionHeading eyebrow="Welcome back" title={row.display_name as string} />
       {row.character_id ? (
-        <div className="rounded-lg border border-gold/15 bg-void/60 p-6">
+        <div className="card-static rounded-lg border border-gold/15 shadow-card p-6">
           <p className="text-parchment/70 mb-4">
             You are playing <span className="text-gold">{row.character_name as string}</span>.
           </p>

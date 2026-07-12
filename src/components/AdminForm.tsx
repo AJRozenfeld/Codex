@@ -1,3 +1,6 @@
+const inputClass =
+  "w-full rounded-lg bg-void/80 border border-gold/25 px-3 py-2 text-parchment placeholder:text-parchment/30 focus:outline-none focus:border-gold/60 focus:shadow-glow transition-colors";
+
 export function Field({
   label,
   name,
@@ -24,7 +27,7 @@ export function Field({
         defaultValue={defaultValue}
         required={required}
         placeholder={placeholder}
-        className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
+        className={inputClass}
       />
     </label>
   );
@@ -51,7 +54,7 @@ export function TextArea({
         defaultValue={defaultValue ?? ""}
         required={required}
         rows={rows}
-        className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
+        className={inputClass}
       />
     </label>
   );
@@ -73,12 +76,7 @@ export function Select({
   return (
     <label className="block">
       <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">{label}</span>
-      <select
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70"
-      >
+      <select name={name} defaultValue={defaultValue ?? ""} required={required} className={inputClass}>
         <option value="">&mdash;</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -123,7 +121,7 @@ export function CheckboxGroup({
   return (
     <fieldset className="block">
       <span className="block text-xs uppercase tracking-widest text-ember/80 mb-2">{label}</span>
-      <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto rounded-lg border border-gold/20 p-3">
+      <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto rounded-lg border border-gold/20 bg-void/40 p-3">
         {options.length === 0 && <span className="text-xs text-parchment/40">Nothing available yet.</span>}
         {options.map((o) => (
           <label key={o.value} className="flex items-center gap-1.5 text-xs text-parchment/70">
@@ -151,7 +149,7 @@ export function BulkActionsBar({
         <button
           type="submit"
           formAction={toggleAction}
-          className="rounded-full border border-gold/40 text-gold px-4 py-1.5 text-xs font-medium hover:bg-gold/10"
+          className="rounded-full border border-gold/40 text-gold px-4 py-1.5 text-xs font-medium hover:bg-gold/10 hover:border-gold/70 transition-colors"
         >
           {toggleLabel}
         </button>
@@ -159,7 +157,7 @@ export function BulkActionsBar({
       <button
         type="submit"
         formAction={deleteAction}
-        className="rounded-full border border-blood/50 text-blood px-4 py-1.5 text-xs font-medium hover:bg-blood/10"
+        className="rounded-full border border-blood/50 text-blood px-4 py-1.5 text-xs font-medium hover:bg-blood/10 transition-colors"
       >
         Delete Selected
       </button>
@@ -175,7 +173,10 @@ export function RowCheckbox({ id }: { id: string }) {
 export function FormActions({ deleteAction }: { deleteAction?: (formData: FormData) => void }) {
   return (
     <div className="flex items-center justify-between pt-4">
-      <button type="submit" className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold">
+      <button
+        type="submit"
+        className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium tracking-wide hover:bg-gold hover:shadow-glow transition-all"
+      >
         Save
       </button>
       {deleteAction && (

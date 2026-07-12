@@ -43,9 +43,9 @@ export default async function AdminPlaylistsPage() {
         </button>
       </form>
 
-      <div className="rounded-lg border border-gold/15 overflow-hidden">
+      <div className="rounded-lg border border-gold/15 overflow-hidden shadow-card">
         <table className="w-full text-sm">
-          <thead className="bg-void/60 text-parchment/60 text-left">
+          <thead className="bg-void/70 text-ember/70 text-left text-xs uppercase tracking-widest border-b border-gold/15">
             <tr>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Tracks</th>
@@ -54,7 +54,7 @@ export default async function AdminPlaylistsPage() {
           </thead>
           <tbody>
             {playlists.map((p) => (
-              <tr key={p.id} className="border-t border-gold/10">
+              <tr key={p.id} className="border-t border-gold/10 hover:bg-void/30 transition-colors">
                 <td className="px-4 py-2 text-parchment">{p.name}</td>
                 <td className="px-4 py-2 text-parchment/50">{p.trackCount}</td>
                 <td className="px-4 py-2 text-right">

@@ -55,9 +55,9 @@ export default async function AdminMusicPage() {
 
       <MusicUploadForm saveTrackAction={saveTrackAction} />
 
-      <div className="rounded-lg border border-gold/15 overflow-hidden">
+      <div className="rounded-lg border border-gold/15 overflow-hidden shadow-card">
         <table className="w-full text-sm">
-          <thead className="bg-void/60 text-parchment/60 text-left">
+          <thead className="bg-void/70 text-ember/70 text-left text-xs uppercase tracking-widest border-b border-gold/15">
             <tr>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Tags</th>
@@ -70,7 +70,7 @@ export default async function AdminMusicPage() {
             {tracks.map((t) => {
               const del = deleteAction.bind(null, t.id);
               return (
-                <tr key={t.id} className="border-t border-gold/10">
+                <tr key={t.id} className="border-t border-gold/10 hover:bg-void/30 transition-colors">
                   <td className="px-4 py-2 text-parchment">{t.name}</td>
                   <td className="px-4 py-2 text-parchment/50">{t.tags ?? ""}</td>
                   <td className="px-4 py-2 text-parchment/50">{t.scene ?? ""}</td>

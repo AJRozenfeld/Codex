@@ -32,7 +32,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
             <li key={`${r.type}-${r.id}`}>
               <Link
                 href={`/${typeHref[r.type]}/${r.slug}`}
-                className="block rounded-lg border border-gold/15 bg-void/60 p-4 hover:border-gold/50 transition-colors"
+                className="card-static block rounded-lg border border-gold/15 shadow-card p-4 hover:border-gold/50 transition-colors"
               >
                 <div className="text-xs uppercase tracking-widest text-ember/80 mb-1">{r.type}</div>
                 <div className="font-display text-lg text-parchment">{r.title}</div>
