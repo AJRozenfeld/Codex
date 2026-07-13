@@ -14,16 +14,29 @@ async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
   const campaignId = await getCurrentCampaignId();
   const password = String(formData.get("password") ?? "");
-  await adminUpsertPlayer(
-    campaignId,
-    {
-      username: String(formData.get("username") ?? ""),
-      displayName: String(formData.get("displayName") ?? ""),
-      characterId: String(formData.get("characterId") ?? "") || null,
-      password: password || undefined,
-    },
-    id
-  );
+  try {
+    await adminUpsertPlayer(
+      campaignId,
+      {
+        username: String(formData.get("username") ?? ""),
+        displayName: String(formData.get("displayName") ?? ""),
+        characterId: String(formData.get("characterId") ?? "") || null,
+        password: password || undefined,
+      },
+      id
+    );
+  } catch (err) {
+    // Most likely players.username's UNIQUE constraint - usernames are
+    // unique across every campaign in this install, not just the current
+    // one (see the `players` table comment in db/schema.sql).
+    const message =
+      err instanceof Error && err.message.includes("UNIQUE constraint failed: players.username")
+        ? "That username is already taken (usernames must be unique across every campaign, not just this one) - please choose another."
+        : err instanceof Error
+        ? err.message
+        : "Something went wrong saving this player.";
+    redirect(`/admin/players/${id ?? "new"}?error=${encodeURIComponent(message)}`);
+  }
   redirect("/admin/players");
 }
 
@@ -34,7 +47,13 @@ async function deleteAction(id: string) {
   redirect("/admin/players");
 }
 
-export default async function AdminPlayerEditPage({ params }: { params: { id: string } }) {
+export default async function AdminPlayerEditPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { error?: string };
+}) {
   const isNew = params.id === "new";
   const campaignId = await getCurrentCampaignId();
   const [player, characters] = await Promise.all([
@@ -52,6 +71,7 @@ export default async function AdminPlayerEditPage({ params }: { params: { id: st
       <form action={save} className="space-y-4">
         <Field label="Display Name" name="displayName" defaultValue={player?.displayName} required />
         <Field label="Username" name="username" defaultValue={player?.username} required />
+        {searchParams?.error && <p className="text-sm text-blood">{searchParams.error}</p>}
         <Select
           label="Linked Character"
           name="characterId"
