@@ -49,8 +49,12 @@ let schemaReady: Promise<void> | null = null;
 // COMMON case on serverless, so this was being paid over and over: the
 // "every click takes forever" bug (Aviv, 2026-07-14).
 //
-// Fix: stamp the database with SQLite's built-in `PRAGMA user_version` after
-// a successful full pass. On startup, one cheap round trip reads the stamp;
+// Fix: stamp the database via a one-row schema_meta table after a
+// successful full pass. On startup, one cheap round trip reads the stamp;
+// (This was PRAGMA user_version at first - hosted Turso rejected it over
+// the wire, taking every prod page down on 2026-07-14. PRAGMAs behave
+// differently between the embedded file engine and hosted Turso; the
+// stamp must live in an ordinary table.)
 // if it matches SCHEMA_VERSION the entire pass (statements + migrations) is
 // skipped. When the full pass does run, statements go through db.batch() -
 // one HTTP request per batch instead of one per statement.
@@ -68,9 +72,13 @@ export async function ensureSchema(): Promise<void> {
   schemaReady = (async () => {
     const db = getDb();
     // Fast path: schema already stamped as current - skip everything.
-    const stamp = await db.execute("PRAGMA user_version");
-    const current = Number(stamp.rows[0]?.user_version ?? 0);
-    if (current === SCHEMA_VERSION) return;
+    try {
+      const stamp = await db.execute("SELECT version FROM schema_meta WHERE id = 1");
+      if (Number(stamp.rows[0]?.version ?? 0) === SCHEMA_VERSION) return;
+    } catch {
+      // schema_meta doesn't exist yet (fresh or pre-stamp db) - run the
+      // full idempotent pass below, which is always safe.
+    }
     const schemaPath = path.join(process.cwd(), "db", "schema.sql");
     const sql = fs.readFileSync(schemaPath, "utf-8");
     // NOTE: this split is naive - it breaks the file on ANY semicolon that's
@@ -119,13 +127,38 @@ export async function ensureSchema(): Promise<void> {
       await db.execute(stmt);
     }
     // One HTTP round trip per batch instead of one per statement (~120 of
-    // them) - the dominant cost of a cold start against hosted Turso.
-    if (tableStatements.length > 0) await db.batch(tableStatements, "write");
+    // them) - the dominant cost of a cold start against hosted Turso. If
+    // the backend rejects a batch for any reason, fall back to the old
+    // statement-by-statement path instead of failing the request.
+    try {
+      if (tableStatements.length > 0) await db.batch(tableStatements, "write");
+    } catch {
+      for (const stmt of tableStatements) await db.execute(stmt);
+    }
     await runMigrations(db);
-    if (indexStatements.length > 0) await db.batch(indexStatements, "write");
-    // Stamp success LAST - if anything above threw, the stamp stays at its
-    // old value and the next attempt reruns the full pass.
-    await db.execute(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    try {
+      if (indexStatements.length > 0) await db.batch(indexStatements, "write");
+    } catch {
+      for (const stmt of indexStatements) await db.execute(stmt);
+    }
+    // Stamp success LAST - if anything above threw, we never reach this, so
+    // the next call reruns the full pass. If only the stamp write itself
+    // fails, swallow it: the site stays up and the fast path simply doesn't
+    // engage until a later cold start stamps successfully.
+    try {
+      await db.batch(
+        [
+          "CREATE TABLE IF NOT EXISTS schema_meta (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL)",
+          {
+            sql: "INSERT INTO schema_meta (id, version) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET version = excluded.version",
+            args: [SCHEMA_VERSION],
+          },
+        ],
+        "write"
+      );
+    } catch {
+      // Non-fatal by design - see comment above.
+    }
   })().catch((err) => {
     // Don't let a transient failure (or, as happened 2026-07-06, a genuine
     // bug) permanently wedge this warm serverless instance - every future
