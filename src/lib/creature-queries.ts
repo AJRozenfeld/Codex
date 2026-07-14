@@ -180,6 +180,17 @@ export async function bulkImportCreatures(campaignId: string, rows: CreatureImpo
   const db = getDb();
   const result: BulkImportResult = { created: 0, updated: 0, errors: [] };
 
+  // One upfront query for every existing slug in the campaign, instead of a
+  // separate "does this slug exist?" round trip per imported row (a 47-row
+  // SRD import was paying 47 of them).
+  const existingRows = await db.execute({
+    sql: "SELECT id, slug FROM creatures WHERE campaign_id = ?",
+    args: [campaignId],
+  });
+  const idBySlug = new Map<string, string>(
+    existingRows.rows.map((r) => [r.slug as string, r.id as string])
+  );
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const label = row?.name || `row ${i + 1}`;
@@ -187,12 +198,14 @@ export async function bulkImportCreatures(campaignId: string, rows: CreatureImpo
       if (!row || typeof row.name !== "string" || !row.name.trim()) {
         throw new Error("Missing required field: name");
       }
-      const existing = await db.execute({
-        sql: "SELECT id FROM creatures WHERE campaign_id = ? AND slug = ?",
-        args: [campaignId, row.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "creature"],
-      });
-      const existingId = existing.rows[0]?.id as string | undefined;
-      await upsertCreature(campaignId, row, existingId);
+      const slug =
+        row.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "creature";
+      const existingId = idBySlug.get(slug);
+      const savedId = await upsertCreature(campaignId, row, existingId);
+      // Keep the map current so a duplicate name later in the SAME import
+      // updates the row just created instead of trying to insert it twice
+      // (matches the old per-row-SELECT behavior exactly).
+      idBySlug.set(slug, savedId);
       if (existingId) result.updated++;
       else result.created++;
     } catch (err) {

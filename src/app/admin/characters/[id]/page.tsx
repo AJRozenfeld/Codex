@@ -63,16 +63,15 @@ export default async function AdminCharacterEditPage({
 }) {
   const isNew = params.id === "new";
   const campaignId = await getCurrentCampaignId();
-  const [character, locations, factions, players, selectedRestrictedIds] = await Promise.all([
+  const [character, locations, factions, players, selectedRestrictedIds, selectedFactionIds] = await Promise.all([
     isNew ? Promise.resolve(null) : adminGetCharacter(campaignId, params.id),
     adminGetLocations(campaignId),
     adminGetFactions(campaignId),
     adminGetPlayers(campaignId),
     isNew ? Promise.resolve([]) : adminGetRestrictedPlayerIds("characters", params.id),
+    isNew ? Promise.resolve([] as string[]) : adminGetCharacterFactionIds(params.id),
   ]);
   if (!isNew && !character) notFound();
-
-  const selectedFactionIds = isNew ? [] : await adminGetCharacterFactionIds(params.id);
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
   const del = deleteAction.bind(null, params.id);

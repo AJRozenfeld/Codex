@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getDb, ensureSchema, newId, LEGACY_CAMPAIGN_ID } from "./db";
 import { slugify } from "./slug";
 import { getAdminSession } from "./auth";
@@ -113,7 +114,10 @@ export async function adminDeleteCampaign(id: string): Promise<void> {
 // "fs"/"path" (used by db.ts to read schema.sql off disk).
 // ---------------------------------------------------------------------------
 
-export async function getCurrentCampaignId(): Promise<string> {
+// PERFORMANCE: cache()d so the session unseal (and, for a fresh session, the
+// campaigns fallback queries) run once per request even though the admin
+// layout AND every admin page both call this on every render.
+export const getCurrentCampaignId = cache(async (): Promise<string> => {
   const session = await getAdminSession();
   if (session.currentCampaignId) return session.currentCampaignId;
   await ensureSchema();
@@ -122,7 +126,7 @@ export async function getCurrentCampaignId(): Promise<string> {
   if (legacy.rows[0]) return legacy.rows[0].id as string;
   const first = await db.execute("SELECT id FROM campaigns ORDER BY created_at ASC LIMIT 1");
   return first.rows[0] ? (first.rows[0].id as string) : LEGACY_CAMPAIGN_ID;
-}
+});
 
 export async function setCurrentCampaignId(campaignId: string): Promise<void> {
   const session = await getAdminSession();

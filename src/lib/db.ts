@@ -39,11 +39,38 @@ export function getDb(): Client {
 
 let schemaReady: Promise<void> | null = null;
 
+// ---------------------------------------------------------------------------
+// PERFORMANCE: the schema fast-path (2026-07-14).
+//
+// Against a hosted Turso database every db.execute() is its own HTTP round
+// trip. The full ensureSchema() pass below is ~120 schema statements plus
+// ~15 PRAGMA table_info migration probes, all sequential - measured in the
+// 10-20 second range on a cold Vercel instance, and cold instances are the
+// COMMON case on serverless, so this was being paid over and over: the
+// "every click takes forever" bug (Aviv, 2026-07-14).
+//
+// Fix: stamp the database with SQLite's built-in `PRAGMA user_version` after
+// a successful full pass. On startup, one cheap round trip reads the stamp;
+// if it matches SCHEMA_VERSION the entire pass (statements + migrations) is
+// skipped. When the full pass does run, statements go through db.batch() -
+// one HTTP request per batch instead of one per statement.
+//
+// >>> RULE: any change to db/schema.sql OR to runMigrations() below MUST
+// >>> bump SCHEMA_VERSION by 1, or existing databases will silently skip
+// >>> the new statements. (Brand-new/dev databases are unaffected - version
+// >>> 0 always runs the full pass.)
+// ---------------------------------------------------------------------------
+const SCHEMA_VERSION = 1;
+
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
     const db = getDb();
+    // Fast path: schema already stamped as current - skip everything.
+    const stamp = await db.execute("PRAGMA user_version");
+    const current = Number(stamp.rows[0]?.user_version ?? 0);
+    if (current === SCHEMA_VERSION) return;
     const schemaPath = path.join(process.cwd(), "db", "schema.sql");
     const sql = fs.readFileSync(schemaPath, "utf-8");
     // NOTE: this split is naive - it breaks the file on ANY semicolon that's
@@ -81,15 +108,24 @@ export async function ensureSchema(): Promise<void> {
     // adjacent lesson: always re-check every regex like this against every
     // statement in the file, not just the ones that existed when it was written).
     const isIndexStmt = (s: string) => /^create\s+(unique\s+)?index/i.test(s);
-    const tableStatements = statements.filter((s) => !isIndexStmt(s));
+    // PRAGMAs (e.g. foreign_keys = ON at the top of schema.sql) must run as
+    // standalone statements - inside db.batch()'s implicit transaction,
+    // foreign_keys is a silent no-op per SQLite semantics.
+    const isPragma = (s: string) => /^pragma\b/i.test(s);
+    const pragmaStatements = statements.filter(isPragma);
+    const tableStatements = statements.filter((s) => !isIndexStmt(s) && !isPragma(s));
     const indexStatements = statements.filter(isIndexStmt);
-    for (const stmt of tableStatements) {
+    for (const stmt of pragmaStatements) {
       await db.execute(stmt);
     }
+    // One HTTP round trip per batch instead of one per statement (~120 of
+    // them) - the dominant cost of a cold start against hosted Turso.
+    if (tableStatements.length > 0) await db.batch(tableStatements, "write");
     await runMigrations(db);
-    for (const stmt of indexStatements) {
-      await db.execute(stmt);
-    }
+    if (indexStatements.length > 0) await db.batch(indexStatements, "write");
+    // Stamp success LAST - if anything above threw, the stamp stays at its
+    // old value and the next attempt reruns the full pass.
+    await db.execute(`PRAGMA user_version = ${SCHEMA_VERSION}`);
   })().catch((err) => {
     // Don't let a transient failure (or, as happened 2026-07-06, a genuine
     // bug) permanently wedge this warm serverless instance - every future

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb, ensureSchema } from "@/lib/db";
 import { getPlayerSession, getViewerContext } from "@/lib/player-session";
 import { getVisibleSectionLinks } from "@/lib/queries";
 
@@ -21,20 +20,12 @@ async function logoutAction() {
   redirect("/");
 }
 
-async function getLoggedInDisplayName(): Promise<string | null> {
-  const session = await getPlayerSession();
-  if (!session.playerId) return null;
-  await ensureSchema();
-  const r = await getDb().execute({
-    sql: "SELECT display_name FROM players WHERE id = ?",
-    args: [session.playerId],
-  });
-  return r.rows[0] ? (r.rows[0].display_name as string) : null;
-}
-
 export default async function NavBar() {
-  const displayName = await getLoggedInDisplayName();
+  // One cached viewer lookup (shared with the page render via React cache())
+  // carries displayName too - this component used to run its own identical
+  // players SELECT before every page could even start streaming.
   const viewer = await getViewerContext();
+  const displayName = viewer.displayName;
   const sectionLinks = await getVisibleSectionLinks(viewer);
   const allLinks = [...links, ...sectionLinks.map((s) => ({ href: `/sections/${s.slug}`, label: s.name }))];
 

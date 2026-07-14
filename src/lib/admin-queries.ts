@@ -185,16 +185,20 @@ export async function adminSetRestrictedPlayerIds(
   if (!REVEALABLE_TABLES.has(entityType)) return;
   await ensureSchema();
   const db = getDb();
-  await db.execute({
-    sql: "DELETE FROM entity_player_access WHERE entity_type = ? AND entity_id = ?",
-    args: [entityType, entityId],
-  });
-  for (const playerId of playerIds) {
-    await db.execute({
-      sql: "INSERT INTO entity_player_access (id, campaign_id, entity_type, entity_id, player_id) VALUES (?,?,?,?,?)",
-      args: [newId(), campaignId, entityType, entityId, playerId],
-    });
-  }
+  // Single batch = one round trip (and atomic), instead of 1 + N executes.
+  await db.batch(
+    [
+      {
+        sql: "DELETE FROM entity_player_access WHERE entity_type = ? AND entity_id = ?",
+        args: [entityType, entityId],
+      },
+      ...playerIds.map((playerId) => ({
+        sql: "INSERT INTO entity_player_access (id, campaign_id, entity_type, entity_id, player_id) VALUES (?,?,?,?,?)",
+        args: [newId(), campaignId, entityType, entityId, playerId],
+      })),
+    ],
+    "write"
+  );
 }
 
 // ---- Moons ------------------------------------------------------------
@@ -442,13 +446,16 @@ export async function adminUpsertCharacter(campaignId: string, input: CharacterI
     });
   }
   if (input.factionIds) {
-    await db.execute({ sql: "DELETE FROM character_factions WHERE character_id = ?", args: [charId] });
-    for (const factionId of input.factionIds) {
-      await db.execute({
-        sql: "INSERT INTO character_factions (id, character_id, faction_id) VALUES (?,?,?)",
-        args: [newId(), charId, factionId],
-      });
-    }
+    await db.batch(
+      [
+        { sql: "DELETE FROM character_factions WHERE character_id = ?", args: [charId] },
+        ...input.factionIds.map((factionId) => ({
+          sql: "INSERT INTO character_factions (id, character_id, faction_id) VALUES (?,?,?)",
+          args: [newId(), charId, factionId],
+        })),
+      ],
+      "write"
+    );
   }
   if (input.restrictedPlayerIds !== undefined) {
     await adminSetRestrictedPlayerIds(campaignId, "characters", charId, input.restrictedPlayerIds);
@@ -608,13 +615,16 @@ export async function adminUpsertStoryline(campaignId: string, input: StorylineI
     });
   }
   if (input.characterIds) {
-    await db.execute({ sql: "DELETE FROM storyline_characters WHERE storyline_id = ?", args: [storyId] });
-    for (const characterId of input.characterIds) {
-      await db.execute({
-        sql: "INSERT INTO storyline_characters (id, storyline_id, character_id) VALUES (?,?,?)",
-        args: [newId(), storyId, characterId],
-      });
-    }
+    await db.batch(
+      [
+        { sql: "DELETE FROM storyline_characters WHERE storyline_id = ?", args: [storyId] },
+        ...input.characterIds.map((characterId) => ({
+          sql: "INSERT INTO storyline_characters (id, storyline_id, character_id) VALUES (?,?,?)",
+          args: [newId(), storyId, characterId],
+        })),
+      ],
+      "write"
+    );
   }
   if (input.restrictedPlayerIds !== undefined) {
     await adminSetRestrictedPlayerIds(campaignId, "storylines", storyId, input.restrictedPlayerIds);
@@ -752,13 +762,16 @@ export async function adminUpsertTimelineEvent(campaignId: string, input: Timeli
     });
   }
   if (input.characterIds) {
-    await db.execute({ sql: "DELETE FROM timeline_event_characters WHERE event_id = ?", args: [eventId] });
-    for (const characterId of input.characterIds) {
-      await db.execute({
-        sql: "INSERT INTO timeline_event_characters (id, event_id, character_id) VALUES (?,?,?)",
-        args: [newId(), eventId, characterId],
-      });
-    }
+    await db.batch(
+      [
+        { sql: "DELETE FROM timeline_event_characters WHERE event_id = ?", args: [eventId] },
+        ...input.characterIds.map((characterId) => ({
+          sql: "INSERT INTO timeline_event_characters (id, event_id, character_id) VALUES (?,?,?)",
+          args: [newId(), eventId, characterId],
+        })),
+      ],
+      "write"
+    );
   }
   if (input.restrictedPlayerIds !== undefined) {
     await adminSetRestrictedPlayerIds(campaignId, "timeline_events", eventId, input.restrictedPlayerIds);
@@ -1605,19 +1618,25 @@ export async function adminUpsertArticle(
  */
 async function syncArticleReferences(articleId: string, fields: TemplateField[], data: ArticleData): Promise<void> {
   const db = getDb();
-  await db.execute({ sql: "DELETE FROM article_references WHERE article_id = ?", args: [articleId] });
+  // Collect every INSERT first, then ship the DELETE + INSERTs as one atomic
+  // batch (one round trip, instead of 1 + one per reference id).
+  const inserts: { sql: string; args: (string | null)[] }[] = [];
   for (const field of fields) {
     if (field.fieldType !== "reference" || !field.referenceTargetType) continue;
     const raw = data[field.key];
     const ids = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
     for (const targetId of ids) {
       if (!targetId) continue;
-      await db.execute({
+      inserts.push({
         sql: "INSERT INTO article_references (id, article_id, field_id, target_type, target_id) VALUES (?,?,?,?,?)",
         args: [newId(), articleId, field.id, field.referenceTargetType, targetId],
       });
     }
   }
+  await db.batch(
+    [{ sql: "DELETE FROM article_references WHERE article_id = ?", args: [articleId] }, ...inserts],
+    "write"
+  );
 }
 
 export async function adminDeleteArticle(campaignId: string, id: string): Promise<void> {

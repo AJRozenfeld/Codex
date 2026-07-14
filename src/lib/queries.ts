@@ -47,7 +47,7 @@ import type {
 // unfiltered, scoped explicitly by an admin-selected campaignId.)
 // ---------------------------------------------------------------------------
 
-const ANONYMOUS: ViewerContext = { playerId: null, username: null, campaignId: null };
+const ANONYMOUS: ViewerContext = { playerId: null, username: null, displayName: null, campaignId: null };
 
 async function filterByPlayerAccess<T extends { id: string }>(
   entityType: string,
@@ -448,33 +448,41 @@ export async function search(query: string, viewer: ViewerContext = ANONYMOUS): 
   if (!query.trim()) return [];
   const db = getDb();
   const like = `%${query.trim()}%`;
-  const results: SearchResult[] = [];
 
-  for (const t of SEARCH_TABLES) {
-    const likeClauses = t.textCols.map((c) => `${c} LIKE ?`).concat([`${t.titleCol} LIKE ?`]).join(" OR ");
-    const args = [viewer.campaignId, ...t.textCols.map(() => like), like];
-    const rows = await db.execute({
-      sql: `SELECT id, slug, ${t.titleCol}, ${t.textCols[0]} AS snippet_col FROM ${t.table} WHERE revealed = 1 AND campaign_id = ? AND (${likeClauses}) LIMIT 20`,
-      args,
-    });
-    let matches = rows.rows.map((row) => ({
-      id: row.id as string,
-      slug: row.slug as string,
-      title: row[t.titleCol] as string,
-      snippet: (row.snippet_col as string) ?? "",
-    }));
-    matches = await filterByPlayerAccess(t.entityType, matches, viewer.playerId);
-    for (const m of matches) {
-      const snippet = resolveGmTags(m.snippet, viewer.username);
-      // If the only match was inside a now-stripped GM tag, don't surface it.
-      if (!snippet.toLowerCase().includes(query.trim().toLowerCase()) && !m.title.toLowerCase().includes(query.trim().toLowerCase())) {
-        continue;
+  // PERFORMANCE: all six entity tables are searched in parallel (they're
+  // fully independent), so the wall-clock cost is one table's round trips
+  // instead of six tables' worth in a row. Result ordering is unchanged -
+  // Promise.all preserves SEARCH_TABLES order, and results are concatenated
+  // in that same order below.
+  const perTable = await Promise.all(
+    SEARCH_TABLES.map(async (t) => {
+      const likeClauses = t.textCols.map((c) => `${c} LIKE ?`).concat([`${t.titleCol} LIKE ?`]).join(" OR ");
+      const args = [viewer.campaignId, ...t.textCols.map(() => like), like];
+      const rows = await db.execute({
+        sql: `SELECT id, slug, ${t.titleCol}, ${t.textCols[0]} AS snippet_col FROM ${t.table} WHERE revealed = 1 AND campaign_id = ? AND (${likeClauses}) LIMIT 20`,
+        args,
+      });
+      let matches = rows.rows.map((row) => ({
+        id: row.id as string,
+        slug: row.slug as string,
+        title: row[t.titleCol] as string,
+        snippet: (row.snippet_col as string) ?? "",
+      }));
+      matches = await filterByPlayerAccess(t.entityType, matches, viewer.playerId);
+      const tableResults: SearchResult[] = [];
+      for (const m of matches) {
+        const snippet = resolveGmTags(m.snippet, viewer.username);
+        // If the only match was inside a now-stripped GM tag, don't surface it.
+        if (!snippet.toLowerCase().includes(query.trim().toLowerCase()) && !m.title.toLowerCase().includes(query.trim().toLowerCase())) {
+          continue;
+        }
+        tableResults.push({ type: t.type, id: m.id, slug: m.slug, title: m.title, snippet });
       }
-      results.push({ type: t.type, id: m.id, slug: m.slug, title: m.title, snippet });
-    }
-  }
+      return tableResults;
+    })
+  );
 
-  return results;
+  return perTable.flat();
 }
 
 // ---------------------------------------------------------------------------
@@ -1073,9 +1081,12 @@ async function attachListsToSections(sections: Section[], viewer: ViewerContext)
     neededGroups.set(summaryGroupKey(l.entityType, l.templateId), { entityType: l.entityType, templateId: l.templateId });
   }
   const summaryMapByGroup = new Map<string, Map<string, ArticleListItemSummary>>();
-  for (const [key, group] of neededGroups) {
-    summaryMapByGroup.set(key, await buildSummariesForType(group.entityType, viewer, group.templateId));
-  }
+  // Each group's summaries come from independent tables - build in parallel.
+  const groupEntries = Array.from(neededGroups.entries());
+  const builtMaps = await Promise.all(
+    groupEntries.map(([, group]) => buildSummariesForType(group.entityType, viewer, group.templateId))
+  );
+  groupEntries.forEach(([key], i) => summaryMapByGroup.set(key, builtMaps[i]));
 
   const listsBySection = new Map<string, ArticleList[]>();
   for (const meta of listMetas) {
@@ -1283,10 +1294,12 @@ export async function getBacklinksForEntity(
 
   const templateIds = Array.from(new Set(articles.map((a) => a.templateId)));
   const templatesById = new Map<string, TemplateWithFields>();
-  for (const templateId of templateIds) {
-    const template = await getTemplateWithFields(templateId);
+  // Independent lookups - fetch all templates in parallel, not one by one.
+  const fetched = await Promise.all(templateIds.map((id) => getTemplateWithFields(id)));
+  templateIds.forEach((templateId, i) => {
+    const template = fetched[i];
     if (template) templatesById.set(templateId, template);
-  }
+  });
 
   const summaries: ArticleListItemSummary[] = [];
   for (const a of articles) {
