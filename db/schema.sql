@@ -13,13 +13,40 @@
 
 PRAGMA foreign_keys = ON;
 
+-- License system (2026-07-16): every campaign belongs to a DM account (a
+-- "license"). The master panel (/master) issues licenses with per-campaign
+-- quotas; the DM claims theirs via a one-time invite link (/claim/<token>),
+-- players join via the DM's shareable /join/<slug> link. The founder
+-- account (see LEGACY_DM_ID in src/lib/db.ts) owns everything that existed
+-- before multi-tenancy and logs in with the ADMIN_PASSWORD master key.
+CREATE TABLE IF NOT EXISTS dm_accounts (
+  id                        TEXT PRIMARY KEY,
+  slug                      TEXT NOT NULL UNIQUE,
+  name                      TEXT NOT NULL,
+  username                  TEXT UNIQUE,
+  password_hash             TEXT,
+  invite_token              TEXT UNIQUE,
+  max_campaigns             INTEGER NOT NULL DEFAULT 1,
+  max_players_per_campaign  INTEGER NOT NULL DEFAULT 8,
+  max_articles_per_campaign INTEGER NOT NULL DEFAULT 200,
+  max_maps_per_campaign     INTEGER NOT NULL DEFAULT 10,
+  is_active                 INTEGER NOT NULL DEFAULT 1,
+  created_at                TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at                TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS campaigns (
   id         TEXT PRIMARY KEY,
+  dm_id      TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
   slug       TEXT NOT NULL UNIQUE,
   name       TEXT NOT NULL,
+  -- Moons are Aviv's homebrew cosmology, not core D&D - hidden by default
+  -- for new campaigns (pre-license campaigns keep theirs via migration).
+  show_moons INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS idx_campaigns_dm ON campaigns(dm_id);
 
 CREATE TABLE IF NOT EXISTS moons (
   id          TEXT PRIMARY KEY,
@@ -235,8 +262,15 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS players (
   id               TEXT PRIMARY KEY,
-  campaign_id      TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
-  username         TEXT NOT NULL UNIQUE,
+  -- License system (2026-07-16): players belong to a DM account; campaign
+  -- assignment is nullable because a player who self-registers via the
+  -- DM's /join/<slug> link starts unassigned until the DM places them.
+  -- Usernames are unique PER DM (see UNIQUE below), not globally - two
+  -- DMs' players can both be "gimli"; they log in via different
+  -- /login/<dm-slug> links so the system knows which DM to look under.
+  dm_id            TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+  campaign_id      TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+  username         TEXT NOT NULL,
   password_hash    TEXT NOT NULL,
   display_name     TEXT NOT NULL,
   character_id     TEXT REFERENCES characters(id) ON DELETE SET NULL,
@@ -246,10 +280,12 @@ CREATE TABLE IF NOT EXISTS players (
   -- to one Codex player account across the whole install.
   discord_user_id  TEXT UNIQUE,
   created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (dm_id, username)
 );
 CREATE INDEX IF NOT EXISTS idx_players_character ON players(character_id);
 CREATE INDEX IF NOT EXISTS idx_players_campaign ON players(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_players_dm ON players(dm_id);
 
 -- ---------------------------------------------------------------------------
 -- Per-player visibility. A revealed entity with zero rows here is visible to

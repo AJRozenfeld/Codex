@@ -1,7 +1,8 @@
 import { cache } from "react";
-import { getDb, ensureSchema, newId, LEGACY_CAMPAIGN_ID } from "./db";
+import { getDb, ensureSchema, newId, LEGACY_CAMPAIGN_ID, LEGACY_DM_ID } from "./db";
 import { slugify } from "./slug";
 import { getAdminSession } from "./auth";
+import { getCurrentDmId, getDmAccount } from "./dm-queries";
 import type { Campaign, InheritableEntityType } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -28,22 +29,35 @@ import type { Campaign, InheritableEntityType } from "./types";
 function rowToCampaign(row: any): Campaign {
   return {
     id: row.id as string,
+    dmId: row.dm_id as string,
     slug: row.slug as string,
     name: row.name as string,
+    showMoons: Boolean(row.show_moons),
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
 }
 
+// License system (2026-07-16): every function here is scoped to the current
+// session's DM account, so one DM can never see or touch another DM's
+// campaigns - same defensive pattern as campaign scoping in admin-queries.
 export async function adminGetCampaigns(): Promise<Campaign[]> {
   await ensureSchema();
-  const r = await getDb().execute("SELECT * FROM campaigns ORDER BY created_at ASC");
+  const dmId = await getCurrentDmId();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM campaigns WHERE dm_id = ? ORDER BY created_at ASC",
+    args: [dmId],
+  });
   return r.rows.map(rowToCampaign);
 }
 
 export async function adminGetCampaign(id: string): Promise<Campaign | null> {
   await ensureSchema();
-  const r = await getDb().execute({ sql: "SELECT * FROM campaigns WHERE id = ?", args: [id] });
+  const dmId = await getCurrentDmId();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM campaigns WHERE id = ? AND dm_id = ?",
+    args: [id, dmId],
+  });
   return r.rows[0] ? rowToCampaign(r.rows[0]) : null;
 }
 
@@ -74,11 +88,22 @@ export interface CreateCampaignInput {
 export async function adminCreateCampaign(input: CreateCampaignInput): Promise<Campaign> {
   await ensureSchema();
   const db = getDb();
+  const dmId = await getCurrentDmId();
+
+  // License quota: campaigns per account.
+  const dm = await getDmAccount(dmId);
+  const countR = await db.execute({ sql: "SELECT COUNT(*) AS n FROM campaigns WHERE dm_id = ?", args: [dmId] });
+  if (dm && Number(countR.rows[0].n) >= dm.maxCampaigns) {
+    throw new Error(`License limit reached: this account can have at most ${dm.maxCampaigns} campaign(s).`);
+  }
+
   const id = newId();
   const slug = await uniqueCampaignSlug(input.name);
+  // show_moons = 0: moons are Aviv's homebrew cosmology, not core D&D - new
+  // campaigns start without that section regardless of which account owns them.
   await db.execute({
-    sql: "INSERT INTO campaigns (id, slug, name) VALUES (?, ?, ?)",
-    args: [id, slug, input.name],
+    sql: "INSERT INTO campaigns (id, dm_id, slug, name, show_moons) VALUES (?, ?, ?, ?, 0)",
+    args: [id, dmId, slug, input.name],
   });
 
   const hasAnySelection =
@@ -95,16 +120,24 @@ export async function adminCreateCampaign(input: CreateCampaignInput): Promise<C
 
 export async function adminRenameCampaign(id: string, name: string): Promise<void> {
   await ensureSchema();
+  const dmId = await getCurrentDmId();
   await getDb().execute({
-    sql: "UPDATE campaigns SET name = ?, updated_at = datetime('now') WHERE id = ?",
-    args: [name, id],
+    sql: "UPDATE campaigns SET name = ?, updated_at = datetime('now') WHERE id = ? AND dm_id = ?",
+    args: [name, id, dmId],
   });
 }
 
 /** Deletes a campaign and every row scoped to it (FK ON DELETE CASCADE handles the rest). */
 export async function adminDeleteCampaign(id: string): Promise<void> {
   await ensureSchema();
-  await getDb().execute({ sql: "DELETE FROM campaigns WHERE id = ?", args: [id] });
+  const dmId = await getCurrentDmId();
+  // Never let a DM delete their last campaign - the admin panel (and
+  // getCurrentCampaignId's fallback) always needs somewhere to land.
+  const countR = await getDb().execute({ sql: "SELECT COUNT(*) AS n FROM campaigns WHERE dm_id = ?", args: [dmId] });
+  if (Number(countR.rows[0].n) <= 1) {
+    throw new Error("You can't delete your only campaign.");
+  }
+  await getDb().execute({ sql: "DELETE FROM campaigns WHERE id = ? AND dm_id = ?", args: [id, dmId] });
 }
 
 // ---------------------------------------------------------------------------
@@ -114,22 +147,50 @@ export async function adminDeleteCampaign(id: string): Promise<void> {
 // "fs"/"path" (used by db.ts to read schema.sql off disk).
 // ---------------------------------------------------------------------------
 
-// PERFORMANCE: cache()d so the session unseal (and, for a fresh session, the
-// campaigns fallback queries) run once per request even though the admin
-// layout AND every admin page both call this on every render.
+// PERFORMANCE: cache()d so the session unseal (and the ownership check) run
+// once per request even though the admin layout AND every admin page both
+// call this on every render.
+// LICENSE SYSTEM: the remembered campaign must belong to the session's DM -
+// a stale id from a different account (e.g. after switching logins in the
+// same browser) silently falls through to the DM's own first campaign.
 export const getCurrentCampaignId = cache(async (): Promise<string> => {
   const session = await getAdminSession();
-  if (session.currentCampaignId) return session.currentCampaignId;
+  const dmId = session.dmId ?? LEGACY_DM_ID;
   await ensureSchema();
   const db = getDb();
-  const legacy = await db.execute({ sql: "SELECT id FROM campaigns WHERE id = ?", args: [LEGACY_CAMPAIGN_ID] });
-  if (legacy.rows[0]) return legacy.rows[0].id as string;
-  const first = await db.execute("SELECT id FROM campaigns ORDER BY created_at ASC LIMIT 1");
-  return first.rows[0] ? (first.rows[0].id as string) : LEGACY_CAMPAIGN_ID;
+  if (session.currentCampaignId) {
+    const owned = await db.execute({
+      sql: "SELECT id FROM campaigns WHERE id = ? AND dm_id = ?",
+      args: [session.currentCampaignId, dmId],
+    });
+    if (owned.rows[0]) return session.currentCampaignId;
+  }
+  const first = await db.execute({
+    sql: "SELECT id FROM campaigns WHERE dm_id = ? ORDER BY created_at ASC LIMIT 1",
+    args: [dmId],
+  });
+  if (first.rows[0]) return first.rows[0].id as string;
+  // Defensive: an account with zero campaigns (shouldn't happen - claiming
+  // creates one, and deleting the last is blocked) still gets a fresh blank
+  // campaign rather than a broken admin panel.
+  const id = newId();
+  await db.execute({
+    sql: "INSERT INTO campaigns (id, dm_id, slug, name, show_moons) VALUES (?,?,?,?,0)",
+    args: [id, dmId, `campaign-${id.slice(0, 8)}`, "New Campaign"],
+  });
+  return id;
 });
 
 export async function setCurrentCampaignId(campaignId: string): Promise<void> {
   const session = await getAdminSession();
+  const dmId = session.dmId ?? LEGACY_DM_ID;
+  await ensureSchema();
+  // Refuse to point the session at a campaign this DM doesn't own.
+  const owned = await getDb().execute({
+    sql: "SELECT id FROM campaigns WHERE id = ? AND dm_id = ?",
+    args: [campaignId, dmId],
+  });
+  if (!owned.rows[0]) return;
   session.currentCampaignId = campaignId;
   await session.save();
 }

@@ -40,6 +40,11 @@ async function switchCampaignAction(campaignId: string) {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const [campaigns, currentCampaignId] = await Promise.all([adminGetCampaigns(), getCurrentCampaignId()]);
+  // Moons are Aviv's homebrew cosmology - the section is hidden for
+  // campaigns that don't use it (every campaign created after the license
+  // system shipped; see campaigns.show_moons).
+  const currentCampaign = campaigns.find((c) => c.id === currentCampaignId);
+  const visibleSections = currentCampaign?.showMoons === false ? sections.filter((s) => s.href !== "/admin/moons") : sections;
 
   return (
     <div className="min-h-screen bg-ink text-parchment">
@@ -57,7 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               DM Console
             </span>
             <nav className="flex flex-wrap gap-4 text-sm text-parchment/70">
-              {sections.map((s) => (
+              {visibleSections.map((s) => (
                 <Link key={s.href} href={s.href} className="hover:text-gold transition-colors">
                   {s.label}
                 </Link>

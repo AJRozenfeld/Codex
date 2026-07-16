@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getIronSession, type SessionOptions } from "iron-session";
-import { sessionOptions, type AdminSessionData } from "@/lib/auth";
+import { sessionOptions, masterSessionOptions, type AdminSessionData, type MasterSessionData } from "@/lib/auth";
 
 // Player sessions reuse the admin session's secret/cookie settings under a
 // different cookie name - duplicated here rather than imported from
@@ -34,7 +34,27 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (pathname === "/login") {
+  // Master (license-issuer) area - its own session, own login page.
+  if (pathname.startsWith("/master")) {
+    if (pathname === "/master/login") {
+      return NextResponse.next();
+    }
+    const response = NextResponse.next();
+    const master = await getIronSession<MasterSessionData>(request, response, masterSessionOptions);
+    if (!master.isMaster) {
+      return NextResponse.redirect(new URL("/master/login", request.url));
+    }
+    return response;
+  }
+
+  // Public entry points: player login (global + per-DM), player
+  // self-registration links, and DM license-claim links.
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname.startsWith("/join/") ||
+    pathname.startsWith("/claim/")
+  ) {
     return NextResponse.next();
   }
 

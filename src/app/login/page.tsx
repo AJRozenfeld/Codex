@@ -1,27 +1,27 @@
 import { redirect } from "next/navigation";
-import { getDb, ensureSchema } from "@/lib/db";
-import { verifyPassword } from "@/lib/password";
+import { LEGACY_DM_ID } from "@/lib/db";
+import { playerLogin } from "@/lib/dm-queries";
 import { getPlayerSession } from "@/lib/player-session";
 
 export const dynamic = "force-dynamic";
 
+// License system (2026-07-16): player usernames are only unique per DM, so
+// a bare /login can't search globally anymore. This page is pinned to the
+// founder account's namespace - Aviv's existing players keep logging in
+// here exactly as before. Other DMs' players use /login/<dm-slug> (linked
+// from their /join/<dm-slug> registration page).
 async function loginAction(formData: FormData) {
   "use server";
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  await ensureSchema();
-  const r = await getDb().execute({
-    sql: "SELECT id, password_hash FROM players WHERE username = ?",
-    args: [username],
-  });
-  const row = r.rows[0];
-  if (!row || !verifyPassword(password, row.password_hash as string)) {
+  const playerId = await playerLogin(LEGACY_DM_ID, username, password);
+  if (!playerId) {
     redirect("/login?error=1");
   }
 
   const session = await getPlayerSession();
-  session.playerId = row.id as string;
+  session.playerId = playerId;
   await session.save();
   redirect("/me");
 }

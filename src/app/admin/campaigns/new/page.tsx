@@ -54,18 +54,24 @@ async function createAction(formData: FormData) {
     if (ids.length > 0) inheritSelections[type] = ids;
   }
 
-  const campaign = await adminCreateCampaign({
-    name,
-    inheritFromCampaignId: inheritFrom,
-    inheritSelections,
-  });
+  let campaign;
+  try {
+    campaign = await adminCreateCampaign({
+      name,
+      inheritFromCampaignId: inheritFrom,
+      inheritSelections,
+    });
+  } catch (err) {
+    // Most likely the license's campaign quota.
+    redirect(`/admin/campaigns/new?error=${encodeURIComponent((err as Error).message)}`);
+  }
 
   // Switch straight into the new campaign so the DM lands somewhere useful.
   await setCurrentCampaignId(campaign.id);
   redirect("/admin");
 }
 
-export default async function NewCampaignPage() {
+export default async function NewCampaignPage({ searchParams }: { searchParams: { error?: string } }) {
   const campaigns = await adminGetCampaigns();
   const entitiesByCampaign: Record<string, Partial<Record<InheritableEntityType, EntityOption[]>>> = {};
   await Promise.all(
@@ -77,6 +83,7 @@ export default async function NewCampaignPage() {
   return (
     <div className="max-w-2xl">
       <h1 className="font-display text-2xl text-gold mb-6">New Campaign</h1>
+      {searchParams?.error && <p className="text-sm text-blood mb-4">{searchParams.error}</p>}
       <NewCampaignForm
         campaigns={campaigns.map((c) => ({ id: c.id, name: c.name }))}
         entitiesByCampaign={entitiesByCampaign}

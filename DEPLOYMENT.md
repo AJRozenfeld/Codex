@@ -87,3 +87,18 @@ content changes, only for code changes.
 If you (or Claude, in a future session) want to change how the site looks
 or add new features, edit the code and push to GitHub — Vercel redeploys
 automatically on every push to your main branch.
+
+## License system (closed beta)
+
+The site is multi-tenant: `/master` is the license-issuer console, gated by
+its own password. Set **`MASTER_PASSWORD`** in the Vercel project's
+environment variables (falls back to a dev-only default locally - never
+leave that in production).
+
+Flow: create a license in `/master` (name + quotas) -> share the one-time
+claim link -> the DM sets username+password there and gets a blank campaign
+-> the DM shares their `/join/<slug>` link with players, who self-register
+and then get assigned to a campaign from `/admin/players`.
+
+The founder account (all pre-license data) still logs into `/admin/login`
+by leaving the username blank and entering `ADMIN_PASSWORD`.

@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminGetPlayers, adminBulkDelete } from "@/lib/admin-queries";
+import {
+  adminGetPlayers,
+  adminBulkDelete,
+  adminGetUnassignedPlayers,
+  adminAssignPlayerToCampaign,
+} from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
+import { getCurrentDmId, getDmAccount } from "@/lib/dm-queries";
 import { BulkActionsBar, RowCheckbox } from "@/components/AdminForm";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +20,32 @@ async function deleteAction(formData: FormData) {
   redirect("/admin/players");
 }
 
-export default async function AdminPlayersPage() {
-  const campaignId = await getCurrentCampaignId();
-  const players = await adminGetPlayers(campaignId);
+async function assignAction(playerId: string) {
+  "use server";
+  const [dmId, campaignId] = await Promise.all([getCurrentDmId(), getCurrentCampaignId()]);
+  try {
+    await adminAssignPlayerToCampaign(dmId, playerId, campaignId);
+  } catch (err) {
+    redirect(`/admin/players?error=${encodeURIComponent((err as Error).message)}`);
+  }
+  redirect("/admin/players");
+}
+
+export default async function AdminPlayersPage({ searchParams }: { searchParams: { error?: string } }) {
+  const [campaignId, dmId] = await Promise.all([getCurrentCampaignId(), getCurrentDmId()]);
+  const [players, unassigned, dm] = await Promise.all([
+    adminGetPlayers(campaignId),
+    adminGetUnassignedPlayers(dmId),
+    getDmAccount(dmId),
+  ]);
+
+  // The shareable self-registration link for this DM's players (license
+  // system, 2026-07-16). Host comes from the request so the link is right
+  // in dev, preview and production alike.
+  const host = headers().get("host") ?? "";
+  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
+  const joinUrl = dm ? `${proto}://${host}/join/${dm.slug}` : null;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -24,9 +54,51 @@ export default async function AdminPlayersPage() {
           + New Player
         </Link>
       </div>
+
+      {joinUrl && (
+        <div className="mb-6 rounded-lg border border-gold/20 bg-void p-4">
+          <p className="text-xs uppercase tracking-widest text-ember/80 mb-1">Your player join link</p>
+          <code className="block text-gold break-all select-all">{joinUrl}</code>
+          <p className="text-xs text-parchment/40 mt-2">
+            Share this with your players - they create their own account there, then you assign them to a
+            campaign below. They log in at <code className="text-gold/70">{`${proto}://${host}/login/${dm!.slug}`}</code>.
+          </p>
+        </div>
+      )}
+
+      {searchParams?.error && <p className="text-sm text-blood mb-4">{searchParams.error}</p>}
+
+      {unassigned.length > 0 && (
+        <div className="mb-6 rounded-lg border border-ember/30 bg-void p-4">
+          <p className="text-xs uppercase tracking-widest text-ember/80 mb-3">
+            Awaiting assignment ({unassigned.length})
+          </p>
+          <ul className="space-y-2">
+            {unassigned.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-4 text-sm">
+                <span className="text-parchment">
+                  {p.displayName} <span className="text-parchment/50">({p.username})</span>
+                </span>
+                <form action={assignAction.bind(null, p.id)}>
+                  <button
+                    type="submit"
+                    className="rounded-full border border-gold/40 text-gold px-3 py-1 text-xs hover:bg-gold/10 hover:border-gold/70 transition-colors"
+                  >
+                    Add to this campaign
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-parchment/40 mt-3">
+            These players registered through your join link. Switch campaigns (top bar) to add them elsewhere.
+          </p>
+        </div>
+      )}
+
       <p className="text-sm text-parchment/50 mb-4">
-        Create one account per player. Link each account to their character so their
-        sheet and personalized view are ready as soon as they log in.
+        Accounts in this campaign. Link each account to their character so their sheet and personalized view
+        are ready as soon as they log in.
       </p>
       <form>
         <BulkActionsBar deleteAction={deleteAction} />

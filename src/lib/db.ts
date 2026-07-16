@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // v2: license system - dm_accounts, campaigns.dm_id/show_moons, players.dm_id
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
@@ -197,6 +197,10 @@ export function newId(): string {
 // ---------------------------------------------------------------------------
 
 export const LEGACY_CAMPAIGN_ID = "00000000-0000-0000-0000-000000000001";
+/** The founder DM account (license system, 2026-07-16). Owns every campaign
+ *  and player that existed before multi-tenancy; unlimited quotas; logs in
+ *  with the ADMIN_PASSWORD master key rather than a per-account password. */
+export const LEGACY_DM_ID = "00000000-0000-0000-0000-0000000000d0";
 const LEGACY_CAMPAIGN_SLUG = "erendyl";
 const LEGACY_CAMPAIGN_NAME = "Erendyl";
 
@@ -428,11 +432,38 @@ const REBUILD_SPECS: RebuildSpec[] = [
 ];
 
 async function runMigrations(db: Client): Promise<void> {
-  // Make sure the legacy campaign exists before anything references it.
+  // License system (2026-07-16): the founder DM account must exist before
+  // campaigns/players reference it. Unlimited quotas.
   await db.execute({
-    sql: "INSERT OR IGNORE INTO campaigns (id, slug, name) VALUES (?, ?, ?)",
-    args: [LEGACY_CAMPAIGN_ID, LEGACY_CAMPAIGN_SLUG, LEGACY_CAMPAIGN_NAME],
+    sql: `INSERT OR IGNORE INTO dm_accounts (id, slug, name, max_campaigns, max_players_per_campaign, max_articles_per_campaign, max_maps_per_campaign)
+          VALUES (?, ?, ?, 999999, 999999, 999999, 999999)`,
+    args: [LEGACY_DM_ID, "erendyl", "Founder (Aviv)"],
   });
+
+  // Make sure the legacy campaign exists before anything references it -
+  // inserting through whichever column shape this database currently has.
+  if (await hasColumn(db, "campaigns", "dm_id")) {
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO campaigns (id, dm_id, slug, name, show_moons) VALUES (?, ?, ?, ?, 1)",
+      args: [LEGACY_CAMPAIGN_ID, LEGACY_DM_ID, LEGACY_CAMPAIGN_SLUG, LEGACY_CAMPAIGN_NAME],
+    });
+  } else {
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO campaigns (id, slug, name) VALUES (?, ?, ?)",
+      args: [LEGACY_CAMPAIGN_ID, LEGACY_CAMPAIGN_SLUG, LEGACY_CAMPAIGN_NAME],
+    });
+    // Pre-license campaigns keep their moons (DEFAULT 1 backfills existing
+    // rows); brand-new databases get DEFAULT 0 from schema.sql instead, and
+    // campaign-creation code always sets show_moons explicitly anyway.
+    // NOTE: SQLite refuses "ADD COLUMN ... REFERENCES ... DEFAULT <non-null>"
+    // in one statement, so migrated databases get dm_id WITHOUT the enforced
+    // FK (fresh databases get the real one from schema.sql). Master-side
+    // deletes cascade explicitly (see masterDeleteDm), so nothing dangles.
+    await db.execute(
+      `ALTER TABLE campaigns ADD COLUMN dm_id TEXT NOT NULL DEFAULT '${LEGACY_DM_ID}'`
+    );
+    await db.execute("ALTER TABLE campaigns ADD COLUMN show_moons INTEGER NOT NULL DEFAULT 1");
+  }
 
   // CRITICAL: with foreign_keys=ON (set at the top of schema.sql), DROPping a
   // table that other tables reference via ON DELETE CASCADE fires those
@@ -619,6 +650,40 @@ async function runMigrations(db: Client): Promise<void> {
     await db.execute("ALTER TABLE creatures ADD COLUMN portrait_path TEXT");
     await db.execute("ALTER TABLE creatures ADD COLUMN source TEXT");
     await db.execute("ALTER TABLE creatures ADD COLUMN stat_block TEXT NOT NULL DEFAULT '{}'");
+  }
+
+  // License system (2026-07-16): players move from a global-unique username
+  // to per-DM uniqueness (UNIQUE(dm_id, username)) and campaign_id becomes
+  // nullable (self-registered players start unassigned). Inline UNIQUE can't
+  // be altered in place, so: the usual drop-and-rebuild dance. foreign_keys
+  // is already OFF from the top of this function. Everything that existed
+  // before multi-tenancy belongs to the founder account.
+  if (!(await hasColumn(db, "players", "dm_id"))) {
+    await db.batch(
+      [
+        `CREATE TABLE players_new (
+          id               TEXT PRIMARY KEY,
+          dm_id            TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+          campaign_id      TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+          username         TEXT NOT NULL,
+          password_hash    TEXT NOT NULL,
+          display_name     TEXT NOT NULL,
+          character_id     TEXT REFERENCES characters(id) ON DELETE SET NULL,
+          discord_user_id  TEXT UNIQUE,
+          created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at       TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (dm_id, username)
+        )`,
+        `INSERT INTO players_new (id, dm_id, campaign_id, username, password_hash, display_name, character_id, discord_user_id, created_at, updated_at)
+         SELECT id, '${LEGACY_DM_ID}', campaign_id, username, password_hash, display_name, character_id, discord_user_id, created_at, updated_at FROM players`,
+        "DROP TABLE players",
+        "ALTER TABLE players_new RENAME TO players",
+        "CREATE INDEX IF NOT EXISTS idx_players_character ON players(character_id)",
+        "CREATE INDEX IF NOT EXISTS idx_players_campaign ON players(campaign_id)",
+        "CREATE INDEX IF NOT EXISTS idx_players_dm ON players(dm_id)",
+      ],
+      "write"
+    );
   }
 
   await db.execute("PRAGMA foreign_keys = ON");

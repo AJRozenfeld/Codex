@@ -1,4 +1,4 @@
-import { getDb, ensureSchema, newId } from "./db";
+import { getDb, ensureSchema, newId, LEGACY_DM_ID } from "./db";
 import { slugify } from "./slug";
 import { hashPassword } from "./password";
 import { uploadMapImage, uploadCharacterPortrait } from "./blob-storage";
@@ -87,6 +87,64 @@ function placeholders(n: number): string {
   return Array.from({ length: n }, () => "?").join(",");
 }
 
+// ---------------------------------------------------------------------------
+// License quotas (2026-07-16). Every campaign's limits come from its owning
+// dm_accounts row. "Articles" means every codex entry a DM posts - the
+// tables below - counted together per campaign. Maps and players have their
+// own per-campaign limits. Moons are excluded (founder-only cosmology), and
+// so are DM-side tools that aren't player-facing codex content (creatures
+// bestiary, scenes, music, templates).
+// ---------------------------------------------------------------------------
+
+const ARTICLE_COUNT_TABLES = [
+  "regions",
+  "locations",
+  "characters",
+  "factions",
+  "storylines",
+  "artifacts",
+  "timeline_events",
+  "sections",
+  "articles",
+];
+
+/** Which quota pool a slug-carrying table's creations draw from. */
+const ARTICLE_QUOTA_TABLES = new Set(ARTICLE_COUNT_TABLES.filter((t) => t !== "timeline_events"));
+
+export async function assertCreateQuota(campaignId: string, kind: "articles" | "maps" | "players"): Promise<void> {
+  const db = getDb();
+  const limitsR = await db.execute({
+    sql: `SELECT d.max_players_per_campaign AS mp, d.max_articles_per_campaign AS ma, d.max_maps_per_campaign AS mm
+          FROM campaigns c JOIN dm_accounts d ON d.id = c.dm_id WHERE c.id = ?`,
+    args: [campaignId],
+  });
+  const limits = limitsR.rows[0];
+  if (!limits) return; // no campaign row - let the write itself surface the real error
+  if (kind === "players") {
+    const n = await db.execute({ sql: "SELECT COUNT(*) AS n FROM players WHERE campaign_id = ?", args: [campaignId] });
+    if (Number(n.rows[0].n) >= Number(limits.mp)) {
+      throw new Error(`License limit reached: this campaign can have at most ${limits.mp} players.`);
+    }
+  } else if (kind === "maps") {
+    const n = await db.execute({ sql: "SELECT COUNT(*) AS n FROM maps WHERE campaign_id = ?", args: [campaignId] });
+    if (Number(n.rows[0].n) >= Number(limits.mm)) {
+      throw new Error(`License limit reached: this campaign can have at most ${limits.mm} maps.`);
+    }
+  } else {
+    const counts = await Promise.all(
+      ARTICLE_COUNT_TABLES.map((t) =>
+        db.execute({ sql: `SELECT COUNT(*) AS n FROM ${t} WHERE campaign_id = ?`, args: [campaignId] })
+      )
+    );
+    const total = counts.reduce((sum, r) => sum + Number(r.rows[0].n), 0);
+    if (total >= Number(limits.ma)) {
+      throw new Error(
+        `License limit reached: this campaign can have at most ${limits.ma} articles (every codex entry counts: characters, locations, factions, storylines, artifacts, regions, timeline events, sections and template articles).`
+      );
+    }
+  }
+}
+
 /** Flips `revealed` (1<->0) for every selected row in one table, scoped to the current campaign. */
 export async function adminBulkToggleRevealed(campaignId: string, table: string, ids: string[]): Promise<void> {
   if (!REVEALABLE_TABLES.has(table) || ids.length === 0) return;
@@ -108,6 +166,14 @@ export async function adminBulkDelete(campaignId: string, table: string, ids: st
 }
 
 async function uniqueSlug(campaignId: string, table: string, base: string, excludeId?: string): Promise<string> {
+  // Every content-creation path in this file funnels through here (no
+  // excludeId = a brand-new row), which makes it the single choke point for
+  // the per-campaign license quotas. Timeline events don't carry slugs and
+  // get their own explicit check at their INSERT; moons are exempt.
+  if (!excludeId) {
+    if (ARTICLE_QUOTA_TABLES.has(table)) await assertCreateQuota(campaignId, "articles");
+    else if (table === "maps") await assertCreateQuota(campaignId, "maps");
+  }
   const db = getDb();
   let slug = slugify(base) || "item";
   let n = 1;
@@ -756,6 +822,7 @@ export async function adminUpsertTimelineEvent(campaignId: string, input: Timeli
       args: [input.title, input.description, input.inWorldDate ?? null, input.sortIndex, input.sessionNumber ?? null, input.eventType, input.locationId ?? null, input.storylineId ?? null, input.revealed ? 1 : 0, id, campaignId],
     });
   } else {
+    await assertCreateQuota(campaignId, "articles");
     await db.execute({
       sql: `INSERT INTO timeline_events (id, campaign_id, title, description, in_world_date, sort_index, session_number, event_type, location_id, storyline_id, revealed) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       args: [eventId, campaignId, input.title, input.description, input.inWorldDate ?? null, input.sortIndex, input.sessionNumber ?? null, input.eventType, input.locationId ?? null, input.storylineId ?? null, input.revealed ? 1 : 0],
@@ -798,6 +865,7 @@ export async function adminGetTimelineEventCharacterIds(eventId: string): Promis
 function rowToPlayer(row: any): Player {
   return {
     id: row.id,
+    campaignId: row.campaign_id ?? null,
     username: row.username,
     displayName: row.display_name,
     characterId: row.character_id ?? null,
@@ -855,12 +923,44 @@ export async function adminUpsertPlayer(campaignId: string, input: PlayerInput, 
     return id;
   }
   if (!input.password) throw new Error("Password is required when creating a new player account.");
+  await assertCreateQuota(campaignId, "players");
+  // Players belong to the campaign's owning DM (license system) - usernames
+  // are unique within that DM's namespace, enforced by UNIQUE(dm_id, username).
+  const dmR = await db.execute({ sql: "SELECT dm_id FROM campaigns WHERE id = ?", args: [campaignId] });
+  const dmId = (dmR.rows[0]?.dm_id as string) ?? LEGACY_DM_ID;
   const newIdVal = newId();
   await db.execute({
-    sql: `INSERT INTO players (id, campaign_id, username, password_hash, display_name, character_id) VALUES (?,?,?,?,?,?)`,
-    args: [newIdVal, campaignId, input.username, hashPassword(input.password), input.displayName, input.characterId ?? null],
+    sql: `INSERT INTO players (id, dm_id, campaign_id, username, password_hash, display_name, character_id) VALUES (?,?,?,?,?,?,?)`,
+    args: [newIdVal, dmId, campaignId, input.username, hashPassword(input.password), input.displayName, input.characterId ?? null],
   });
   return newIdVal;
+}
+
+/** Players who self-registered via this DM's /join link and are not yet in
+ *  any campaign. Shown on /admin/players with an assign button. */
+export async function adminGetUnassignedPlayers(dmId: string): Promise<Player[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: `SELECT p.*, NULL AS character_name, NULL AS character_slug
+          FROM players p WHERE p.dm_id = ? AND p.campaign_id IS NULL
+          ORDER BY p.created_at ASC`,
+    args: [dmId],
+  });
+  return r.rows.map(rowToPlayer);
+}
+
+/** Puts a self-registered player into one of the DM's campaigns, enforcing
+ *  the per-campaign player quota. */
+export async function adminAssignPlayerToCampaign(dmId: string, playerId: string, campaignId: string): Promise<void> {
+  await ensureSchema();
+  const db = getDb();
+  const owned = await db.execute({ sql: "SELECT id FROM campaigns WHERE id = ? AND dm_id = ?", args: [campaignId, dmId] });
+  if (!owned.rows[0]) return;
+  await assertCreateQuota(campaignId, "players");
+  await db.execute({
+    sql: "UPDATE players SET campaign_id = ?, updated_at = datetime('now') WHERE id = ? AND dm_id = ?",
+    args: [campaignId, playerId, dmId],
+  });
 }
 
 export async function adminDeletePlayer(campaignId: string, id: string): Promise<void> {

@@ -1,7 +1,11 @@
 export interface Campaign {
   id: string;
+  /** Owning DM account (license system, 2026-07-16). */
+  dmId: string;
   slug: string;
   name: string;
+  /** Aviv's homebrew moons cosmology - hidden for new campaigns (not core D&D). */
+  showMoons: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -160,6 +164,8 @@ export interface CharacterSummary {
 
 export interface Player {
   id: string;
+  /** Null = self-registered via the DM's /join link, not yet assigned to a campaign. */
+  campaignId: string | null;
   username: string;
   displayName: string;
   characterId: string | null;

@@ -18,6 +18,10 @@ import { getIronSession, type SessionOptions } from "iron-session";
 
 export interface AdminSessionData {
   isAdmin?: boolean;
+  /** Which DM account (license) this admin session belongs to - set at
+   *  login (2026-07-16). Sessions created before multi-tenancy lack it and
+   *  are treated as the founder account (see getCurrentDmId). */
+  dmId?: string;
   currentCampaignId?: string;
 }
 
@@ -51,5 +55,35 @@ export async function isAdminAuthed(): Promise<boolean> {
 
 export function checkPassword(input: string): boolean {
   const expected = process.env.ADMIN_PASSWORD ?? "erendyl";
+  return input === expected;
+}
+
+// ---------------------------------------------------------------------------
+// Master (license-issuer) auth - a completely separate cookie/session from
+// both the DM admin session and the player session, gating /master. Only
+// Aviv holds MASTER_PASSWORD; DMs never see this area. Kept edge-safe (no
+// db.ts import) for the same middleware reason as everything else here.
+// ---------------------------------------------------------------------------
+
+export interface MasterSessionData {
+  isMaster?: boolean;
+}
+
+export const masterSessionOptions: SessionOptions = {
+  ...sessionOptions,
+  cookieName: "erendyl_master_session",
+};
+
+export async function getMasterSession() {
+  return getIronSession<MasterSessionData>(await cookies(), masterSessionOptions);
+}
+
+export async function isMasterAuthed(): Promise<boolean> {
+  const session = await getMasterSession();
+  return Boolean(session.isMaster);
+}
+
+export function checkMasterPassword(input: string): boolean {
+  const expected = process.env.MASTER_PASSWORD ?? "erendyl-master";
   return input === expected;
 }
