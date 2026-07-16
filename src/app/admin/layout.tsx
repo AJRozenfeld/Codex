@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/auth";
 import { adminGetCampaigns, getCurrentCampaignId, setCurrentCampaignId } from "@/lib/campaign-queries";
+import { getCurrentDmId, getDmAccount } from "@/lib/dm-queries";
 import { CampaignSwitcher } from "@/components/CampaignSwitcher";
 
 const sections = [
@@ -39,7 +40,15 @@ async function switchCampaignAction(campaignId: string) {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [campaigns, currentCampaignId] = await Promise.all([adminGetCampaigns(), getCurrentCampaignId()]);
+  const [campaigns, currentCampaignId, dmId] = await Promise.all([
+    adminGetCampaigns(),
+    getCurrentCampaignId(),
+    getCurrentDmId(),
+  ]);
+  // Whose console is this? Matters most when the master opens a license's
+  // console from /master - the label makes it impossible to edit the wrong
+  // DM's world without noticing.
+  const account = await getDmAccount(dmId);
   // Moons are Aviv's homebrew cosmology - the section is hidden for
   // campaigns that don't use it (every campaign created after the license
   // system shipped; see campaigns.show_moons).
@@ -60,6 +69,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 className="h-6 w-6 object-contain drop-shadow-[0_0_5px_rgba(218,185,98,0.5)]"
               />
               DM Console
+              {account && (
+                <span className="text-[10px] font-body tracking-widest uppercase text-parchment/45 border border-gold/20 rounded-full px-2 py-0.5">
+                  {account.name}
+                </span>
+              )}
             </span>
             <nav className="flex flex-wrap gap-4 text-sm text-parchment/70">
               {visibleSections.map((s) => (

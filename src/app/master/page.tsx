@@ -7,8 +7,11 @@ import {
   masterSetDmActive,
   masterRegenerateInvite,
   masterDeleteDm,
+  masterSetDmPassword,
+  masterListAllCampaigns,
 } from "@/lib/dm-queries";
 import { LEGACY_DM_ID } from "@/lib/db";
+import { getAdminSession, getMasterSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -69,12 +72,47 @@ async function deleteAction(id: string) {
   redirect("/master");
 }
 
+async function setPasswordAction(id: string, formData: FormData) {
+  "use server";
+  const password = String(formData.get("password") ?? "");
+  try {
+    await masterSetDmPassword(id, password);
+  } catch (err) {
+    redirect(`/master?error=${encodeURIComponent((err as Error).message)}`);
+  }
+  redirect("/master?pwset=1");
+}
+
+// Master opens any license's DM console: the admin session is pointed at
+// that dm_id (a master-only superpower - the extra isMaster check inside
+// the action means a forged POST from a non-master can't reach it even
+// though the page itself is already middleware-gated). The admin header
+// shows whose console you're in; log out of /admin or open another license
+// to switch.
+async function openConsoleAction(dmId: string, campaignId: string | null) {
+  "use server";
+  const master = await getMasterSession();
+  if (!master.isMaster) redirect("/master/login");
+  const session = await getAdminSession();
+  session.isAdmin = true;
+  session.dmId = dmId;
+  session.currentCampaignId = campaignId ?? undefined;
+  await session.save();
+  redirect("/admin");
+}
+
 export default async function MasterDashboard({
   searchParams,
 }: {
-  searchParams: { created?: string; error?: string };
+  searchParams: { created?: string; error?: string; pwset?: string };
 }) {
-  const licenses = await masterListDms();
+  const [licenses, allCampaigns] = await Promise.all([masterListDms(), masterListAllCampaigns()]);
+  const campaignsByDm = new Map<string, { id: string; name: string }[]>();
+  for (const c of allCampaigns) {
+    const arr = campaignsByDm.get(c.dmId) ?? [];
+    arr.push({ id: c.id, name: c.name });
+    campaignsByDm.set(c.dmId, arr);
+  }
   const host = headers().get("host") ?? "";
   const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
 
@@ -87,6 +125,7 @@ export default async function MasterDashboard({
       </p>
 
       {searchParams?.error && <p className="text-sm text-blood mb-4">{searchParams.error}</p>}
+      {searchParams?.pwset && <p className="text-sm text-gold mb-4">Password updated.</p>}
 
       <div className="rounded-lg border border-gold/20 bg-void p-5 mb-10">
         <h2 className="font-display text-lg text-gold mb-4">Issue a new license</h2>
@@ -173,6 +212,26 @@ export default async function MasterDashboard({
                 )}
               </div>
 
+              {(campaignsByDm.get(l.id) ?? []).length > 0 && (
+                <div className="mt-3 rounded border border-gold/15 bg-ink p-3">
+                  <p className="text-[10px] uppercase tracking-widest text-ember/80 mb-2">
+                    Campaigns ({(campaignsByDm.get(l.id) ?? []).length})
+                  </p>
+                  <ul className="space-y-1.5">
+                    {(campaignsByDm.get(l.id) ?? []).map((c) => (
+                      <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-parchment/80">{c.name}</span>
+                        <form action={openConsoleAction.bind(null, l.id, c.id)}>
+                          <button type="submit" className="rounded-full border border-gold/40 text-gold px-3 py-0.5 text-xs hover:bg-gold/10 hover:border-gold/70 transition-colors">
+                            Open in DM Console
+                          </button>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {claimUrl && (
                 <div className="mt-3 rounded border border-ember/30 bg-ink p-3">
                   <p className="text-xs uppercase tracking-widest text-ember/80 mb-1">One-time claim link (share with the DM)</p>
@@ -209,6 +268,24 @@ export default async function MasterDashboard({
                         Save
                       </button>
                     </div>
+                  </form>
+                  <form action={setPasswordAction.bind(null, l.id)} className="flex items-end gap-3 mt-4">
+                    <label className="block flex-1 max-w-xs">
+                      <span className="block text-[10px] uppercase tracking-widest text-ember/80 mb-1">
+                        Set new password{l.username ? ` for ${l.username}` : " (once claimed)"}
+                      </span>
+                      <input
+                        type="password"
+                        name="password"
+                        minLength={6}
+                        required
+                        autoComplete="new-password"
+                        className="w-full rounded bg-ink border border-gold/30 px-2 py-1.5 text-sm text-parchment"
+                      />
+                    </label>
+                    <button type="submit" className="rounded-full border border-ember/50 text-ember px-4 py-1.5 text-xs hover:bg-ember/10">
+                      Reset Password
+                    </button>
                   </form>
                 </details>
               )}

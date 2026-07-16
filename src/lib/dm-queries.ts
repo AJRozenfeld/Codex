@@ -192,6 +192,28 @@ export async function masterRegenerateInvite(id: string): Promise<string> {
   return token;
 }
 
+/** Master sets/resets a license's DM password directly (beta support tool -
+ *  "I forgot my password" without waiting for a self-serve reset flow). The
+ *  founder account has no per-account password (it uses the ADMIN_PASSWORD
+ *  master key), so it's refused here. */
+export async function masterSetDmPassword(id: string, password: string): Promise<void> {
+  if (id === LEGACY_DM_ID) throw new Error("The founder account logs in with the master password.");
+  if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+  await ensureSchema();
+  await getDb().execute({
+    sql: "UPDATE dm_accounts SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
+    args: [hashPassword(password), id],
+  });
+}
+
+/** Every campaign across every license, for the master dashboard's
+ *  per-license campaign listings. */
+export async function masterListAllCampaigns(): Promise<{ id: string; dmId: string; name: string }[]> {
+  await ensureSchema();
+  const r = await getDb().execute("SELECT id, dm_id, name FROM campaigns ORDER BY created_at ASC");
+  return r.rows.map((row) => ({ id: row.id as string, dmId: row.dm_id as string, name: row.name as string }));
+}
+
 /** Deletes the license and, via ON DELETE CASCADE from campaigns.dm_id and
  *  players.dm_id, every campaign and player under it. The founder account
  *  refuses deletion outright. */
