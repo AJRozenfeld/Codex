@@ -1,11 +1,32 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { stageCampaignImport } from "@/lib/campaign-io/import";
+import { getCurrentDmId } from "@/lib/dm-queries";
+import { LEGACY_DM_ID } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+// CLOSED BETA (2026-07-16, Aviv's call): campaign import is founder-only.
+// Licensed DMs have no real use for it yet, and it bypassed the per-campaign
+// article quota - disabling it closes that hole until the community sharing
+// / marketplace system (see IDEA_BOARD) gives imports a proper quota-aware
+// path. The guard sits on the page AND inside every server action, so a
+// crafted POST can't slip past a hidden link.
+function ImportDisabledNote() {
+  return (
+    <div className="max-w-2xl">
+      <h1 className="font-display text-2xl text-gold mb-3">Import Campaign</h1>
+      <p className="text-sm text-parchment/60">
+        Campaign import is disabled during the closed beta. It&apos;s coming back once the
+        community sharing system ships - for now, build your world right here in the codex.
+      </p>
+    </div>
+  );
+}
+
 async function uploadAction(formData: FormData) {
   "use server";
+  if ((await getCurrentDmId()) !== LEGACY_DM_ID) redirect("/admin/campaigns");
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     redirect("/admin/campaigns/import?error=nofile");
@@ -21,7 +42,8 @@ async function uploadAction(formData: FormData) {
   redirect(`/admin/campaigns/import/${stagingId}`);
 }
 
-export default function CampaignImportPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function CampaignImportPage({ searchParams }: { searchParams: { error?: string } }) {
+  if ((await getCurrentDmId()) !== LEGACY_DM_ID) return <ImportDisabledNote />;
   return (
     <div className="max-w-2xl">
       <div className="flex items-center justify-between mb-2">

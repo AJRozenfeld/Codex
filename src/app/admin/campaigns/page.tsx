@@ -8,6 +8,8 @@ import {
   setCurrentCampaignId,
 } from "@/lib/campaign-queries";
 import { Field } from "@/components/AdminForm";
+import { getCurrentDmId } from "@/lib/dm-queries";
+import { LEGACY_DM_ID } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,8 @@ async function deleteAction(id: string, formData: FormData) {
 export default async function CampaignsPage() {
   const campaigns = await adminGetCampaigns();
   const currentId = await getCurrentCampaignId();
+  // CLOSED BETA: import is founder-only (quota bypass; see import/page.tsx).
+  const isFounder = (await getCurrentDmId()) === LEGACY_DM_ID;
 
   return (
     <div className="max-w-2xl">
@@ -44,9 +48,11 @@ export default async function CampaignsPage() {
           <Link href="/admin/campaigns/export" className="text-sm text-gold hover:underline">
             Export Campaign
           </Link>
-          <Link href="/admin/campaigns/import" className="text-sm text-gold hover:underline">
-            Import Campaign
-          </Link>
+          {isFounder && (
+            <Link href="/admin/campaigns/import" className="text-sm text-gold hover:underline">
+              Import Campaign
+            </Link>
+          )}
           <Link href="/admin/campaigns/new" className="rounded-full bg-gold/90 text-ink px-4 py-2 text-sm font-medium hover:bg-gold">
             + New Campaign
           </Link>

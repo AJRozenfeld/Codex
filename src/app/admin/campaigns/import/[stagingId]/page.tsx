@@ -4,10 +4,14 @@ import { adminGetCampaigns, getCurrentCampaignId } from "@/lib/campaign-queries"
 import { getStagedImport, commitCampaignImport, type CommitTarget, type CommitSelection } from "@/lib/campaign-io/import";
 import { ENTITY_TYPES, type EntityTypeKey } from "@/lib/campaign-io/registry";
 import { CampaignImportReviewForm } from "@/components/CampaignImportReviewForm";
+import { getCurrentDmId } from "@/lib/dm-queries";
+import { LEGACY_DM_ID } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+// CLOSED BETA: founder-only, see the note in ../page.tsx.
 export default async function CampaignImportReviewPage({ params }: { params: { stagingId: string } }) {
+  if ((await getCurrentDmId()) !== LEGACY_DM_ID) redirect("/admin/campaigns");
   const { stagingId } = params;
   const staged = await getStagedImport(stagingId);
   if (!staged) notFound();
@@ -16,6 +20,7 @@ export default async function CampaignImportReviewPage({ params }: { params: { s
 
   async function commitAction(formData: FormData) {
     "use server";
+    if ((await getCurrentDmId()) !== LEGACY_DM_ID) redirect("/admin/campaigns");
     const mode = String(formData.get("mode") ?? "existing") as "existing" | "new";
     const target: CommitTarget =
       mode === "new"
