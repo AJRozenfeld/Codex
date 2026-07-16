@@ -76,12 +76,16 @@ export async function getDmBySlug(slug: string): Promise<DmAccount | null> {
 
 /** DM login for /admin/login. Returns the account id on success, null on any
  *  failure (unknown username, unclaimed account, wrong password, deactivated
- *  license) - the caller shows one generic error, no oracle. */
+ *  license) - the caller shows one generic error, no oracle.
+ *  Username matching is case-insensitive (COLLATE NOCASE): "Gandalf" claimed
+ *  on a laptop must still log in as "gandalf" typed on a phone that didn't
+ *  auto-capitalize - this exact mismatch locked out the first invited beta
+ *  DM (2026-07-16). Passwords stay case-sensitive, obviously. */
 export async function dmLogin(username: string, password: string): Promise<string | null> {
   await ensureSchema();
   const r = await getDb().execute({
-    sql: "SELECT id, password_hash, is_active FROM dm_accounts WHERE username = ?",
-    args: [username],
+    sql: "SELECT id, password_hash, is_active FROM dm_accounts WHERE username = ? COLLATE NOCASE",
+    args: [username.trim()],
   });
   const row = r.rows[0];
   if (!row || !row.password_hash) return null;
@@ -261,8 +265,10 @@ export async function claimDmAccount(
     return { ok: false, error: "Username must be 3-32 characters: letters, numbers, _ . -" };
   }
   if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
+  // NOCASE so "Gandalf" and "gandalf" can't be two different DM accounts -
+  // login matching is case-insensitive, so storage uniqueness must be too.
   const taken = await db.execute({
-    sql: "SELECT id FROM dm_accounts WHERE username = ? AND id != ?",
+    sql: "SELECT id FROM dm_accounts WHERE username = ? COLLATE NOCASE AND id != ?",
     args: [uname, account.id],
   });
   if (taken.rows[0]) return { ok: false, error: "That username is taken - pick another." };
@@ -308,7 +314,7 @@ export async function registerPlayer(
   if (!dname) return { ok: false, error: "Display name is required." };
   if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
   const taken = await db.execute({
-    sql: "SELECT id FROM players WHERE dm_id = ? AND username = ?",
+    sql: "SELECT id FROM players WHERE dm_id = ? AND username = ? COLLATE NOCASE",
     args: [dm.id, uname],
   });
   if (taken.rows[0]) return { ok: false, error: "That username is taken in this DM's game - pick another." };
@@ -328,7 +334,7 @@ export async function registerPlayer(
 export async function playerLogin(dmId: string, username: string, password: string): Promise<string | null> {
   await ensureSchema();
   const r = await getDb().execute({
-    sql: "SELECT id, password_hash FROM players WHERE dm_id = ? AND username = ?",
+    sql: "SELECT id, password_hash FROM players WHERE dm_id = ? AND username = ? COLLATE NOCASE",
     args: [dmId, username.trim()],
   });
   const row = r.rows[0];
