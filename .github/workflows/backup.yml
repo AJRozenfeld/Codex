@@ -1,0 +1,47 @@
+# Nightly logical backup of the production Turso database (2026-07-16).
+#
+# Free-tier substitute for point-in-time restore: a full SQL dump every
+# night at 03:00 UTC, kept 90 days as workflow artifacts. Worst-case data
+# loss window is 24h - acceptable for the closed beta, tighten the cron if
+# activity grows.
+#
+# SETUP (one-time, in the GitHub repo):
+#   Settings -> Secrets and variables -> Actions -> New repository secret:
+#     DATABASE_URL         - the production Turso URL (libsql://...)
+#     DATABASE_AUTH_TOKEN  - the matching auth token
+#
+# Manual backup any time: Actions tab -> "Nightly database backup" -> Run
+# workflow. Download: the run's artifact. Restore: see DEPLOYMENT.md.
+name: Nightly database backup
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
+        run: |
+          mkdir -p backup-out
+          npx tsx db/backup.ts > "backup-out/codex-backup-$(date -u +%Y-%m-%d).sql"
+          gzip -9 backup-out/*.sql
+          ls -lh backup-out/
+      - name: Store backup artifact (90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-backup-${{ github.run_id }}
+          path: backup-out/
+          retention-days: 90
+          if-no-files-found: error

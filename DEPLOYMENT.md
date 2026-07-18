@@ -102,3 +102,32 @@ and then get assigned to a campaign from `/admin/players`.
 
 The founder account (all pre-license data) still logs into `/admin/login`
 by leaving the username blank and entering `ADMIN_PASSWORD`.
+
+## Database backups (free-tier plan)
+
+No Turso subscription needed: `.github/workflows/backup.yml` dumps the whole
+database nightly (03:00 UTC) and stores it as a GitHub Actions artifact for
+90 days. Worst-case loss window: 24 hours.
+
+**One-time setup:** GitHub repo -> Settings -> Secrets and variables ->
+Actions -> add `DATABASE_URL` and `DATABASE_AUTH_TOKEN` (same values as
+Vercel's). Then trigger one manual run (Actions tab -> Nightly database
+backup -> Run workflow) to confirm it's green.
+
+**Restore drill** (do this once BEFORE you need it for real):
+1. Download a backup artifact, `gunzip` it.
+2. Create a scratch database: `turso db create codex-restore-test` (or any
+   empty libsql target), grab its URL + token.
+3. `DATABASE_URL=<scratch-url> DATABASE_AUTH_TOKEN=<token> npm run restore -- codex-backup-YYYY-MM-DD.sql`
+4. Point a local dev server at the scratch db and click around. If it looks
+   like your world, the drill passed.
+
+**Real disaster:** same as the drill, but restore into a fresh production
+database and swap Vercel's `DATABASE_URL`/`DATABASE_AUTH_TOKEN` to it, then
+redeploy. `--force` exists for restoring over a non-empty database; it DROPS
+everything there first - read the warning in `db/restore.ts` before using it.
+
+Note: portrait/map images live in Vercel Blob, not the database - the dump
+holds their URLs. Blob storage carries its own durability; a blob-mirroring
+job can come later if the beta grows.
+

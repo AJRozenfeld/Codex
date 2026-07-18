@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx db/seed.ts"
+    "seed": "tsx db/seed.ts",
+    "backup": "tsx db/backup.ts",
+    "restore": "tsx db/restore.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
