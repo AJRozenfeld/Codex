@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
 import { SHEET_VARIABLES, newActionRoll, describeActionRoll } from "@/lib/character-sheet-shared";
 import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "@/lib/types";
@@ -24,6 +24,7 @@ export function CharacterSheetForm({
   initialData,
   saveAction,
   rollAction,
+  saved = false,
 }: {
   characterName: string;
   initialData: CharacterSheetData;
@@ -32,8 +33,37 @@ export function CharacterSheetForm({
    *  roll on the campaign's linked Discord server - exactly what a
    *  [[mask]]: *roll x* message does (roll bridge, 2026-07-16). */
   rollAction?: (target: string) => Promise<{ ok: boolean; error?: string }>;
+  /** True when the page was just reached via a successful save redirect
+   *  (?saved=1) - shows the confirmation toast, then cleans the URL. */
+  saved?: boolean;
 }) {
   const [sheet, setSheet] = useState<CharacterSheetData>(initialData);
+  // Save-confirmation toast (2026-07-19): visible for a few seconds after a
+  // successful save; the ?saved=1 marker is stripped from the URL so a
+  // refresh doesn't re-celebrate.
+  const [showSaved, setShowSaved] = useState(saved);
+  useEffect(() => {
+    if (!showSaved) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("saved")) {
+      url.searchParams.delete("saved");
+      window.history.replaceState(null, "", url.toString());
+    }
+    const t = setTimeout(() => setShowSaved(false), 3500);
+    return () => clearTimeout(t);
+  }, [showSaved]);
+  // Spell list vs. editor (2026-07-19): saved spells show as compact rows;
+  // only spells the user is actively editing expand into the full builder.
+  // Fresh spells open expanded, everything else starts collapsed.
+  const [expandedSpells, setExpandedSpells] = useState<Set<string>>(new Set());
+  function toggleSpellExpanded(id: string, open: boolean) {
+    setExpandedSpells((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
 
   function updateAbility(key: AbilityKey, value: number) {
     setSheet((s) => ({ ...s, abilityScores: { ...s.abilityScores, [key]: value } }));
@@ -60,13 +90,12 @@ export function CharacterSheetForm({
     setSheet((s) => ({ ...s, attacks: s.attacks.filter((_, i) => i !== index) }));
   }
   function addSpell() {
+    const id = crypto.randomUUID();
     setSheet((s) => ({
       ...s,
-      spells: [
-        ...s.spells,
-        { id: crypto.randomUUID(), level: 0, name: "", prepared: false, description: "", rolls: [] },
-      ],
+      spells: [...s.spells, { id, level: 0, name: "", prepared: false, description: "", rolls: [] }],
     }));
+    toggleSpellExpanded(id, true);
   }
   function updateSpell(index: number, field: keyof SpellEntry, value: string | number | boolean | ActionRoll[]) {
     setSheet((s) => ({ ...s, spells: s.spells.map((sp, i) => (i === index ? { ...sp, [field]: value } : sp)) }));
@@ -495,7 +524,29 @@ export function CharacterSheetForm({
         </div>
         <div className="space-y-2">
           {sheet.spells.map((sp, i) => (
-            <div key={sp.id} className="rounded-lg border border-gold/15 bg-void/40 p-3 space-y-2">
+            !expandedSpells.has(sp.id) ? (
+              <div key={sp.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                <span className="shrink-0 rounded-full border border-gold/30 text-gold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                  {sp.level > 0 ? `Lv ${sp.level}` : "Cantrip"}
+                </span>
+                <span className="flex-1 text-sm text-parchment truncate">
+                  {sp.name || <span className="text-parchment/40 italic">Unnamed spell</span>}
+                  {sp.prepared && <span className="ml-2 text-[10px] text-gold/70 uppercase tracking-wider">prepared</span>}
+                </span>
+                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                  {sp.rolls.length > 0
+                    ? sp.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
+                    : "no rolls"}
+                </span>
+                {rollAction && sp.rolls.length > 0 && (
+                  <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => toggleSpellExpanded(sp.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                  Edit
+                </button>
+              </div>
+            ) : (
+            <div key={sp.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
               <div className="grid grid-cols-[4rem_1fr_auto_auto_auto] gap-2 items-center">
                 <input
                   type="number"
@@ -552,7 +603,17 @@ export function CharacterSheetForm({
                   + Add Roll
                 </button>
               </div>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => toggleSpellExpanded(sp.id, false)}
+                  className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
+                >
+                  Done
+                </button>
+              </div>
             </div>
+            )
           ))}
           {sheet.spells.length === 0 && <div className="text-xs text-parchment/40">No spells added yet.</div>}
         </div>
@@ -563,6 +624,12 @@ export function CharacterSheetForm({
           Save Character Sheet
         </button>
       </div>
+
+      {showSaved && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg border border-gold/60 bg-void px-5 py-3 shadow-card text-sm text-gold">
+          <span aria-hidden>✓</span> Character sheet saved
+        </div>
+      )}
     </form>
   );
 }

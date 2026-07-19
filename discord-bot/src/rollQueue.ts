@@ -1,5 +1,5 @@
 import type { Client, Guild, TextChannel } from "discord.js";
-import { ChannelType } from "discord.js";
+import { ChannelType, EmbedBuilder } from "discord.js";
 import {
   fetchPendingRollRequests,
   resolveRollRequest,
@@ -97,9 +97,28 @@ async function processOnce(client: Client): Promise<void> {
           continue;
         }
         const results = (spell.rolls as ActionRollSpec[]).map((spec) => computeActionRoll(sheet, spec));
-        const parts = results.map((r) => `${r.label}: **${r.total}** (${r.breakdown})`).join(" · ");
         const spellName = typeof spell.name === "string" && spell.name ? spell.name : "a spell";
-        await channel.send(`✨ **${character.name}** casts **${spellName}** — ${parts}`);
+        const level = typeof spell.level === "number" ? spell.level : 0;
+        const description = typeof spell.description === "string" ? spell.description.trim() : "";
+        // A proper spell card (Aviv's call, 2026-07-19): gold-trimmed embed
+        // with the description as flavor and one field per roll.
+        const embed = new EmbedBuilder()
+          .setColor(0xdab962)
+          .setAuthor({
+            name: `${character.name} casts...`,
+            ...(character.portraitPath ? { iconURL: character.portraitPath } : {}),
+          })
+          .setTitle(`✨ ${spellName}`)
+          .setFooter({ text: level > 0 ? `Level ${level} spell` : "Cantrip" })
+          .addFields(
+            results.map((r) => ({
+              name: `🎲 ${r.label}`,
+              value: `**${r.total}**\n${r.breakdown}`.slice(0, 1024),
+              inline: true,
+            }))
+          );
+        if (description) embed.setDescription(`*${description.slice(0, 350)}${description.length > 350 ? "…" : ""}*`);
+        await channel.send({ embeds: [embed] });
         await resolveRollRequest(req.id, "done");
         continue;
       }

@@ -9,7 +9,7 @@ import type { CharacterSheetData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function MyCharacterSheetPage() {
+export default async function MyCharacterSheetPage({ searchParams }: { searchParams: { saved?: string } }) {
   const session = await getPlayerSession();
   if (!session.playerId) redirect("/login");
 
@@ -48,7 +48,7 @@ export default async function MyCharacterSheetPage() {
       redirect("/me/sheet");
     }
     await saveCharacterSheet(characterId, parsed!);
-    redirect("/me/sheet");
+    redirect("/me/sheet?saved=1");
   }
 
   // Roll bridge (2026-07-16): the d20 buttons. Ownership is re-verified
@@ -74,7 +74,7 @@ export default async function MyCharacterSheetPage() {
       <div className="mt-4 mb-6">
         <h1 className="font-display text-2xl text-gold">Character Sheet</h1>
       </div>
-      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} />
+      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} saved={Boolean(searchParams?.saved)} />
     </div>
   );
 }

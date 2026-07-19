@@ -9,7 +9,13 @@ import type { CharacterSheetData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCharacterSheetPage({ params }: { params: { id: string } }) {
+export default async function AdminCharacterSheetPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { saved?: string };
+}) {
   const campaignId = await getCurrentCampaignId();
   const character = await adminGetCharacter(campaignId, params.id);
   if (!character) notFound();
@@ -26,7 +32,7 @@ export default async function AdminCharacterSheetPage({ params }: { params: { id
       redirect(`/admin/characters/${params.id}/sheet`);
     }
     await saveCharacterSheet(params.id, parsed!);
-    redirect(`/admin/characters/${params.id}/sheet`);
+    redirect(`/admin/characters/${params.id}/sheet?saved=1`);
   }
 
   // Roll bridge (2026-07-16): the DM may roll for any character in the
@@ -47,7 +53,7 @@ export default async function AdminCharacterSheetPage({ params }: { params: { id
       <div className="mt-4 mb-6">
         <h1 className="font-display text-2xl text-gold">Character Sheet: {character.name}</h1>
       </div>
-      <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} />
+      <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} saved={Boolean(searchParams?.saved)} />
     </div>
   );
 }
