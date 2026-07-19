@@ -144,3 +144,89 @@ export function computeRoll(sheet: Record<string, unknown> | null, trigger: Roll
 export function computeInitiative(sheet: Record<string, unknown> | null): RollComputation {
   return computeRoll(sheet, { raw: "*init*", target: "dex", isSkill: false, label: "Initiative" });
 }
+
+// ---------------------------------------------------------------------------
+// Action rolls (Action Creator v1, 2026-07-19). Executes the roll
+// expressions defined on character-sheet spell entries: count d die +
+// modifier, where any slot may be a sheet-variable key. THE VARIABLE KEYS
+// ARE A STABLE CONTRACT with SHEET_VARIABLES in the website's
+// src/lib/character-sheet-shared.ts - change them in both places or not at
+// all. Sanity clamps keep a mistyped "[strScore]d[strScore]" from rolling
+// three hundred dice into the channel.
+// ---------------------------------------------------------------------------
+
+export interface ActionRollSpec {
+  id?: string;
+  label?: string;
+  count: number | string;
+  die: number | string;
+  modifier: number | string;
+}
+
+function sheetAbilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
+export function resolveSheetVariable(sheet: Record<string, unknown> | null, key: string): number | null {
+  if (!sheet) return null;
+  const scores = (sheet.abilityScores as Record<string, number>) ?? {};
+  const abilities = ["str", "dex", "con", "int", "wis", "cha"];
+  for (const a of abilities) {
+    if (key === `${a}Mod`) return sheetAbilityModifier(scores[a] ?? 10);
+    if (key === `${a}Score`) return scores[a] ?? 10;
+  }
+  const prof = (sheet.proficiencyBonus as number) ?? 2;
+  const castAbility = (sheet.spellcastingAbility as string) ?? "";
+  const spellMod = castAbility ? sheetAbilityModifier(scores[castAbility] ?? 10) : 0;
+  switch (key) {
+    case "prof": return prof;
+    case "spellMod": return spellMod;
+    case "spellAttack": return spellMod + prof;
+    case "spellDC": return 8 + prof + spellMod;
+    case "level": {
+      const m = String(sheet.classLevel ?? "").match(/\d+/);
+      return m ? Number(m[0]) : 1;
+    }
+    case "ac": return (sheet.armorClass as number) ?? 10;
+    default: return null;
+  }
+}
+
+function resolvePart(sheet: Record<string, unknown> | null, part: number | string): { value: number; note: string | null } {
+  if (typeof part === "number") return { value: part, note: null };
+  const resolved = resolveSheetVariable(sheet, part);
+  if (resolved === null) return { value: 0, note: `unknown variable "${part}" treated as 0` };
+  return { value: resolved, note: null };
+}
+
+export interface ActionRollResult {
+  label: string;
+  total: number;
+  breakdown: string;
+}
+
+/** Rolls one action-roll expression against a sheet. Clamps: 1-40 dice,
+ *  d2-d1000, modifier -999..999 - generous for real systems, fatal to typos. */
+export function computeActionRoll(sheet: Record<string, unknown> | null, spec: ActionRollSpec): ActionRollResult {
+  const notes: string[] = [];
+  const countR = resolvePart(sheet, spec.count);
+  const dieR = resolvePart(sheet, spec.die);
+  const modR = resolvePart(sheet, spec.modifier);
+  for (const r of [countR, dieR, modR]) if (r.note) notes.push(r.note);
+
+  const count = Math.min(40, Math.max(1, Math.floor(countR.value) || 1));
+  const die = Math.min(1000, Math.max(2, Math.floor(dieR.value) || 2));
+  const modifier = Math.min(999, Math.max(-999, Math.floor(modR.value) || 0));
+  if (count !== countR.value && typeof spec.count !== "string") notes.push(`dice count clamped to ${count}`);
+
+  const dice: number[] = [];
+  for (let i = 0; i < count; i++) dice.push(Math.floor(Math.random() * die) + 1);
+  const sum = dice.reduce((a, b) => a + b, 0);
+  const total = sum + modifier;
+
+  const diceShown = dice.length <= 10 ? dice.join(",") : `${dice.slice(0, 10).join(",")},…`;
+  const modStr = modifier === 0 ? "" : modifier > 0 ? `+${modifier}` : `${modifier}`;
+  let breakdown = `${count}d${die}(${diceShown})${modStr}`;
+  if (notes.length) breakdown += ` [${notes.join("; ")}]`;
+  return { label: spec.label || "Roll", total, breakdown };
+}

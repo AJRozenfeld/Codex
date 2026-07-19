@@ -38,8 +38,23 @@ export async function requestSheetRoll(
   target: string
 ): Promise<{ ok: boolean; error?: string }> {
   await ensureSchema();
-  const normalized = target.trim().toLowerCase();
-  if (!ROLLABLE_TARGETS.has(normalized)) return { ok: false, error: "Unknown roll target." };
+  const trimmed = target.trim();
+  let normalized: string;
+  if (trimmed.startsWith("spell:")) {
+    // Action Creator v1 (2026-07-19): "spell:<id>" targets one of the
+    // character's spell entries - validated against the sheet right now so
+    // a stale/forged id fails here, not in the bot. Ids are case-sensitive.
+    normalized = trimmed;
+    const sheet = await loadSheetSpells(characterId);
+    const spell = sheet.find((sp) => `spell:${sp.id}` === trimmed);
+    if (!spell) return { ok: false, error: "That spell no longer exists on this sheet - save the sheet and try again." };
+    if (!Array.isArray(spell.rolls) || spell.rolls.length === 0) {
+      return { ok: false, error: "This spell has no rolls defined." };
+    }
+  } else {
+    normalized = trimmed.toLowerCase();
+    if (!ROLLABLE_TARGETS.has(normalized)) return { ok: false, error: "Unknown roll target." };
+  }
 
   const db = getDb();
   const ch = await db.execute({ sql: "SELECT campaign_id, name FROM characters WHERE id = ?", args: [characterId] });
@@ -68,4 +83,22 @@ export async function requestSheetRoll(
     args: [newId(), campaignId, characterId, normalized],
   });
   return { ok: true };
+}
+
+/** The character's saved spell entries, raw from the sheet blob (no merge -
+ *  unsaved client-side edits are invisible here by design: casting requires
+ *  a saved sheet, which the cast button's placement inside the form makes
+ *  naturally true after the first save). */
+async function loadSheetSpells(characterId: string): Promise<{ id?: string; rolls?: unknown[] }[]> {
+  const r = await getDb().execute({
+    sql: "SELECT data FROM character_sheets WHERE character_id = ?",
+    args: [characterId],
+  });
+  if (!r.rows[0]) return [];
+  try {
+    const data = JSON.parse(r.rows[0].data as string);
+    return Array.isArray(data.spells) ? data.spells : [];
+  } catch {
+    return [];
+  }
 }

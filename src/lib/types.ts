@@ -361,10 +361,40 @@ export interface AttackEntry {
   damage: string;
 }
 
+// ---------------------------------------------------------------------------
+// Action rolls (Action Creator v1, 2026-07-19). A roll expression is
+// "count d die + modifier" where EVERY slot can be either a literal number
+// or - as a string - the key of a sheet variable (see SHEET_VARIABLES in
+// character-sheet-shared.ts). That covers "1d6 + strMod", "strScore d6"
+// (dice-count-from-stat systems), and "1d strScore" (die-size-from-stat)
+// alike. This little grammar is deliberately the seed of the future
+// configurable sheet engine - keep it stable; the Discord bot mirrors it in
+// discord-bot/src/rolls.ts and the VTT will execute it later.
+// ---------------------------------------------------------------------------
+
+/** A literal number, or a sheet-variable key string (e.g. "strMod", "prof"). */
+export type RollPart = number | string;
+
+export interface ActionRoll {
+  id: string;
+  /** e.g. "To Hit", "Damage", "Healing" - free text. */
+  label: string;
+  count: RollPart;
+  die: RollPart;
+  modifier: RollPart;
+}
+
 export interface SpellEntry {
+  /** Stable id so roll requests can target this spell; backfilled onto
+   *  pre-Action-Creator entries by mergeWithDefaults. */
+  id: string;
   level: number;
   name: string;
   prepared: boolean;
+  /** Player/DM-written rules text, shown on the sheet (Action Creator v1). */
+  description: string;
+  /** Rolls casting performs, in order. Empty = utility spell, no cast button. */
+  rolls: ActionRoll[];
 }
 
 export interface SpellSlotLevel {

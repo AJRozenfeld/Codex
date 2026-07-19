@@ -7,7 +7,7 @@ import {
   getCharacterById,
   getCharacterSheetData,
 } from "./db.js";
-import { triggerForTarget, computeRoll } from "./rolls.js";
+import { triggerForTarget, computeRoll, computeActionRoll, type ActionRollSpec } from "./rolls.js";
 
 // ---------------------------------------------------------------------------
 // The website -> Discord roll bridge (2026-07-16). The character sheet's d20
@@ -62,8 +62,9 @@ async function processOnce(client: Client): Promise<void> {
   const requests = await fetchPendingRollRequests(5);
   for (const req of requests) {
     try {
-      const trigger = triggerForTarget(req.rollTarget);
-      if (!trigger) {
+      const isSpell = req.rollTarget.startsWith("spell:");
+      const trigger = isSpell ? null : triggerForTarget(req.rollTarget);
+      if (!isSpell && !trigger) {
         await resolveRollRequest(req.id, "failed", `unknown target: ${req.rollTarget}`);
         continue;
       }
@@ -83,11 +84,30 @@ async function processOnce(client: Client): Promise<void> {
         continue;
       }
       const sheet = await getCharacterSheetData(req.characterId);
-      const roll = computeRoll(sheet, trigger);
+      if (isSpell) {
+        // Action Creator v1 (2026-07-19): execute every roll the spell
+        // defines, in order, as one message - "To Hit" then "Damage" etc.
+        const spellId = req.rollTarget.slice("spell:".length);
+        const spells = Array.isArray((sheet as Record<string, unknown> | null)?.spells)
+          ? ((sheet as Record<string, unknown>).spells as Record<string, unknown>[])
+          : [];
+        const spell = spells.find((sp) => sp.id === spellId);
+        if (!spell || !Array.isArray(spell.rolls) || spell.rolls.length === 0) {
+          await resolveRollRequest(req.id, "failed", "spell or its rolls not found on saved sheet");
+          continue;
+        }
+        const results = (spell.rolls as ActionRollSpec[]).map((spec) => computeActionRoll(sheet, spec));
+        const parts = results.map((r) => `${r.label}: **${r.total}** (${r.breakdown})`).join(" · ");
+        const spellName = typeof spell.name === "string" && spell.name ? spell.name : "a spell";
+        await channel.send(`✨ **${character.name}** casts **${spellName}** — ${parts}`);
+        await resolveRollRequest(req.id, "done");
+        continue;
+      }
+      const roll = computeRoll(sheet, trigger!);
       // Same voice as a masked *roll x* message - the table shouldn't be
       // able to tell whether the die came from chat or the website sheet.
       await channel.send(
-        `🎲 **${character.name}** — ${trigger.label} Check: **${roll.total}** (${roll.breakdown})`
+        `🎲 **${character.name}** — ${trigger!.label} Check: **${roll.total}** (${roll.breakdown})`
       );
       await resolveRollRequest(req.id, "done");
     } catch (err) {

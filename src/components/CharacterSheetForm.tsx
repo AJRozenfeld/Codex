@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { RollButton } from "./RollButton";
-import type { AbilityKey, AttackEntry, CharacterSheetData, SkillKey, SpellEntry } from "@/lib/types";
+import { SHEET_VARIABLES, newActionRoll, describeActionRoll } from "@/lib/character-sheet-shared";
+import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "@/lib/types";
 import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
 
 const ABILITIES: { key: AbilityKey; label: string }[] = [
@@ -59,10 +60,33 @@ export function CharacterSheetForm({
     setSheet((s) => ({ ...s, attacks: s.attacks.filter((_, i) => i !== index) }));
   }
   function addSpell() {
-    setSheet((s) => ({ ...s, spells: [...s.spells, { level: 0, name: "", prepared: false }] }));
+    setSheet((s) => ({
+      ...s,
+      spells: [
+        ...s.spells,
+        { id: crypto.randomUUID(), level: 0, name: "", prepared: false, description: "", rolls: [] },
+      ],
+    }));
   }
-  function updateSpell(index: number, field: keyof SpellEntry, value: string | number | boolean) {
+  function updateSpell(index: number, field: keyof SpellEntry, value: string | number | boolean | ActionRoll[]) {
     setSheet((s) => ({ ...s, spells: s.spells.map((sp, i) => (i === index ? { ...sp, [field]: value } : sp)) }));
+  }
+  function addSpellRoll(spellIndex: number) {
+    const spell = sheet.spells[spellIndex];
+    const label = spell.rolls.length === 0 ? "To Hit" : spell.rolls.length === 1 ? "Damage" : `Roll ${spell.rolls.length + 1}`;
+    updateSpell(spellIndex, "rolls", [...spell.rolls, newActionRoll(label)]);
+  }
+  function updateSpellRoll(spellIndex: number, rollIndex: number, patch: Partial<ActionRoll>) {
+    const spell = sheet.spells[spellIndex];
+    updateSpell(
+      spellIndex,
+      "rolls",
+      spell.rolls.map((r, i) => (i === rollIndex ? { ...r, ...patch } : r))
+    );
+  }
+  function removeSpellRoll(spellIndex: number, rollIndex: number) {
+    const spell = sheet.spells[spellIndex];
+    updateSpell(spellIndex, "rolls", spell.rolls.filter((_, i) => i !== rollIndex));
   }
   function removeSpell(index: number) {
     setSheet((s) => ({ ...s, spells: s.spells.filter((_, i) => i !== index) }));
@@ -471,22 +495,63 @@ export function CharacterSheetForm({
         </div>
         <div className="space-y-2">
           {sheet.spells.map((sp, i) => (
-            <div key={i} className="grid grid-cols-[4rem_1fr_auto_auto] gap-2 items-center">
-              <input
-                type="number"
-                className={inputCls}
-                value={sp.level}
-                onChange={(e) => updateSpell(i, "level", Number(e.target.value) || 0)}
-                title="Level"
+            <div key={sp.id} className="rounded-lg border border-gold/15 bg-void/40 p-3 space-y-2">
+              <div className="grid grid-cols-[4rem_1fr_auto_auto_auto] gap-2 items-center">
+                <input
+                  type="number"
+                  className={inputCls}
+                  value={sp.level}
+                  onChange={(e) => updateSpell(i, "level", Number(e.target.value) || 0)}
+                  title="Level"
+                />
+                <input className={inputCls} placeholder="Spell name" value={sp.name} onChange={(e) => updateSpell(i, "name", e.target.value)} />
+                <label className="flex items-center gap-1 text-xs text-parchment/70">
+                  <input type="checkbox" className="accent-gold" checked={sp.prepared} onChange={(e) => updateSpell(i, "prepared", e.target.checked)} />
+                  Prepared
+                </label>
+                {rollAction && sp.rolls.length > 0 && (
+                  <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => removeSpell(i)} className="text-blood text-xs hover:underline">
+                  Remove
+                </button>
+              </div>
+              <textarea
+                className={`${inputCls} w-full`}
+                rows={2}
+                placeholder="Spell description - what it does, rules text, flavor..."
+                value={sp.description}
+                onChange={(e) => updateSpell(i, "description", e.target.value)}
               />
-              <input className={inputCls} placeholder="Spell name" value={sp.name} onChange={(e) => updateSpell(i, "name", e.target.value)} />
-              <label className="flex items-center gap-1 text-xs text-parchment/70">
-                <input type="checkbox" className="accent-gold" checked={sp.prepared} onChange={(e) => updateSpell(i, "prepared", e.target.checked)} />
-                Prepared
-              </label>
-              <button type="button" onClick={() => removeSpell(i)} className="text-blood text-xs hover:underline">
-                Remove
-              </button>
+              <div className="space-y-1.5">
+                {sp.rolls.map((roll, ri) => (
+                  <div key={roll.id} className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <input
+                      className={`${inputCls} w-24`}
+                      placeholder="Label"
+                      value={roll.label}
+                      onChange={(e) => updateSpellRoll(i, ri, { label: e.target.value })}
+                      title="What this roll is for (To Hit, Damage...)"
+                    />
+                    <RollPartInput value={roll.count} onChange={(v) => updateSpellRoll(i, ri, { count: v })} title="Number of dice" />
+                    <span className="text-gold font-medium">d</span>
+                    <RollPartInput value={roll.die} onChange={(v) => updateSpellRoll(i, ri, { die: v })} title="Die type" />
+                    <span className="text-gold font-medium">+</span>
+                    <RollPartInput value={roll.modifier} onChange={(v) => updateSpellRoll(i, ri, { modifier: v })} title="Modifier" allowNegative />
+                    <span className="text-parchment/40 ml-1">= {describeActionRoll(roll)}</span>
+                    <button type="button" onClick={() => removeSpellRoll(i, ri)} className="text-blood hover:underline ml-auto">
+                      remove roll
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addSpellRoll(i)}
+                  className="text-xs text-gold/80 hover:text-gold hover:underline"
+                >
+                  + Add Roll
+                </button>
+              </div>
             </div>
           ))}
           {sheet.spells.length === 0 && <div className="text-xs text-parchment/40">No spells added yet.</div>}
@@ -499,5 +564,57 @@ export function CharacterSheetForm({
         </button>
       </div>
     </form>
+  );
+}
+
+// One slot of a roll expression (Action Creator v1): a compact picker that
+// is either a literal number input or a sheet-variable dropdown. Selecting
+// "123" flips back to number mode; anything else is a variable key from
+// SHEET_VARIABLES (see character-sheet-shared.ts - the keys are a stable
+// contract with the Discord bot's resolver).
+function RollPartInput({
+  value,
+  onChange,
+  title,
+  allowNegative = false,
+}: {
+  value: RollPart;
+  onChange: (v: RollPart) => void;
+  title: string;
+  allowNegative?: boolean;
+}) {
+  const isNumber = typeof value === "number";
+  return (
+    <span className="inline-flex items-center gap-1" title={title}>
+      {isNumber && (
+        <input
+          type="number"
+          min={allowNegative ? undefined : 0}
+          className="w-14 rounded bg-void border border-gold/30 px-1.5 py-1 text-parchment text-xs"
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value) || 0)}
+        />
+      )}
+      <select
+        className="rounded bg-void border border-gold/30 px-1 py-1 text-parchment/80 text-xs max-w-28"
+        value={isNumber ? "__number" : (value as string)}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "__number") onChange(isNumber ? value : 1);
+          else onChange(v);
+        }}
+      >
+        <option value="__number">123 (number)</option>
+        {["Modifiers", "Ability scores", "Other"].map((group) => (
+          <optgroup key={group} label={group}>
+            {SHEET_VARIABLES.filter((sv) => sv.group === group).map((sv) => (
+              <option key={sv.key} value={sv.key}>
+                {sv.label}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </span>
   );
 }
