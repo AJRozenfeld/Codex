@@ -12,6 +12,7 @@ import {
 } from "@/lib/dm-queries";
 import { LEGACY_DM_ID } from "@/lib/db";
 import { getAdminSession, getMasterSession } from "@/lib/auth";
+import { siteOrigin } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -113,8 +114,9 @@ export default async function MasterDashboard({
     arr.push({ id: c.id, name: c.name });
     campaignsByDm.set(c.dmId, arr);
   }
-  const host = headers().get("host") ?? "";
-  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
+  // Pinned to SITE_URL when configured - claim links must never inherit a
+  // protected Vercel deployment host (see src/lib/site-url.ts).
+  const origin = siteOrigin(headers().get("host"));
 
   return (
     <div>
@@ -161,7 +163,7 @@ export default async function MasterDashboard({
       <div className="space-y-6">
         {licenses.map((l) => {
           const isFounder = l.id === LEGACY_DM_ID;
-          const claimUrl = l.inviteToken ? `${proto}://${host}/claim/${l.inviteToken}` : null;
+          const claimUrl = l.inviteToken ? `${origin}/claim/${l.inviteToken}` : null;
           const justCreated = searchParams?.created === l.id;
           return (
             <div

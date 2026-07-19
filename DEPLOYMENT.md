@@ -131,3 +131,16 @@ Note: portrait/map images live in Vercel Blob, not the database - the dump
 holds their URLs. Blob storage carries its own durability; a blob-mirroring
 job can come later if the beta grows.
 
+
+## SITE_URL (shareable links)
+
+Set **`SITE_URL`** in Vercel's environment variables to the site's real
+public address (e.g. `https://your-codex.vercel.app` or your custom
+domain). Every shareable link the panels generate (player join links,
+player login links, license claim links) is pinned to it.
+
+Without it, links are built from whatever host you happen to be browsing
+on - and Vercel *deployment* URLs (`codex-git-main-xxxx.vercel.app`) sit
+behind Vercel's own Deployment Protection login, so a player following
+such a link hits a Vercel SSO screen and "requests access to your
+deployments" instead of the registration page.

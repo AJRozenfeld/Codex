@@ -10,6 +10,7 @@ import {
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { getCurrentDmId, getDmAccount } from "@/lib/dm-queries";
 import { BulkActionsBar, RowCheckbox } from "@/components/AdminForm";
+import { siteOrigin } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -39,12 +40,12 @@ export default async function AdminPlayersPage({ searchParams }: { searchParams:
     getDmAccount(dmId),
   ]);
 
-  // The shareable self-registration link for this DM's players (license
-  // system, 2026-07-16). Host comes from the request so the link is right
-  // in dev, preview and production alike.
-  const host = headers().get("host") ?? "";
-  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
-  const joinUrl = dm ? `${proto}://${host}/join/${dm.slug}` : null;
+  // The shareable self-registration link for this DM's players. Pinned to
+  // SITE_URL when configured so browsing the panel via a protected Vercel
+  // deployment URL can never leak that host into a player's invite (see
+  // src/lib/site-url.ts for the incident this prevents).
+  const origin = siteOrigin(headers().get("host"));
+  const joinUrl = dm ? `${origin}/join/${dm.slug}` : null;
 
   return (
     <div>
@@ -61,7 +62,7 @@ export default async function AdminPlayersPage({ searchParams }: { searchParams:
           <code className="block text-gold break-all select-all">{joinUrl}</code>
           <p className="text-xs text-parchment/40 mt-2">
             Share this with your players - they create their own account there, then you assign them to a
-            campaign below. They log in at <code className="text-gold/70">{`${proto}://${host}/login/${dm!.slug}`}</code>.
+            campaign below. They log in at <code className="text-gold/70">{`${origin}/login/${dm!.slug}`}</code>.
           </p>
         </div>
       )}
