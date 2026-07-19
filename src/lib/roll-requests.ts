@@ -40,16 +40,19 @@ export async function requestSheetRoll(
   await ensureSchema();
   const trimmed = target.trim();
   let normalized: string;
-  if (trimmed.startsWith("spell:")) {
-    // Action Creator v1 (2026-07-19): "spell:<id>" targets one of the
-    // character's spell entries - validated against the sheet right now so
-    // a stale/forged id fails here, not in the bot. Ids are case-sensitive.
+  const actionKind = trimmed.startsWith("spell:") ? "spells" : trimmed.startsWith("attack:") ? "attacks" : null;
+  if (actionKind) {
+    // Action Creator (2026-07-19/20): "spell:<id>" / "attack:<id>" target an
+    // entry on the character's sheet - validated against the SAVED sheet
+    // right now so a stale/forged id fails here, not in the bot.
     normalized = trimmed;
-    const sheet = await loadSheetSpells(characterId);
-    const spell = sheet.find((sp) => `spell:${sp.id}` === trimmed);
-    if (!spell) return { ok: false, error: "That spell no longer exists on this sheet - save the sheet and try again." };
-    if (!Array.isArray(spell.rolls) || spell.rolls.length === 0) {
-      return { ok: false, error: "This spell has no rolls defined." };
+    const noun = actionKind === "spells" ? "spell" : "weapon";
+    const entries = await loadSheetActions(characterId, actionKind);
+    const prefix = actionKind === "spells" ? "spell:" : "attack:";
+    const entry = entries.find((e) => `${prefix}${e.id}` === trimmed);
+    if (!entry) return { ok: false, error: `That ${noun} no longer exists on this sheet - save the sheet and try again.` };
+    if (!Array.isArray(entry.rolls) || entry.rolls.length === 0) {
+      return { ok: false, error: `This ${noun} has no rolls defined.` };
     }
   } else {
     normalized = trimmed.toLowerCase();
@@ -85,11 +88,13 @@ export async function requestSheetRoll(
   return { ok: true };
 }
 
-/** The character's saved spell entries, raw from the sheet blob (no merge -
- *  unsaved client-side edits are invisible here by design: casting requires
- *  a saved sheet, which the cast button's placement inside the form makes
- *  naturally true after the first save). */
-async function loadSheetSpells(characterId: string): Promise<{ id?: string; rolls?: unknown[] }[]> {
+/** The character's saved spell or weapon entries, raw from the sheet blob
+ *  (no merge - unsaved client-side edits are invisible here by design:
+ *  rolling requires a saved sheet). */
+async function loadSheetActions(
+  characterId: string,
+  key: "spells" | "attacks"
+): Promise<{ id?: string; rolls?: unknown[] }[]> {
   const r = await getDb().execute({
     sql: "SELECT data FROM character_sheets WHERE character_id = ?",
     args: [characterId],
@@ -97,7 +102,7 @@ async function loadSheetSpells(characterId: string): Promise<{ id?: string; roll
   if (!r.rows[0]) return [];
   try {
     const data = JSON.parse(r.rows[0].data as string);
-    return Array.isArray(data.spells) ? data.spells : [];
+    return Array.isArray(data[key]) ? data[key] : [];
   } catch {
     return [];
   }

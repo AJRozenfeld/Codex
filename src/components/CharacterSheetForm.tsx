@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
-import { SHEET_VARIABLES, newActionRoll, describeActionRoll } from "@/lib/character-sheet-shared";
+import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, describeActionRoll } from "@/lib/character-sheet-shared";
 import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "@/lib/types";
 import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
 
@@ -52,9 +52,9 @@ export function CharacterSheetForm({
     const t = setTimeout(() => setShowSaved(false), 3500);
     return () => clearTimeout(t);
   }, [showSaved]);
-  // Spell list vs. editor (2026-07-19): saved spells show as compact rows;
-  // only spells the user is actively editing expand into the full builder.
-  // Fresh spells open expanded, everything else starts collapsed.
+  // Action list vs. editor (2026-07-19): saved spells AND weapons show as
+  // compact rows; only the entry being edited expands into the full builder.
+  // (The set holds uuids from either section - they can't collide.)
   const [expandedSpells, setExpandedSpells] = useState<Set<string>>(new Set());
   function toggleSpellExpanded(id: string, open: boolean) {
     setExpandedSpells((prev) => {
@@ -81,10 +81,30 @@ export function CharacterSheetForm({
     setSheet((s) => ({ ...s, spellSlots: { ...s.spellSlots, [level]: { ...s.spellSlots[level], [field]: value } } }));
   }
   function addAttack() {
-    setSheet((s) => ({ ...s, attacks: [...s.attacks, { name: "", atkBonus: "", damage: "" }] }));
+    const id = crypto.randomUUID();
+    // Fresh weapons come pre-armed with 5e-shaped To Hit + Damage rolls -
+    // every part editable (see newWeaponRolls).
+    setSheet((s) => ({
+      ...s,
+      attacks: [...s.attacks, { id, name: "", description: "", rolls: newWeaponRolls() }],
+    }));
+    toggleSpellExpanded(id, true);
   }
-  function updateAttack(index: number, field: keyof AttackEntry, value: string) {
+  function updateAttack(index: number, field: keyof AttackEntry, value: string | ActionRoll[]) {
     setSheet((s) => ({ ...s, attacks: s.attacks.map((a, i) => (i === index ? { ...a, [field]: value } : a)) }));
+  }
+  function addAttackRoll(attackIndex: number) {
+    const atk = sheet.attacks[attackIndex];
+    const label = atk.rolls.length === 0 ? "To Hit" : atk.rolls.length === 1 ? "Damage" : `Roll ${atk.rolls.length + 1}`;
+    updateAttack(attackIndex, "rolls", [...atk.rolls, newActionRoll(label)]);
+  }
+  function updateAttackRoll(attackIndex: number, rollIndex: number, patch: Partial<ActionRoll>) {
+    const atk = sheet.attacks[attackIndex];
+    updateAttack(attackIndex, "rolls", atk.rolls.map((r, i) => (i === rollIndex ? { ...r, ...patch } : r)));
+  }
+  function removeAttackRoll(attackIndex: number, rollIndex: number) {
+    const atk = sheet.attacks[attackIndex];
+    updateAttack(attackIndex, "rolls", atk.rolls.filter((_, i) => i !== rollIndex));
   }
   function removeAttack(index: number) {
     setSheet((s) => ({ ...s, attacks: s.attacks.filter((_, i) => i !== index) }));
@@ -377,14 +397,65 @@ export function CharacterSheetForm({
         </div>
         <div className="space-y-2">
           {sheet.attacks.map((atk, i) => (
-            <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
-              <input className={inputCls} placeholder="Name" value={atk.name} onChange={(e) => updateAttack(i, "name", e.target.value)} />
-              <input className={inputCls} placeholder="Atk Bonus" value={atk.atkBonus} onChange={(e) => updateAttack(i, "atkBonus", e.target.value)} />
-              <input className={inputCls} placeholder="Damage / Type" value={atk.damage} onChange={(e) => updateAttack(i, "damage", e.target.value)} />
-              <button type="button" onClick={() => removeAttack(i)} className="text-blood text-xs hover:underline">
-                Remove
-              </button>
+            !expandedSpells.has(atk.id) ? (
+              <div key={atk.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                <span className="flex-1 text-sm text-parchment truncate">
+                  {atk.name || <span className="text-parchment/40 italic">Unnamed weapon</span>}
+                </span>
+                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                  {atk.rolls.length > 0
+                    ? atk.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
+                    : "no rolls"}
+                </span>
+                {rollAction && atk.rolls.length > 0 && (
+                  <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => toggleSpellExpanded(atk.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                  Edit
+                </button>
+              </div>
+            ) : (
+            <div key={atk.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+                <input className={inputCls} placeholder="Weapon name" value={atk.name} onChange={(e) => updateAttack(i, "name", e.target.value)} />
+                {rollAction && atk.rolls.length > 0 && (
+                  <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => removeAttack(i)} className="text-blood text-xs hover:underline">
+                  Remove
+                </button>
+              </div>
+              <textarea
+                className={`${inputCls} w-full`}
+                rows={2}
+                placeholder="Properties, range, weight, cost, flavor... (e.g. Martial melee · Versatile (1d10) · 3 lb · 15 gp)"
+                value={atk.description}
+                onChange={(e) => updateAttack(i, "description", e.target.value)}
+              />
+              <div className="space-y-1.5">
+                {atk.rolls.map((roll, ri) => (
+                  <ActionRollEditor
+                    key={roll.id}
+                    roll={roll}
+                    onChange={(patch) => updateAttackRoll(i, ri, patch)}
+                    onRemove={() => removeAttackRoll(i, ri)}
+                  />
+                ))}
+                <button type="button" onClick={() => addAttackRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                  + Add Roll
+                </button>
+              </div>
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => toggleSpellExpanded(atk.id, false)}
+                  className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
+                >
+                  Done
+                </button>
+              </div>
             </div>
+            )
           ))}
           {sheet.attacks.length === 0 && <div className="text-xs text-parchment/40">No attacks added yet.</div>}
         </div>
@@ -576,24 +647,12 @@ export function CharacterSheetForm({
               />
               <div className="space-y-1.5">
                 {sp.rolls.map((roll, ri) => (
-                  <div key={roll.id} className="flex flex-wrap items-center gap-1.5 text-xs">
-                    <input
-                      className={`${inputCls} w-24`}
-                      placeholder="Label"
-                      value={roll.label}
-                      onChange={(e) => updateSpellRoll(i, ri, { label: e.target.value })}
-                      title="What this roll is for (To Hit, Damage...)"
-                    />
-                    <RollPartInput value={roll.count} onChange={(v) => updateSpellRoll(i, ri, { count: v })} title="Number of dice" />
-                    <span className="text-gold font-medium">d</span>
-                    <RollPartInput value={roll.die} onChange={(v) => updateSpellRoll(i, ri, { die: v })} title="Die type" />
-                    <span className="text-gold font-medium">+</span>
-                    <RollPartInput value={roll.modifier} onChange={(v) => updateSpellRoll(i, ri, { modifier: v })} title="Modifier" allowNegative />
-                    <span className="text-parchment/40 ml-1">= {describeActionRoll(roll)}</span>
-                    <button type="button" onClick={() => removeSpellRoll(i, ri)} className="text-blood hover:underline ml-auto">
-                      remove roll
-                    </button>
-                  </div>
+                  <ActionRollEditor
+                    key={roll.id}
+                    roll={roll}
+                    onChange={(patch) => updateSpellRoll(i, ri, patch)}
+                    onRemove={() => removeSpellRoll(i, ri)}
+                  />
                 ))}
                 <button
                   type="button"
@@ -639,6 +698,66 @@ export function CharacterSheetForm({
 // "123" flips back to number mode; anything else is a variable key from
 // SHEET_VARIABLES (see character-sheet-shared.ts - the keys are a stable
 // contract with the Discord bot's resolver).
+// One full roll expression row (Action Creator, 2026-07-20): label, count d
+// die, then ANY number of additive modifier terms - a longsword To Hit is
+// 1d20 + [strMod] + [prof]. Shared by the spell and weapon editors.
+function ActionRollEditor({
+  roll,
+  onChange,
+  onRemove,
+}: {
+  roll: ActionRoll;
+  onChange: (patch: Partial<ActionRoll>) => void;
+  onRemove: () => void;
+}) {
+  const mods = roll.modifiers ?? [];
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+      <input
+        className="w-24 rounded bg-void border border-gold/30 px-1.5 py-1 text-parchment text-xs"
+        placeholder="Label"
+        value={roll.label}
+        onChange={(e) => onChange({ label: e.target.value })}
+        title="What this roll is for (To Hit, Damage...)"
+      />
+      <RollPartInput value={roll.count} onChange={(v) => onChange({ count: v })} title="Number of dice" />
+      <span className="text-gold font-medium">d</span>
+      <RollPartInput value={roll.die} onChange={(v) => onChange({ die: v })} title="Die type" />
+      {mods.map((m, mi) => (
+        <span key={mi} className="inline-flex items-center gap-1">
+          <span className="text-gold font-medium">+</span>
+          <RollPartInput
+            value={m}
+            onChange={(v) => onChange({ modifiers: mods.map((x, xi) => (xi === mi ? v : x)) })}
+            title="Modifier term"
+            allowNegative
+          />
+          <button
+            type="button"
+            onClick={() => onChange({ modifiers: mods.filter((_, xi) => xi !== mi) })}
+            className="text-blood/70 hover:text-blood"
+            title="Remove this modifier term"
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange({ modifiers: [...mods, 0] })}
+        className="text-gold/70 hover:text-gold hover:underline"
+        title="Add a modifier term (number or sheet variable)"
+      >
+        + mod
+      </button>
+      <span className="text-parchment/40 ml-1">= {describeActionRoll(roll)}</span>
+      <button type="button" onClick={onRemove} className="text-blood hover:underline ml-auto">
+        remove roll
+      </button>
+    </div>
+  );
+}
+
 function RollPartInput({
   value,
   onChange,

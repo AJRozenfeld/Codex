@@ -160,7 +160,10 @@ export interface ActionRollSpec {
   label?: string;
   count: number | string;
   die: number | string;
-  modifier: number | string;
+  /** Current shape: any number of additive terms (2026-07-20). */
+  modifiers?: (number | string)[];
+  /** Legacy single-slot shape (2026-07-19) - still honored. */
+  modifier?: number | string;
 }
 
 function sheetAbilityModifier(score: number): number {
@@ -211,21 +214,35 @@ export function computeActionRoll(sheet: Record<string, unknown> | null, spec: A
   const notes: string[] = [];
   const countR = resolvePart(sheet, spec.count);
   const dieR = resolvePart(sheet, spec.die);
-  const modR = resolvePart(sheet, spec.modifier);
-  for (const r of [countR, dieR, modR]) if (r.note) notes.push(r.note);
+  const modParts = Array.isArray(spec.modifiers)
+    ? spec.modifiers
+    : spec.modifier !== undefined
+      ? [spec.modifier]
+      : [];
+  const resolvedMods = modParts.map((m) => resolvePart(sheet, m));
+  for (const r of [countR, dieR, ...resolvedMods]) if (r.note) notes.push(r.note);
 
   const count = Math.min(40, Math.max(1, Math.floor(countR.value) || 1));
   const die = Math.min(1000, Math.max(2, Math.floor(dieR.value) || 2));
-  const modifier = Math.min(999, Math.max(-999, Math.floor(modR.value) || 0));
+  const modifierSum = Math.min(
+    999,
+    Math.max(-999, resolvedMods.reduce((sum, r) => sum + (Math.floor(r.value) || 0), 0))
+  );
   if (count !== countR.value && typeof spec.count !== "string") notes.push(`dice count clamped to ${count}`);
 
   const dice: number[] = [];
   for (let i = 0; i < count; i++) dice.push(Math.floor(Math.random() * die) + 1);
   const sum = dice.reduce((a, b) => a + b, 0);
-  const total = sum + modifier;
+  const total = sum + modifierSum;
 
   const diceShown = dice.length <= 10 ? dice.join(",") : `${dice.slice(0, 10).join(",")},…`;
-  const modStr = modifier === 0 ? "" : modifier > 0 ? `+${modifier}` : `${modifier}`;
+  // Show each term as rolled - "1d20(11)+3+2" reads like the sheet does.
+  const modStr = resolvedMods
+    .map((r) => {
+      const v = Math.floor(r.value) || 0;
+      return v === 0 ? "" : v > 0 ? `+${v}` : `${v}`;
+    })
+    .join("");
   let breakdown = `${count}d${die}(${diceShown})${modStr}`;
   if (notes.length) breakdown += ` [${notes.join("; ")}]`;
   return { label: spec.label || "Roll", total, breakdown };

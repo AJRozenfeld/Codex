@@ -3,7 +3,7 @@
 // CharacterSheetForm without webpack trying to bundle node:fs/node:path from
 // db.ts. Server-side load/save lives in character-sheet.ts, which re-exports
 // everything from this module too.
-import type { ActionRoll, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "./types";
+import type { ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "./types";
 
 export const SKILL_ABILITY: Record<SkillKey, "str" | "dex" | "con" | "int" | "wis" | "cha"> = {
   acrobatics: "dex",
@@ -106,7 +106,7 @@ export function mergeWithDefaults(partial: Partial<CharacterSheetData>): Charact
     skills: { ...base.skills, ...(partial.skills ?? {}) },
     currency: { ...base.currency, ...(partial.currency ?? {}) },
     spellSlots: { ...base.spellSlots, ...(partial.spellSlots ?? {}) },
-    attacks: partial.attacks ?? base.attacks,
+    attacks: (partial.attacks ?? base.attacks).map((atk) => normalizeAttackEntry(atk as Partial<AttackEntry>)),
     spells: (partial.spells ?? base.spells).map((sp) => normalizeSpellEntry(sp as Partial<SpellEntry>)),
   };
 }
@@ -184,9 +184,10 @@ export function formatRollPart(part: RollPart): string {
 }
 
 export function describeActionRoll(roll: ActionRoll): string {
-  const mod = roll.modifier;
-  const modStr = typeof mod === "number" ? (mod === 0 ? "" : mod > 0 ? `+${mod}` : `${mod}`) : `+[${mod}]`;
-  return `${formatRollPart(roll.count)}d${formatRollPart(roll.die)}${modStr}`;
+  const mods = (roll.modifiers ?? [])
+    .map((m) => (typeof m === "number" ? (m === 0 ? "" : m > 0 ? `+${m}` : `${m}`) : `+[${m}]`))
+    .join("");
+  return `${formatRollPart(roll.count)}d${formatRollPart(roll.die)}${mods}`;
 }
 
 export function isKnownVariable(key: string): boolean {
@@ -194,7 +195,52 @@ export function isKnownVariable(key: string): boolean {
 }
 
 export function newActionRoll(label: string): ActionRoll {
-  return { id: crypto.randomUUID(), label, count: 1, die: 20, modifier: 0 };
+  return { id: crypto.randomUUID(), label, count: 1, die: 20, modifiers: [] };
+}
+
+/** Migrates any stored roll to the current shape - notably the one-day-old
+ *  single-`modifier` format (2026-07-19) into the modifiers array. */
+export function normalizeActionRoll(raw: Partial<ActionRoll> & { modifier?: RollPart }): ActionRoll {
+  let modifiers: RollPart[];
+  if (Array.isArray(raw.modifiers)) modifiers = raw.modifiers;
+  else if (raw.modifier !== undefined && raw.modifier !== 0) modifiers = [raw.modifier];
+  else modifiers = [];
+  return {
+    id: typeof raw.id === "string" && raw.id ? raw.id : crypto.randomUUID(),
+    label: typeof raw.label === "string" ? raw.label : "Roll",
+    count: raw.count ?? 1,
+    die: raw.die ?? 20,
+    modifiers,
+  };
+}
+
+/** Sensible starting rolls for a fresh weapon: a 5e-flavored To Hit
+ *  (1d20 + strMod + prof) and Damage (1d6 + strMod) - every part editable,
+ *  so a finesse/ranged/homebrew weapon is two dropdown changes away. */
+export function newWeaponRolls(): ActionRoll[] {
+  return [
+    { id: crypto.randomUUID(), label: "To Hit", count: 1, die: 20, modifiers: ["strMod", "prof"] },
+    { id: crypto.randomUUID(), label: "Damage", count: 1, die: 6, modifiers: ["strMod"] },
+  ];
+}
+
+/** Backfills pre-Action-Creator attack entries. The old shape was three
+ *  free-text fields (name/atkBonus/damage); their text is preserved by
+ *  folding it into the description so nothing a player wrote is lost, and
+ *  the rolls start empty for a proper rebuild. */
+export function normalizeAttackEntry(atk: Partial<AttackEntry> & Record<string, unknown>): AttackEntry {
+  const legacyBits: string[] = [];
+  if (typeof atk.atkBonus === "string" && atk.atkBonus.trim()) legacyBits.push(`Atk ${atk.atkBonus.trim()}`);
+  if (typeof atk.damage === "string" && atk.damage.trim()) legacyBits.push(`Damage ${atk.damage.trim()}`);
+  const baseDescription = typeof atk.description === "string" ? atk.description : "";
+  const description =
+    baseDescription || (legacyBits.length ? legacyBits.join(" \u00B7 ") : "");
+  return {
+    id: typeof atk.id === "string" && atk.id ? atk.id : crypto.randomUUID(),
+    name: typeof atk.name === "string" ? atk.name : "",
+    description,
+    rolls: Array.isArray(atk.rolls) ? (atk.rolls as ActionRoll[]).map(normalizeActionRoll) : [],
+  };
 }
 
 /** Backfills pre-Action-Creator spell entries (no id/description/rolls) so
@@ -206,7 +252,7 @@ export function normalizeSpellEntry(sp: Partial<SpellEntry> & Record<string, unk
     name: typeof sp.name === "string" ? sp.name : "",
     prepared: Boolean(sp.prepared),
     description: typeof sp.description === "string" ? sp.description : "",
-    rolls: Array.isArray(sp.rolls) ? (sp.rolls as ActionRoll[]) : [],
+    rolls: Array.isArray(sp.rolls) ? (sp.rolls as ActionRoll[]).map(normalizeActionRoll) : [],
   };
 }
 

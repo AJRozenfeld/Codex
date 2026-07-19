@@ -356,9 +356,18 @@ export interface SkillProficiency {
 }
 
 export interface AttackEntry {
+  /** Stable id so roll requests can target this weapon (attack:<id>). */
+  id: string;
   name: string;
-  atkBonus: string;
-  damage: string;
+  /** Properties, cost, weight, range, flavor - free text. */
+  description: string;
+  /** The rolls swinging this weapon performs, in order. */
+  rolls: ActionRoll[];
+  /** @deprecated pre-Action-Creator free-text fields - folded into
+   *  description by normalizeAttackEntry, kept optional so old sheet blobs
+   *  still typecheck while being migrated on load. */
+  atkBonus?: string;
+  damage?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -377,11 +386,15 @@ export type RollPart = number | string;
 
 export interface ActionRoll {
   id: string;
-  /** e.g. "To Hit", "Damage", "Healing" - free text. */
+  /** e.g. "To Hit", "Damage (slashing)", "Healing" - free text. */
   label: string;
   count: RollPart;
   die: RollPart;
-  modifier: RollPart;
+  /** Any number of additive terms, each a number or a variable - a longsword
+   *  To Hit is 1d20 + [strMod] + [prof], which a single slot couldn't say.
+   *  (Was a single `modifier` slot for one day, 2026-07-19 - normalizeActionRoll
+   *  migrates old entries.) */
+  modifiers: RollPart[];
 }
 
 export interface SpellEntry {

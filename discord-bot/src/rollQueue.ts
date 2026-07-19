@@ -63,8 +63,10 @@ async function processOnce(client: Client): Promise<void> {
   for (const req of requests) {
     try {
       const isSpell = req.rollTarget.startsWith("spell:");
-      const trigger = isSpell ? null : triggerForTarget(req.rollTarget);
-      if (!isSpell && !trigger) {
+      const isAttack = req.rollTarget.startsWith("attack:");
+      const isAction = isSpell || isAttack;
+      const trigger = isAction ? null : triggerForTarget(req.rollTarget);
+      if (!isAction && !trigger) {
         await resolveRollRequest(req.id, "failed", `unknown target: ${req.rollTarget}`);
         continue;
       }
@@ -84,32 +86,30 @@ async function processOnce(client: Client): Promise<void> {
         continue;
       }
       const sheet = await getCharacterSheetData(req.characterId);
-      if (isSpell) {
-        // Action Creator v1 (2026-07-19): execute every roll the spell
-        // defines, in order, as one message - "To Hit" then "Damage" etc.
-        const spellId = req.rollTarget.slice("spell:".length);
-        const spells = Array.isArray((sheet as Record<string, unknown> | null)?.spells)
-          ? ((sheet as Record<string, unknown>).spells as Record<string, unknown>[])
+      if (isAction) {
+        // Action Creator (2026-07-19/20): execute every roll the spell or
+        // weapon defines, in order, as one themed card.
+        const key = isSpell ? "spells" : "attacks";
+        const entryId = req.rollTarget.slice(isSpell ? "spell:".length : "attack:".length);
+        const entries = Array.isArray((sheet as Record<string, unknown> | null)?.[key])
+          ? ((sheet as Record<string, unknown>)[key] as Record<string, unknown>[])
           : [];
-        const spell = spells.find((sp) => sp.id === spellId);
-        if (!spell || !Array.isArray(spell.rolls) || spell.rolls.length === 0) {
-          await resolveRollRequest(req.id, "failed", "spell or its rolls not found on saved sheet");
+        const entry = entries.find((e) => e.id === entryId);
+        if (!entry || !Array.isArray(entry.rolls) || entry.rolls.length === 0) {
+          await resolveRollRequest(req.id, "failed", `${isSpell ? "spell" : "weapon"} or its rolls not found on saved sheet`);
           continue;
         }
-        const results = (spell.rolls as ActionRollSpec[]).map((spec) => computeActionRoll(sheet, spec));
-        const spellName = typeof spell.name === "string" && spell.name ? spell.name : "a spell";
-        const level = typeof spell.level === "number" ? spell.level : 0;
-        const description = typeof spell.description === "string" ? spell.description.trim() : "";
-        // A proper spell card (Aviv's call, 2026-07-19): gold-trimmed embed
-        // with the description as flavor and one field per roll.
+        const results = (entry.rolls as ActionRollSpec[]).map((spec) => computeActionRoll(sheet, spec));
+        const entryName = typeof entry.name === "string" && entry.name ? entry.name : isSpell ? "a spell" : "a weapon";
+        const description = typeof entry.description === "string" ? entry.description.trim() : "";
+        // Spell cards are gold and sparkle; weapon cards are ember and steel.
         const embed = new EmbedBuilder()
-          .setColor(0xdab962)
+          .setColor(isSpell ? 0xdab962 : 0xc97b4a)
           .setAuthor({
-            name: `${character.name} casts...`,
+            name: `${character.name} ${isSpell ? "casts..." : "attacks with..."}`,
             ...(character.portraitPath ? { iconURL: character.portraitPath } : {}),
           })
-          .setTitle(`✨ ${spellName}`)
-          .setFooter({ text: level > 0 ? `Level ${level} spell` : "Cantrip" })
+          .setTitle(`${isSpell ? "✨" : "⚔️"} ${entryName}`)
           .addFields(
             results.map((r) => ({
               name: `🎲 ${r.label}`,
@@ -117,6 +117,12 @@ async function processOnce(client: Client): Promise<void> {
               inline: true,
             }))
           );
+        if (isSpell) {
+          const level = typeof entry.level === "number" ? entry.level : 0;
+          embed.setFooter({ text: level > 0 ? `Level ${level} spell` : "Cantrip" });
+        } else {
+          embed.setFooter({ text: "Weapon attack" });
+        }
         if (description) embed.setDescription(`*${description.slice(0, 350)}${description.length > 350 ? "…" : ""}*`);
         await channel.send({ embeds: [embed] });
         await resolveRollRequest(req.id, "done");
