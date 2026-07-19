@@ -517,3 +517,67 @@ export async function getSceneForActivation(sceneId: string): Promise<BotSceneDe
     shuffle: !!s.shuffle,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Website -> Discord roll bridge (2026-07-16). The sheet's d20 buttons write
+// rows into roll_requests; rollQueue.ts drains them here.
+// ---------------------------------------------------------------------------
+
+export interface RollRequest {
+  id: string;
+  campaignId: string;
+  characterId: string;
+  rollTarget: string;
+}
+
+/** Oldest pending requests, after expiring anything older than 90s - a
+ *  stale die landing minutes late mid-conversation only confuses the table
+ *  (e.g. after the bot was briefly down). */
+export async function fetchPendingRollRequests(limit = 5): Promise<RollRequest[]> {
+  const db = getDb();
+  await db.execute(
+    `UPDATE roll_requests SET status = 'expired', processed_at = datetime('now')
+     WHERE status = 'pending' AND created_at < datetime('now', '-90 seconds')`
+  );
+  const r = await db.execute({
+    sql: `SELECT id, campaign_id, character_id, roll_target FROM roll_requests
+          WHERE status = 'pending' ORDER BY created_at ASC LIMIT ?`,
+    args: [limit],
+  });
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    campaignId: row.campaign_id as string,
+    characterId: row.character_id as string,
+    rollTarget: row.roll_target as string,
+  }));
+}
+
+export async function resolveRollRequest(id: string, status: "done" | "failed", detail?: string): Promise<void> {
+  await getDb().execute({
+    sql: "UPDATE roll_requests SET status = ?, detail = ?, processed_at = datetime('now') WHERE id = ?",
+    args: [status, detail ?? null, id],
+  });
+}
+
+/** Where this campaign's website-initiated rolls should land. */
+export async function getRollDestination(
+  campaignId: string
+): Promise<{ guildId: string; rollChannelId: string | null } | null> {
+  const r = await getDb().execute({
+    sql: "SELECT guild_id, roll_channel_id FROM guild_links WHERE campaign_id = ? LIMIT 1",
+    args: [campaignId],
+  });
+  const row = r.rows[0];
+  if (!row) return null;
+  return { guildId: row.guild_id as string, rollChannelId: (row.roll_channel_id as string) ?? null };
+}
+
+/** messageHandler calls this on every processed mask message so rolls post
+ *  wherever the table is actually talking (cached caller-side - one write
+ *  only when the channel actually changes). */
+export async function rememberRollChannel(guildId: string, channelId: string): Promise<void> {
+  await getDb().execute({
+    sql: "UPDATE guild_links SET roll_channel_id = ? WHERE guild_id = ?",
+    args: [channelId, guildId],
+  });
+}

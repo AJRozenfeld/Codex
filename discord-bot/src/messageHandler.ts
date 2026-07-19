@@ -1,6 +1,7 @@
 import { Message, PermissionsBitField, TextChannel } from "discord.js";
 import { getCampaignIdForGuild, getCharacterByMask, getOwnedCharacterId, getCharacterSheetData } from "./db.js";
 import { findRollTrigger, computeRoll, computeInitiative } from "./rolls.js";
+import { rememberRollChannel } from "./db.js";
 import { getActiveBattle, recordRollAndRefresh } from "./battle.js";
 
 // ---------------------------------------------------------------------------
@@ -21,6 +22,19 @@ const INIT_PATTERN = /\*init(?:iative)?\*/i;
 const WEBHOOK_NAME = "Erendyl Codex Masks";
 
 const webhookCache = new Map<string, import("discord.js").Webhook>();
+
+// Roll bridge (2026-07-16): remember the last channel each guild's masks
+// speak in, so website-initiated rolls (rollQueue.ts) land there. Cached so
+// the guild_links UPDATE only fires when the channel actually changes.
+const lastRollChannel = new Map<string, string>();
+function trackRollChannel(guildId: string | null, channelId: string) {
+  if (!guildId) return;
+  if (lastRollChannel.get(guildId) === channelId) return;
+  lastRollChannel.set(guildId, channelId);
+  void rememberRollChannel(guildId, channelId).catch(() => {
+    lastRollChannel.delete(guildId); // retry on the next message
+  });
+}
 
 async function getChannelWebhook(channel: TextChannel) {
   const cached = webhookCache.get(channel.id);
@@ -79,6 +93,7 @@ export async function handleMessage(message: Message): Promise<void> {
   }
 
   try {
+    trackRollChannel(message.guildId, message.channel.id);
     const webhook = await getChannelWebhook(message.channel);
     await message.delete();
     await webhook.send({

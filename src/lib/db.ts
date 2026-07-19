@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 2; // v2: license system - dm_accounts, campaigns.dm_id/show_moons, players.dm_id
+const SCHEMA_VERSION = 3; // v3: roll bridge - roll_requests table, guild_links.roll_channel_id
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
@@ -684,6 +684,12 @@ async function runMigrations(db: Client): Promise<void> {
       ],
       "write"
     );
+  }
+
+  // Roll bridge (2026-07-16): guild_links gains the channel website rolls
+  // post to. Plain nullable ADD COLUMN, no constraint gymnastics needed.
+  if (!(await hasColumn(db, "guild_links", "roll_channel_id"))) {
+    await db.execute("ALTER TABLE guild_links ADD COLUMN roll_channel_id TEXT");
   }
 
   await db.execute("PRAGMA foreign_keys = ON");

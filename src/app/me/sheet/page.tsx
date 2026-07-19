@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, ensureSchema } from "@/lib/db";
 import { getPlayerSession } from "@/lib/player-session";
 import { getCharacterSheet, saveCharacterSheet } from "@/lib/character-sheet";
+import { requestSheetRoll } from "@/lib/roll-requests";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
 import type { CharacterSheetData } from "@/lib/types";
 
@@ -50,13 +51,30 @@ export default async function MyCharacterSheetPage() {
     redirect("/me/sheet");
   }
 
+  // Roll bridge (2026-07-16): the d20 buttons. Ownership is re-verified
+  // inside the action - a player may only ever roll for their own character,
+  // no matter what a tampered client sends.
+  async function rollAction(target: string): Promise<{ ok: boolean; error?: string }> {
+    "use server";
+    const activeSession = await getPlayerSession();
+    if (!activeSession.playerId) return { ok: false, error: "Not logged in." };
+    const check = await getDb().execute({
+      sql: "SELECT character_id FROM players WHERE id = ?",
+      args: [activeSession.playerId],
+    });
+    if ((check.rows[0]?.character_id as string | undefined) !== characterId) {
+      return { ok: false, error: "Not your character." };
+    }
+    return requestSheetRoll(characterId, target);
+  }
+
   return (
     <div>
       <Link href="/me" className="text-sm text-parchment/50 hover:text-gold">&larr; Back</Link>
       <div className="mt-4 mb-6">
         <h1 className="font-display text-2xl text-gold">Character Sheet</h1>
       </div>
-      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} />
+      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} />
     </div>
   );
 }

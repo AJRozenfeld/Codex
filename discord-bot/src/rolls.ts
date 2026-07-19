@@ -74,6 +74,21 @@ export function findRollTrigger(text: string): RollTrigger | null {
   return null;
 }
 
+/** Builds a RollTrigger straight from a normalized target key (ability or
+ *  skill) - used by the website roll bridge (rollQueue.ts), which has no
+ *  message text to parse. Same normalization rules as findRollTrigger. */
+export function triggerForTarget(target: string): RollTrigger | null {
+  const key = target.trim().toLowerCase().replace(/\s+/g, "");
+  if (SKILL_TO_ABILITY[key]) {
+    return { raw: key, target: key, isSkill: true, label: SKILL_LABELS[key] };
+  }
+  if (ABILITY_ALIASES[key]) {
+    const ability = ABILITY_ALIASES[key];
+    return { raw: key, target: ability, isSkill: false, label: ABILITY_LABELS[ability] };
+  }
+  return null;
+}
+
 export function rollD20(): number {
   return Math.floor(Math.random() * 20) + 1;
 }

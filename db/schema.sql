@@ -699,10 +699,15 @@ CREATE INDEX IF NOT EXISTS idx_link_codes_campaign ON link_codes(campaign_id);
 -- linked from more than one guild (no UNIQUE on campaign_id), just not the
 -- reverse.
 CREATE TABLE IF NOT EXISTS guild_links (
-  id          TEXT PRIMARY KEY,
-  guild_id    TEXT NOT NULL UNIQUE,
-  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
-  linked_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  id              TEXT PRIMARY KEY,
+  guild_id        TEXT NOT NULL UNIQUE,
+  campaign_id     TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  -- Where website-initiated rolls (roll_requests below) get posted. The bot
+  -- learns this automatically: every [[mask]] message it processes updates
+  -- it to that channel, so rolls always land where the table is talking.
+  -- Falls back to the guild's system channel when NULL (2026-07-16).
+  roll_channel_id TEXT,
+  linked_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_guild_links_campaign ON guild_links(campaign_id);
 
@@ -946,3 +951,23 @@ CREATE TABLE IF NOT EXISTS scene_characters (
 );
 CREATE INDEX IF NOT EXISTS idx_scene_characters_scene ON scene_characters(scene_id);
 CREATE INDEX IF NOT EXISTS idx_scene_characters_character ON scene_characters(character_id);
+
+-- ---------------------------------------------------------------------------
+-- Website -> Discord roll bridge (2026-07-16): the d20 buttons on character
+-- sheets insert a row here; the bot polls every ~1.5s, executes the roll
+-- with the character's sheet (same math as a [[mask]]: *roll x* message),
+-- posts it in the linked guild, and marks the row done. Rows the bot never
+-- reached in 90s expire rather than firing stale - a roll from three
+-- minutes ago landing mid-conversation would only confuse the table.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS roll_requests (
+  id           TEXT PRIMARY KEY,
+  campaign_id  TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  roll_target  TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','done','failed','expired')),
+  detail       TEXT,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  processed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_roll_requests_pending ON roll_requests(status, created_at);

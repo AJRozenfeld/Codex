@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RollButton } from "./RollButton";
 import type { AbilityKey, AttackEntry, CharacterSheetData, SkillKey, SpellEntry } from "@/lib/types";
 import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
 
@@ -21,10 +22,15 @@ export function CharacterSheetForm({
   characterName,
   initialData,
   saveAction,
+  rollAction,
 }: {
   characterName: string;
   initialData: CharacterSheetData;
   saveAction: (formData: FormData) => void;
+  /** When present, every ability and skill gets a d20 button that fires the
+   *  roll on the campaign's linked Discord server - exactly what a
+   *  [[mask]]: *roll x* message does (roll bridge, 2026-07-16). */
+  rollAction?: (target: string) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [sheet, setSheet] = useState<CharacterSheetData>(initialData);
 
@@ -127,6 +133,7 @@ export function CharacterSheetForm({
                 onChange={(e) => updateAbility(key, Number(e.target.value) || 0)}
               />
               <div className="text-gold text-sm">{formatModifier(abilityModifier(sheet.abilityScores[key]))}</div>
+              {rollAction && <RollButton target={key} label={label} rollAction={rollAction} className="mx-auto mt-1" />}
             </div>
           ))}
         </div>
@@ -196,6 +203,7 @@ export function CharacterSheetForm({
                   />
                   <span className="w-10 text-gold">{formatModifier(bonus)}</span>
                   <span className="flex-1">{SKILL_LABELS[key]}</span>
+                  {rollAction && <RollButton target={key} label={SKILL_LABELS[key]} rollAction={rollAction} />}
                   <span className="text-xs text-parchment/40 uppercase">{ability}</span>
                 </div>
               );
