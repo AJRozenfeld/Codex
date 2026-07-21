@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
-import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, describeActionRoll } from "@/lib/character-sheet-shared";
-import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "@/lib/types";
+import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, newCustomAction, describeActionRoll } from "@/lib/character-sheet-shared";
+import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "@/lib/types";
+import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
 import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
 
 const ABILITIES: { key: AbilityKey; label: string }[] = [
@@ -24,6 +25,7 @@ export function CharacterSheetForm({
   initialData,
   saveAction,
   rollAction,
+  livePatchAction,
   saved = false,
 }: {
   characterName: string;
@@ -33,6 +35,10 @@ export function CharacterSheetForm({
    *  roll on the campaign's linked Discord server - exactly what a
    *  [[mask]]: *roll x* message does (roll bridge, 2026-07-16). */
   rollAction?: (target: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Instant persistence of the fast-changing combat values (HP, temp HP,
+   *  death saves, slot usage, long rest) - no full-sheet save needed
+   *  (play-ready sheet, 2026-07-20). */
+  livePatchAction?: (patch: LiveSheetPatch) => Promise<LiveSheetState>;
   /** True when the page was just reached via a successful save redirect
    *  (?saved=1) - shows the confirmation toast, then cleans the URL. */
   saved?: boolean;
@@ -141,6 +147,52 @@ export function CharacterSheetForm({
     setSheet((s) => ({ ...s, spells: s.spells.filter((_, i) => i !== index) }));
   }
 
+  // Custom actions (play-ready sheet, 2026-07-20): class features etc. - same
+  // builder as spells/weapons, third list, custom:<id> roll target.
+  function addCustomAction() {
+    const entry = newCustomAction();
+    setSheet((s) => ({ ...s, customActions: [...s.customActions, entry] }));
+    toggleSpellExpanded(entry.id, true);
+  }
+  function updateCustomAction(index: number, field: keyof CustomAction, value: string | ActionRoll[]) {
+    setSheet((s) => ({ ...s, customActions: s.customActions.map((a, i) => (i === index ? { ...a, [field]: value } : a)) }));
+  }
+  function addCustomRoll(actionIndex: number) {
+    const act = sheet.customActions[actionIndex];
+    updateCustomAction(actionIndex, "rolls", [...act.rolls, newActionRoll(act.rolls.length === 0 ? "Roll" : `Roll ${act.rolls.length + 1}`)]);
+  }
+  function updateCustomRoll(actionIndex: number, rollIndex: number, patch: Partial<ActionRoll>) {
+    const act = sheet.customActions[actionIndex];
+    updateCustomAction(actionIndex, "rolls", act.rolls.map((r, i) => (i === rollIndex ? { ...r, ...patch } : r)));
+  }
+  function removeCustomRoll(actionIndex: number, rollIndex: number) {
+    const act = sheet.customActions[actionIndex];
+    updateCustomAction(actionIndex, "rolls", act.rolls.filter((_, i) => i !== rollIndex));
+  }
+  function removeCustomAction(index: number) {
+    setSheet((s) => ({ ...s, customActions: s.customActions.filter((_, i) => i !== index) }));
+  }
+
+  // Live patch: fire-and-reconcile. Optimistically apply the same clamp the
+  // server will, then sync from the authoritative response (covers e.g. a
+  // heal capped at max HP).
+  async function applyLivePatch(patch: LiveSheetPatch) {
+    if (!livePatchAction) return;
+    try {
+      const next = await livePatchAction(patch);
+      setSheet((s) => ({
+        ...s,
+        hitPointCurrent: next.hitPointCurrent,
+        hitPointTemp: next.hitPointTemp,
+        deathSaveSuccesses: next.deathSaveSuccesses,
+        deathSaveFailures: next.deathSaveFailures,
+        spellSlots: next.spellSlots,
+      }));
+    } catch {
+      // transient - the value simply stays as it was; next click retries
+    }
+  }
+
   const profBonus = Number(sheet.proficiencyBonus) || 0;
   const spellMod = sheet.spellcastingAbility ? abilityModifier(sheet.abilityScores[sheet.spellcastingAbility]) : 0;
   const spellSaveDc = sheet.spellcastingAbility ? 8 + profBonus + spellMod : 0;
@@ -241,11 +293,12 @@ export function CharacterSheetForm({
               const proficient = sheet.savingThrows[key];
               const bonus = abilityModifier(sheet.abilityScores[key]) + (proficient ? profBonus : 0);
               return (
-                <label key={key} className="flex items-center gap-3 text-sm text-parchment/80">
+                <div key={key} className="flex items-center gap-3 text-sm text-parchment/80">
                   <input type="checkbox" className="accent-gold" checked={proficient} onChange={(e) => updateSavingThrow(key, e.target.checked)} />
                   <span className="w-10 text-gold">{formatModifier(bonus)}</span>
-                  <span>{label}</span>
-                </label>
+                  <span className="flex-1">{label}</span>
+                  {rollAction && <RollButton target={`save:${key}`} label={`${label} Save`} rollAction={rollAction} />}
+                </div>
               );
             })}
           </div>
@@ -308,7 +361,10 @@ export function CharacterSheetForm({
           </label>
           <div className="block">
             <span className={labelCls}>Initiative Total</span>
-            <div className="rounded-lg border border-gold/15 px-3 py-2 text-gold">{formatModifier(initiativeTotal)}</div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-lg border border-gold/15 px-3 py-2 text-gold">{formatModifier(initiativeTotal)}</div>
+              {rollAction && <RollButton target="initiative" label="Initiative" rollAction={rollAction} />}
+            </div>
           </div>
           <label className="block">
             <span className={labelCls}>Speed</span>
@@ -357,6 +413,32 @@ export function CharacterSheetForm({
             />
           </label>
         </div>
+
+        {livePatchAction && (
+          <div className="mt-4 rounded-lg border border-gold/20 bg-void/40 p-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="font-display text-2xl text-gold">
+                {sheet.hitPointCurrent}
+                <span className="text-parchment/40 text-lg"> / {sheet.hitPointMax}</span>
+                {sheet.hitPointTemp > 0 && <span className="text-sky-300 text-base ml-2">(+{sheet.hitPointTemp} temp)</span>}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <HpAdjust label="Damage" tone="blood" onApply={(n) => applyLivePatch({ kind: "hp", current: sheet.hitPointCurrent - n })} />
+                <HpAdjust label="Heal" tone="green" onApply={(n) => applyLivePatch({ kind: "hp", current: sheet.hitPointCurrent + n })} />
+                <button
+                  type="button"
+                  onClick={() => applyLivePatch({ kind: "longRest" })}
+                  title="Full HP, all spell slots recovered, death saves cleared"
+                  className="rounded-full border border-gold/40 text-gold px-3 py-1.5 text-xs hover:bg-gold/10"
+                >
+                  🌙 Long Rest
+                </button>
+              </div>
+            </div>
+            <p className="text-[10px] text-parchment/40 mt-2">These save instantly - no need to press Save Character Sheet.</p>
+          </div>
+        )}
+
         <div className="mt-4">
           <span className={labelCls}>Death Saves</span>
           <div className="flex flex-wrap gap-6">
@@ -368,7 +450,11 @@ export function CharacterSheetForm({
                   type="checkbox"
                   className="accent-gold"
                   checked={sheet.deathSaveSuccesses >= n}
-                  onChange={() => setSheet((s) => ({ ...s, deathSaveSuccesses: s.deathSaveSuccesses >= n ? n - 1 : n }))}
+                  onChange={() => {
+                    const v = sheet.deathSaveSuccesses >= n ? n - 1 : n;
+                    if (livePatchAction) applyLivePatch({ kind: "deathSaves", successes: v });
+                    else setSheet((s) => ({ ...s, deathSaveSuccesses: v }));
+                  }}
                 />
               ))}
             </div>
@@ -380,7 +466,11 @@ export function CharacterSheetForm({
                   type="checkbox"
                   className="accent-blood"
                   checked={sheet.deathSaveFailures >= n}
-                  onChange={() => setSheet((s) => ({ ...s, deathSaveFailures: s.deathSaveFailures >= n ? n - 1 : n }))}
+                  onChange={() => {
+                    const v = sheet.deathSaveFailures >= n ? n - 1 : n;
+                    if (livePatchAction) applyLivePatch({ kind: "deathSaves", failures: v });
+                    else setSheet((s) => ({ ...s, deathSaveFailures: v }));
+                  }}
                 />
               ))}
             </div>
@@ -458,6 +548,74 @@ export function CharacterSheetForm({
             )
           ))}
           {sheet.attacks.length === 0 && <div className="text-xs text-parchment/40">No attacks added yet.</div>}
+        </div>
+      </section>
+
+      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-display text-lg text-gold">Actions &amp; Features</h2>
+          <button type="button" onClick={addCustomAction} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+            + Add
+          </button>
+        </div>
+        <p className="text-xs text-parchment/40 mb-4">Class features, breath weapons - anything rollable that isn&apos;t a spell or weapon.</p>
+        <div className="space-y-2">
+          {sheet.customActions.map((act, i) => (
+            !expandedSpells.has(act.id) ? (
+              <div key={act.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                <span className="flex-1 text-sm text-parchment truncate">
+                  {act.name || <span className="text-parchment/40 italic">Unnamed action</span>}
+                </span>
+                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                  {act.rolls.length > 0 ? act.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ") : "no rolls"}
+                </span>
+                {rollAction && act.rolls.length > 0 && (
+                  <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => toggleSpellExpanded(act.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                  Edit
+                </button>
+              </div>
+            ) : (
+            <div key={act.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+                <input className={inputCls} placeholder="Action name (e.g. Second Wind)" value={act.name} onChange={(e) => updateCustomAction(i, "name", e.target.value)} />
+                {rollAction && act.rolls.length > 0 && (
+                  <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                )}
+                <button type="button" onClick={() => removeCustomAction(i)} className="text-blood text-xs hover:underline">
+                  Remove
+                </button>
+              </div>
+              <textarea
+                className={`${inputCls} w-full`}
+                rows={2}
+                placeholder="What it does, recharge, resource cost, flavor..."
+                value={act.description}
+                onChange={(e) => updateCustomAction(i, "description", e.target.value)}
+              />
+              <div className="space-y-1.5">
+                {act.rolls.map((roll, ri) => (
+                  <ActionRollEditor
+                    key={roll.id}
+                    roll={roll}
+                    onChange={(patch) => updateCustomRoll(i, ri, patch)}
+                    onRemove={() => removeCustomRoll(i, ri)}
+                  />
+                ))}
+                <button type="button" onClick={() => addCustomRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                  + Add Roll
+                </button>
+              </div>
+              <div className="text-right">
+                <button type="button" onClick={() => toggleSpellExpanded(act.id, false)} className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10">
+                  Done
+                </button>
+              </div>
+            </div>
+            )
+          ))}
+          {sheet.customActions.length === 0 && <div className="text-xs text-parchment/40">No custom actions yet.</div>}
         </div>
       </section>
 
@@ -582,6 +740,22 @@ export function CharacterSheetForm({
                   onChange={(e) => updateSpellSlot(lvl, "used", Number(e.target.value) || 0)}
                   title="Used"
                 />
+                {livePatchAction && (sheet.spellSlots[lvl]?.total ?? 0) > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1 mt-1">
+                    {Array.from({ length: sheet.spellSlots[lvl].total }, (_, pi) => {
+                      const used = pi < (sheet.spellSlots[lvl]?.used ?? 0);
+                      return (
+                        <button
+                          key={pi}
+                          type="button"
+                          title={used ? "Recover this slot" : "Spend a slot"}
+                          onClick={() => applyLivePatch({ kind: "slot", level: lvl, used: used ? pi : pi + 1 })}
+                          className={`h-3 w-3 rounded-full border transition-colors ${used ? "bg-gold border-gold" : "bg-void border-gold/40 hover:border-gold"}`}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -698,6 +872,36 @@ export function CharacterSheetForm({
 // "123" flips back to number mode; anything else is a variable key from
 // SHEET_VARIABLES (see character-sheet-shared.ts - the keys are a stable
 // contract with the Discord bot's resolver).
+// A small damage/heal entry: a number and an apply button (play-ready
+// sheet). Kept local so its input state doesn't re-render the whole sheet.
+function HpAdjust({ label, tone, onApply }: { label: string; tone: "blood" | "green"; onApply: (n: number) => void }) {
+  const [val, setVal] = useState("");
+  const color = tone === "blood" ? "border-blood/50 text-blood" : "border-green-500/50 text-green-400";
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input
+        type="number"
+        min={0}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        placeholder="0"
+        className="w-14 rounded bg-void border border-gold/30 px-1.5 py-1 text-parchment text-xs text-center"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          const n = Number(val) || 0;
+          if (n > 0) onApply(n);
+          setVal("");
+        }}
+        className={`rounded-full border px-2.5 py-1 text-xs hover:bg-gold/5 ${color}`}
+      >
+        {label}
+      </button>
+    </span>
+  );
+}
+
 // One full roll expression row (Action Creator, 2026-07-20): label, count d
 // die, then ANY number of additive modifier terms - a longsword To Hit is
 // 1d20 + [strMod] + [prof]. Shared by the spell and weapon editors.

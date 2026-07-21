@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { adminGetCharacter } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
-import { getCharacterSheet, saveCharacterSheet } from "@/lib/character-sheet";
+import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
 import type { CharacterSheetData } from "@/lib/types";
@@ -45,6 +45,14 @@ export default async function AdminCharacterSheetPage({
     return requestSheetRoll(params.id, target);
   }
 
+  async function livePatchAction(patch: LiveSheetPatch) {
+    "use server";
+    const cid = await getCurrentCampaignId();
+    const owned = await adminGetCharacter(cid, params.id);
+    if (!owned) throw new Error("Character not found in this campaign.");
+    return patchLiveSheet(params.id, patch);
+  }
+
   return (
     <div>
       <Link href={`/admin/characters/${params.id}`} className="text-sm text-parchment/50 hover:text-gold">
@@ -53,7 +61,7 @@ export default async function AdminCharacterSheetPage({
       <div className="mt-4 mb-6">
         <h1 className="font-display text-2xl text-gold">Character Sheet: {character.name}</h1>
       </div>
-      <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} saved={Boolean(searchParams?.saved)} />
+      <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} saved={Boolean(searchParams?.saved)} />
     </div>
   );
 }

@@ -40,20 +40,34 @@ export async function requestSheetRoll(
   await ensureSchema();
   const trimmed = target.trim();
   let normalized: string;
-  const actionKind = trimmed.startsWith("spell:") ? "spells" : trimmed.startsWith("attack:") ? "attacks" : null;
-  if (actionKind) {
-    // Action Creator (2026-07-19/20): "spell:<id>" / "attack:<id>" target an
-    // entry on the character's sheet - validated against the SAVED sheet
-    // right now so a stale/forged id fails here, not in the bot.
+  const ACTION_KEYS: Record<string, "spells" | "attacks" | "customActions"> = {
+    "spell:": "spells",
+    "attack:": "attacks",
+    "custom:": "customActions",
+  };
+  const prefix = Object.keys(ACTION_KEYS).find((p) => trimmed.startsWith(p));
+  if (prefix) {
+    // Action Creator (2026-07-19/20): spell:/attack:/custom: <id> target an
+    // entry on the SAVED sheet - a stale/forged id fails here, not in the bot.
     normalized = trimmed;
-    const noun = actionKind === "spells" ? "spell" : "weapon";
-    const entries = await loadSheetActions(characterId, actionKind);
-    const prefix = actionKind === "spells" ? "spell:" : "attack:";
+    const kind = ACTION_KEYS[prefix];
+    const noun = kind === "spells" ? "spell" : kind === "attacks" ? "weapon" : "action";
+    const entries = await loadSheetActions(characterId, kind);
     const entry = entries.find((e) => `${prefix}${e.id}` === trimmed);
     if (!entry) return { ok: false, error: `That ${noun} no longer exists on this sheet - save the sheet and try again.` };
     if (!Array.isArray(entry.rolls) || entry.rolls.length === 0) {
       return { ok: false, error: `This ${noun} has no rolls defined.` };
     }
+  } else if (trimmed.startsWith("save:")) {
+    // Saving throw (2026-07-20): save:<ability>. Proficiency is read from the
+    // sheet by the bot; here we only validate the ability key.
+    const ability = trimmed.slice("save:".length).toLowerCase();
+    if (!["str", "dex", "con", "int", "wis", "cha"].includes(ability)) {
+      return { ok: false, error: "Unknown saving throw." };
+    }
+    normalized = `save:${ability}`;
+  } else if (trimmed.toLowerCase() === "initiative") {
+    normalized = "initiative";
   } else {
     normalized = trimmed.toLowerCase();
     if (!ROLLABLE_TARGETS.has(normalized)) return { ok: false, error: "Unknown roll target." };
@@ -93,7 +107,7 @@ export async function requestSheetRoll(
  *  rolling requires a saved sheet). */
 async function loadSheetActions(
   characterId: string,
-  key: "spells" | "attacks"
+  key: "spells" | "attacks" | "customActions"
 ): Promise<{ id?: string; rolls?: unknown[] }[]> {
   const r = await getDb().execute({
     sql: "SELECT data FROM character_sheets WHERE character_id = ?",

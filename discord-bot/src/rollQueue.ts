@@ -7,7 +7,7 @@ import {
   getCharacterById,
   getCharacterSheetData,
 } from "./db.js";
-import { triggerForTarget, computeRoll, computeActionRoll, type ActionRollSpec } from "./rolls.js";
+import { triggerForTarget, computeRoll, computeActionRoll, computeSavingThrow, computeInitiativeFromSheet, type ActionRollSpec } from "./rolls.js";
 
 // ---------------------------------------------------------------------------
 // The website -> Discord roll bridge (2026-07-16). The character sheet's d20
@@ -64,9 +64,12 @@ async function processOnce(client: Client): Promise<void> {
     try {
       const isSpell = req.rollTarget.startsWith("spell:");
       const isAttack = req.rollTarget.startsWith("attack:");
-      const isAction = isSpell || isAttack;
-      const trigger = isAction ? null : triggerForTarget(req.rollTarget);
-      if (!isAction && !trigger) {
+      const isCustom = req.rollTarget.startsWith("custom:");
+      const isAction = isSpell || isAttack || isCustom;
+      const isSave = req.rollTarget.startsWith("save:");
+      const isInit = req.rollTarget === "initiative";
+      const trigger = isAction || isSave || isInit ? null : triggerForTarget(req.rollTarget);
+      if (!isAction && !isSave && !isInit && !trigger) {
         await resolveRollRequest(req.id, "failed", `unknown target: ${req.rollTarget}`);
         continue;
       }
@@ -86,30 +89,49 @@ async function processOnce(client: Client): Promise<void> {
         continue;
       }
       const sheet = await getCharacterSheetData(req.characterId);
+      if (isSave) {
+        const ability = req.rollTarget.slice("save:".length);
+        const roll = computeSavingThrow(sheet, ability);
+        const label = { str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" }[ability] ?? ability;
+        await channel.send(`🛡️ **${character.name}** — ${label} Save: **${roll.total}** (${roll.breakdown})`);
+        await resolveRollRequest(req.id, "done");
+        continue;
+      }
+      if (isInit) {
+        const roll = computeInitiativeFromSheet(sheet);
+        await channel.send(`⚡ **${character.name}** — Initiative: **${roll.total}** (${roll.breakdown})`);
+        await resolveRollRequest(req.id, "done");
+        continue;
+      }
       if (isAction) {
-        // Action Creator (2026-07-19/20): execute every roll the spell or
-        // weapon defines, in order, as one themed card.
-        const key = isSpell ? "spells" : "attacks";
-        const entryId = req.rollTarget.slice(isSpell ? "spell:".length : "attack:".length);
+        // Action Creator (2026-07-19/20): execute every roll the spell,
+        // weapon, or custom action defines, in order, as one themed card.
+        const key = isSpell ? "spells" : isAttack ? "attacks" : "customActions";
+        const prefixLen = (isSpell ? "spell:" : isAttack ? "attack:" : "custom:").length;
+        const entryId = req.rollTarget.slice(prefixLen);
         const entries = Array.isArray((sheet as Record<string, unknown> | null)?.[key])
           ? ((sheet as Record<string, unknown>)[key] as Record<string, unknown>[])
           : [];
         const entry = entries.find((e) => e.id === entryId);
+        const noun = isSpell ? "spell" : isAttack ? "weapon" : "action";
         if (!entry || !Array.isArray(entry.rolls) || entry.rolls.length === 0) {
-          await resolveRollRequest(req.id, "failed", `${isSpell ? "spell" : "weapon"} or its rolls not found on saved sheet`);
+          await resolveRollRequest(req.id, "failed", `${noun} or its rolls not found on saved sheet`);
           continue;
         }
         const results = (entry.rolls as ActionRollSpec[]).map((spec) => computeActionRoll(sheet, spec));
-        const entryName = typeof entry.name === "string" && entry.name ? entry.name : isSpell ? "a spell" : "a weapon";
+        const entryName = typeof entry.name === "string" && entry.name ? entry.name : `a ${noun}`;
         const description = typeof entry.description === "string" ? entry.description.trim() : "";
-        // Spell cards are gold and sparkle; weapon cards are ember and steel.
+        // Spell = gold ✨, weapon = ember ⚔️, custom = green ✦.
+        const color = isSpell ? 0xdab962 : isAttack ? 0xc97b4a : 0x6da56d;
+        const icon = isSpell ? "✨" : isAttack ? "⚔️" : "✦";
+        const verb = isSpell ? "casts..." : isAttack ? "attacks with..." : "uses...";
         const embed = new EmbedBuilder()
-          .setColor(isSpell ? 0xdab962 : 0xc97b4a)
+          .setColor(color)
           .setAuthor({
-            name: `${character.name} ${isSpell ? "casts..." : "attacks with..."}`,
+            name: `${character.name} ${verb}`,
             ...(character.portraitPath ? { iconURL: character.portraitPath } : {}),
           })
-          .setTitle(`${isSpell ? "✨" : "⚔️"} ${entryName}`)
+          .setTitle(`${icon} ${entryName}`)
           .addFields(
             results.map((r) => ({
               name: `🎲 ${r.label}`,
@@ -120,8 +142,10 @@ async function processOnce(client: Client): Promise<void> {
         if (isSpell) {
           const level = typeof entry.level === "number" ? entry.level : 0;
           embed.setFooter({ text: level > 0 ? `Level ${level} spell` : "Cantrip" });
-        } else {
+        } else if (isAttack) {
           embed.setFooter({ text: "Weapon attack" });
+        } else {
+          embed.setFooter({ text: "Action" });
         }
         if (description) embed.setDescription(`*${description.slice(0, 350)}${description.length > 350 ? "…" : ""}*`);
         await channel.send({ embeds: [embed] });

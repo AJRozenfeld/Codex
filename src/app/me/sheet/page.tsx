@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb, ensureSchema } from "@/lib/db";
 import { getPlayerSession } from "@/lib/player-session";
-import { getCharacterSheet, saveCharacterSheet } from "@/lib/character-sheet";
+import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
 import type { CharacterSheetData } from "@/lib/types";
@@ -68,13 +68,29 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
     return requestSheetRoll(characterId, target);
   }
 
+  // Live combat patches (HP/slots/death saves/long rest) - ownership
+  // re-verified server-side, same as rolling.
+  async function livePatchAction(patch: LiveSheetPatch) {
+    "use server";
+    const activeSession = await getPlayerSession();
+    if (!activeSession.playerId) throw new Error("Not logged in.");
+    const check = await getDb().execute({
+      sql: "SELECT character_id FROM players WHERE id = ?",
+      args: [activeSession.playerId],
+    });
+    if ((check.rows[0]?.character_id as string | undefined) !== characterId) {
+      throw new Error("Not your character.");
+    }
+    return patchLiveSheet(characterId, patch);
+  }
+
   return (
     <div>
       <Link href="/me" className="text-sm text-parchment/50 hover:text-gold">&larr; Back</Link>
       <div className="mt-4 mb-6">
         <h1 className="font-display text-2xl text-gold">Character Sheet</h1>
       </div>
-      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} saved={Boolean(searchParams?.saved)} />
+      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} saved={Boolean(searchParams?.saved)} />
     </div>
   );
 }

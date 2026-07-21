@@ -397,6 +397,16 @@ export interface ActionRoll {
   modifiers: RollPart[];
 }
 
+/** A DM/player-defined action that's neither weapon nor spell - a class
+ *  feature, breath weapon, Lay on Hands, anything with rolls (Action
+ *  Creator, 2026-07-20). Same roll grammar as spells/weapons. */
+export interface CustomAction {
+  id: string;
+  name: string;
+  description: string;
+  rolls: ActionRoll[];
+}
+
 export interface SpellEntry {
   /** Stable id so roll requests can target this spell; backfilled onto
    *  pre-Action-Creator entries by mergeWithDefaults. */
@@ -443,6 +453,8 @@ export interface CharacterSheetData {
   deathSaveFailures: number;
 
   attacks: AttackEntry[];
+  /** Freeform rollable actions - class features etc. (Action Creator, 2026-07-20). */
+  customActions: CustomAction[];
 
   equipment: string;
   currency: { cp: number; sp: number; ep: number; gp: number; pp: number };

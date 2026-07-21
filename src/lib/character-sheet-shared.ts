@@ -3,7 +3,7 @@
 // CharacterSheetForm without webpack trying to bundle node:fs/node:path from
 // db.ts. Server-side load/save lives in character-sheet.ts, which re-exports
 // everything from this module too.
-import type { ActionRoll, AttackEntry, CharacterSheetData, RollPart, SkillKey, SpellEntry } from "./types";
+import type { ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "./types";
 
 export const SKILL_ABILITY: Record<SkillKey, "str" | "dex" | "con" | "int" | "wis" | "cha"> = {
   acrobatics: "dex",
@@ -81,6 +81,7 @@ export function defaultCharacterSheet(): CharacterSheetData {
     deathSaveSuccesses: 0,
     deathSaveFailures: 0,
     attacks: [],
+    customActions: [],
     equipment: "",
     currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
     proficienciesLanguages: "",
@@ -107,6 +108,7 @@ export function mergeWithDefaults(partial: Partial<CharacterSheetData>): Charact
     currency: { ...base.currency, ...(partial.currency ?? {}) },
     spellSlots: { ...base.spellSlots, ...(partial.spellSlots ?? {}) },
     attacks: (partial.attacks ?? base.attacks).map((atk) => normalizeAttackEntry(atk as Partial<AttackEntry>)),
+    customActions: (partial.customActions ?? base.customActions).map((a) => normalizeCustomAction(a as Partial<CustomAction>)),
     spells: (partial.spells ?? base.spells).map((sp) => normalizeSpellEntry(sp as Partial<SpellEntry>)),
   };
 }
@@ -228,6 +230,19 @@ export function newWeaponRolls(): ActionRoll[] {
  *  free-text fields (name/atkBonus/damage); their text is preserved by
  *  folding it into the description so nothing a player wrote is lost, and
  *  the rolls start empty for a proper rebuild. */
+export function newCustomAction(): CustomAction {
+  return { id: crypto.randomUUID(), name: "", description: "", rolls: [] };
+}
+
+export function normalizeCustomAction(a: Partial<CustomAction> & Record<string, unknown>): CustomAction {
+  return {
+    id: typeof a.id === "string" && a.id ? a.id : crypto.randomUUID(),
+    name: typeof a.name === "string" ? a.name : "",
+    description: typeof a.description === "string" ? a.description : "",
+    rolls: Array.isArray(a.rolls) ? (a.rolls as ActionRoll[]).map(normalizeActionRoll) : [],
+  };
+}
+
 export function normalizeAttackEntry(atk: Partial<AttackEntry> & Record<string, unknown>): AttackEntry {
   const legacyBits: string[] = [];
   if (typeof atk.atkBonus === "string" && atk.atkBonus.trim()) legacyBits.push(`Atk ${atk.atkBonus.trim()}`);

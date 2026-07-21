@@ -247,3 +247,37 @@ export function computeActionRoll(sheet: Record<string, unknown> | null, spec: A
   if (notes.length) breakdown += ` [${notes.join("; ")}]`;
   return { label: spec.label || "Roll", total, breakdown };
 }
+
+// ---------------------------------------------------------------------------
+// Saving throws + initiative from the sheet buttons (2026-07-20). Same voice
+// as computeRoll; saves add proficiency when the sheet marks that save
+// proficient, initiative adds dex mod + the sheet's initiativeMisc.
+// ---------------------------------------------------------------------------
+
+const SAVE_ABILITY_LABELS: Record<string, string> = {
+  str: "Strength", dex: "Dexterity", con: "Constitution",
+  int: "Intelligence", wis: "Wisdom", cha: "Charisma",
+};
+
+export function computeSavingThrow(sheet: Record<string, unknown> | null, ability: string): RollComputation {
+  const d20 = rollD20();
+  const scores = (sheet?.abilityScores as Record<string, number>) ?? {};
+  const mod = Math.floor(((scores[ability] ?? 10) - 10) / 2);
+  const saves = (sheet?.savingThrows as Record<string, boolean>) ?? {};
+  const prof = saves[ability] ? ((sheet?.proficiencyBonus as number) ?? 2) : 0;
+  const total = d20 + mod + prof;
+  let breakdown = `${d20} + ${mod} (${SAVE_ABILITY_LABELS[ability] ?? ability})`;
+  if (prof) breakdown += ` + ${prof} (proficient)`;
+  return { d20, modifier: mod + prof, total, breakdown };
+}
+
+export function computeInitiativeFromSheet(sheet: Record<string, unknown> | null): RollComputation {
+  const d20 = rollD20();
+  const scores = (sheet?.abilityScores as Record<string, number>) ?? {};
+  const dexMod = Math.floor(((scores.dex ?? 10) - 10) / 2);
+  const misc = (sheet?.initiativeMisc as number) ?? 0;
+  const total = d20 + dexMod + misc;
+  let breakdown = `${d20} + ${dexMod} (Dex)`;
+  if (misc) breakdown += ` ${misc > 0 ? "+" : ""}${misc} (misc)`;
+  return { d20, modifier: dexMod + misc, total, breakdown };
+}
