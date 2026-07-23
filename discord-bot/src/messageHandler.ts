@@ -13,6 +13,41 @@ import { getActiveBattle, recordRollAndRefresh } from "./battle.js";
 
 const MASK_PATTERN = /^\[\[([^\]]+)\]\]:\s*([\s\S]*)$/;
 
+// Multi-mask messages (2026-07-20, Aviv's spec): a mask marker at the START
+// OF ANY LINE begins a new segment, so one Discord message can voice several
+// characters - each segment is reposted as its own webhook message, in order:
+//   [[NPC1]]: "Hello friends"
+//   [[NPC2]]: "We've been waiting for you"
+// The MESSAGE must still start with a mask (prose before the first mask means
+// it isn't a mask message at all - unchanged trigger condition). A segment
+// owns every following line until the next mask line, so multi-line speeches
+// still work. Triggers (*roll x*, *init*, *introduction*) apply per segment.
+const MASK_LINE_PATTERN = /^\[\[([^\]]+)\]\]:[ \t]*/;
+const MAX_SEGMENTS = 10;
+
+interface MaskSegment {
+  mask: string;
+  text: string;
+}
+
+export function parseMaskSegments(content: string): MaskSegment[] | null {
+  const lines = content.split("\n");
+  if (!MASK_LINE_PATTERN.test(lines[0] ?? "")) return null;
+  const segments: MaskSegment[] = [];
+  let current: MaskSegment | null = null;
+  for (const line of lines) {
+    const m = line.match(MASK_LINE_PATTERN);
+    if (m) {
+      if (current) segments.push(current);
+      current = { mask: m[1].trim(), text: line.slice(m[0].length) };
+    } else if (current) {
+      current.text += "\n" + line;
+    }
+  }
+  if (current) segments.push(current);
+  return segments;
+}
+
 // Initiative (2026-07-06): a bare *init*/*initiative* trigger, deliberately
 // separate from the generic *roll <ability/skill>* pattern in rolls.ts -
 // see computeInitiative's doc comment for why this can't just be another
@@ -75,11 +110,12 @@ async function replyAndForget(message: Message, content: string) {
 export async function handleMessage(message: Message): Promise<void> {
   if (message.author.bot || message.webhookId) return;
   if (!message.guild || !message.member) return;
-  const match = message.content.match(MASK_PATTERN);
-  if (!match) return;
-
-  const mask = match[1].trim();
-  const spoken = match[2];
+  const segments = parseMaskSegments(message.content);
+  if (!segments || segments.length === 0) return;
+  if (segments.length > MAX_SEGMENTS) {
+    await replyAndForget(message, `That's a lot of voices - at most ${MAX_SEGMENTS} masks per message, please.`);
+    return;
+  }
 
   const campaignId = await getCampaignIdForGuild(message.guild.id);
   if (!campaignId) {
@@ -87,19 +123,24 @@ export async function handleMessage(message: Message): Promise<void> {
     return;
   }
 
-  const character = await getCharacterByMask(campaignId, mask);
-  if (!character) {
-    await replyAndForget(message, `No character has the mask **[[${mask}]]**.`);
-    return;
-  }
-
+  // Resolve and permission-check EVERY mask up front: a typo in the second
+  // mask must not eat the whole message (nothing is deleted or posted until
+  // every segment is valid).
+  const charByMask = new Map<string, NonNullable<Awaited<ReturnType<typeof getCharacterByMask>>>>();
   const isDm = message.member.permissions.has(PermissionsBitField.Flags.ManageGuild);
-  if (!isDm) {
-    const ownedCharacterId = await getOwnedCharacterId(message.author.id, campaignId);
-    if (ownedCharacterId !== character.id) {
-      await replyAndForget(message, `You aren't linked to **${character.name}** - see /me/profile on the website.`);
+  const ownedCharacterId = isDm ? null : await getOwnedCharacterId(message.author.id, campaignId);
+  for (const seg of segments) {
+    if (charByMask.has(seg.mask)) continue;
+    const found = await getCharacterByMask(campaignId, seg.mask);
+    if (!found) {
+      await replyAndForget(message, `No character has the mask **[[${seg.mask}]]** - message left untouched.`);
       return;
     }
+    if (!isDm && ownedCharacterId !== found.id) {
+      await replyAndForget(message, `You aren't linked to **${found.name}** - see /me/profile on the website.`);
+      return;
+    }
+    charByMask.set(seg.mask, found);
   }
 
   if (!(message.channel instanceof TextChannel)) {
@@ -107,57 +148,70 @@ export async function handleMessage(message: Message): Promise<void> {
     return;
   }
 
+  let webhook;
   try {
     trackRollChannel(message.guildId, message.channel.id);
-    const webhook = await getChannelWebhook(message.channel);
+    webhook = await getChannelWebhook(message.channel);
     await message.delete();
-
-    // Introduction takes over the whole message: post the bio as the
-    // character, portrait attached as a clickable file beneath it, then stop
-    // (it's not a roll, so skip the trigger checks below).
-    if (INTRODUCTION_PATTERN.test(spoken.trim())) {
-      const bio = character.summary?.trim() || `*${character.name} offers no words about themselves.*`;
-      const hasImage = !!character.portraitPath && /^https?:\/\//i.test(character.portraitPath);
-      const files = hasImage
-        ? [new AttachmentBuilder(character.portraitPath as string, { name: portraitFileName(character.name, character.portraitPath as string) })]
-        : [];
-      await webhook.send({
-        content: bio.slice(0, 2000),
-        username: character.name,
-        avatarURL: character.portraitPath ?? undefined,
-        files,
-      });
-      return;
-    }
-
-    await webhook.send({
-      content: spoken || "*...*",
-      username: character.name,
-      avatarURL: character.portraitPath ?? undefined,
-    });
   } catch (err) {
     console.error("[mask] proxy failed:", err);
     await replyAndForget(message, "I need Manage Messages and Manage Webhooks permissions in this channel to do that.");
     return;
   }
 
-  if (INIT_PATTERN.test(spoken)) {
-    const sheet = await getCharacterSheetData(character.id);
-    const roll = computeInitiative(sheet);
-    await message.channel.send(`🎲 **${character.name}** rolls Initiative: **${roll.total}** (${roll.breakdown})`);
-    const battle = await getActiveBattle(message.guild.id);
-    if (battle) {
-      await recordRollAndRefresh(message.channel, battle, character.id, roll.total);
-    }
-    return;
-  }
+  // Post each segment in order, as its own webhook message under its own
+  // character; triggers fire per segment so two NPCs can each roll from
+  // their own line of the same message.
+  for (const seg of segments) {
+    const character = charByMask.get(seg.mask)!;
+    const spoken = seg.text.replace(/\s+$/, "");
 
-  const trigger = findRollTrigger(spoken);
-  if (trigger) {
-    const sheet = await getCharacterSheetData(character.id);
-    const roll = computeRoll(sheet, trigger);
-    await message.channel.send(
-      `🎲 **${character.name}** — ${trigger.label} Check: **${roll.total}** (${roll.breakdown})`
-    );
+    try {
+      // Introduction takes over this segment: bio as the character, portrait
+      // attached as a clickable file beneath it.
+      if (INTRODUCTION_PATTERN.test(spoken.trim())) {
+        const bio = character.summary?.trim() || `*${character.name} offers no words about themselves.*`;
+        const hasImage = !!character.portraitPath && /^https?:\/\//i.test(character.portraitPath);
+        const files = hasImage
+          ? [new AttachmentBuilder(character.portraitPath as string, { name: portraitFileName(character.name, character.portraitPath as string) })]
+          : [];
+        await webhook.send({
+          content: bio.slice(0, 2000),
+          username: character.name,
+          avatarURL: character.portraitPath ?? undefined,
+          files,
+        });
+        continue;
+      }
+
+      await webhook.send({
+        content: spoken || "*...*",
+        username: character.name,
+        avatarURL: character.portraitPath ?? undefined,
+      });
+    } catch (err) {
+      console.error("[mask] segment post failed:", err);
+      continue; // one broken segment shouldn't silence the rest
+    }
+
+    if (INIT_PATTERN.test(spoken)) {
+      const sheet = await getCharacterSheetData(character.id);
+      const roll = computeInitiative(sheet);
+      await message.channel.send(`🎲 **${character.name}** rolls Initiative: **${roll.total}** (${roll.breakdown})`);
+      const battle = await getActiveBattle(message.guild.id);
+      if (battle) {
+        await recordRollAndRefresh(message.channel, battle, character.id, roll.total);
+      }
+      continue;
+    }
+
+    const trigger = findRollTrigger(spoken);
+    if (trigger) {
+      const sheet = await getCharacterSheetData(character.id);
+      const roll = computeRoll(sheet, trigger);
+      await message.channel.send(
+        `🎲 **${character.name}** — ${trigger.label} Check: **${roll.total}** (${roll.breakdown})`
+      );
+    }
   }
 }
