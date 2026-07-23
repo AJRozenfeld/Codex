@@ -720,24 +720,27 @@ CREATE INDEX IF NOT EXISTS idx_guild_links_campaign ON guild_links(campaign_id);
 -- on characters.tags, rather than a normalized tag table - track counts per
 -- campaign are small enough that free-text tags are simpler and sufficient.
 -- ---------------------------------------------------------------------------
+-- Music is shared across all of a DM's campaigns (2026-07-20, Aviv's call):
+-- scoped to dm_id, not campaign_id, so uploading a track once makes it
+-- available in every campaign that DM runs (saves storage and re-work) and
+-- deleting a campaign never takes the shared library with it. Playlists stay
+-- per-campaign (curated set drawn from this shared pool). Slug uniqueness is
+-- enforced app-side per DM (uniqueTrackSlug); no UNIQUE here so the migration
+-- from per-campaign data can never fail on a cross-campaign slug collision.
 CREATE TABLE IF NOT EXISTS music_tracks (
   id          TEXT PRIMARY KEY,
-  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  dm_id       TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
   slug        TEXT NOT NULL,
   name        TEXT NOT NULL,
   tags        TEXT,
-  -- Free-text link to a future "Scenes/Encounters" feature (2026-07-10, not
-  -- built yet - see project memory). Same plain-string convention as `tags`
-  -- rather than a foreign key, since the `scenes` table doesn't exist yet -
-  -- the DM can start tagging tracks with a scene name now, and once Scenes
-  -- ships it can match tracks/playlists by this name. Nullable/optional.
+  -- Free-text link to the Scenes feature. Same plain-string convention as
+  -- `tags` rather than a foreign key.
   scene       TEXT,
   file_url    TEXT NOT NULL,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE (campaign_id, slug)
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_music_tracks_campaign ON music_tracks(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_music_tracks_dm ON music_tracks(dm_id);
 
 -- ---------------------------------------------------------------------------
 -- Music playlists (2026-07-10). An ordered set of existing music_tracks,

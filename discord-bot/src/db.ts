@@ -192,10 +192,19 @@ export async function listLocations(campaignId: string): Promise<BotLocation[]> 
   }));
 }
 
+// Music is shared across all of a DM's campaigns (2026-07-20): resolve the
+// guild's campaign to its owning DM and scope the library on dm_id.
+const FOUNDER_DM_ID = "00000000-0000-0000-0000-0000000000d0";
+async function dmIdForCampaign(campaignId: string): Promise<string> {
+  const r = await getDb().execute({ sql: "SELECT dm_id FROM campaigns WHERE id = ?", args: [campaignId] });
+  return (r.rows[0]?.dm_id as string) ?? FOUNDER_DM_ID;
+}
+
 export async function listMusicTracks(campaignId: string): Promise<BotMusicTrack[]> {
+  const dmId = await dmIdForCampaign(campaignId);
   const r = await getDb().execute({
-    sql: "SELECT id, name, tags, file_url FROM music_tracks WHERE campaign_id = ? ORDER BY name ASC",
-    args: [campaignId],
+    sql: "SELECT id, name, tags, file_url FROM music_tracks WHERE dm_id = ? ORDER BY name ASC",
+    args: [dmId],
   });
   return r.rows.map((row) => ({
     id: row.id as string,
@@ -428,9 +437,10 @@ export async function endBattle(battleId: string): Promise<void> {
 
 /** A random track tagged "battle" (case-insensitive substring match against the free-text tags field). */
 export async function getRandomBattleTrack(campaignId: string): Promise<BotMusicTrack | null> {
+  const dmId = await dmIdForCampaign(campaignId);
   const r = await getDb().execute({
-    sql: "SELECT id, name, tags, file_url FROM music_tracks WHERE campaign_id = ? AND lower(tags) LIKE '%battle%' ORDER BY RANDOM() LIMIT 1",
-    args: [campaignId],
+    sql: "SELECT id, name, tags, file_url FROM music_tracks WHERE dm_id = ? AND lower(tags) LIKE '%battle%' ORDER BY RANDOM() LIMIT 1",
+    args: [dmId],
   });
   const row = r.rows[0];
   if (!row) return null;

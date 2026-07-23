@@ -1,4 +1,4 @@
-import { getDb, ensureSchema, newId } from "./db";
+import { getDb, ensureSchema, newId, LEGACY_DM_ID } from "./db";
 import { uploadImage } from "./blob-storage";
 import { getCreature } from "./creature-queries";
 import type {
@@ -113,12 +113,22 @@ export async function unlinkGuild(campaignId: string, guildId: string): Promise<
 }
 
 // ---- Music library --------------------------------------------------------
+// Music is shared across all of a DM's campaigns (2026-07-20): every function
+// still takes the current campaignId (callers are unchanged) but resolves it
+// to the owning DM and scopes on dm_id, so the same library shows up in every
+// campaign that DM runs.
+
+async function dmIdForCampaign(campaignId: string): Promise<string> {
+  const r = await getDb().execute({ sql: "SELECT dm_id FROM campaigns WHERE id = ?", args: [campaignId] });
+  return (r.rows[0]?.dm_id as string) ?? LEGACY_DM_ID;
+}
 
 export async function listMusicTracks(campaignId: string): Promise<MusicTrack[]> {
   await ensureSchema();
+  const dmId = await dmIdForCampaign(campaignId);
   const r = await getDb().execute({
-    sql: "SELECT * FROM music_tracks WHERE campaign_id = ? ORDER BY name ASC",
-    args: [campaignId],
+    sql: "SELECT * FROM music_tracks WHERE dm_id = ? ORDER BY name ASC",
+    args: [dmId],
   });
   return r.rows.map((row) => ({
     id: row.id as string,
@@ -130,7 +140,7 @@ export async function listMusicTracks(campaignId: string): Promise<MusicTrack[]>
   }));
 }
 
-async function uniqueTrackSlug(campaignId: string, name: string, excludeId?: string): Promise<string> {
+async function uniqueTrackSlug(dmId: string, name: string, excludeId?: string): Promise<string> {
   const base = name
     .toLowerCase()
     .trim()
@@ -142,8 +152,8 @@ async function uniqueTrackSlug(campaignId: string, name: string, excludeId?: str
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const r = await db.execute({
-      sql: "SELECT id FROM music_tracks WHERE campaign_id = ? AND slug = ?",
-      args: [campaignId, slug],
+      sql: "SELECT id FROM music_tracks WHERE dm_id = ? AND slug = ?",
+      args: [dmId, slug],
     });
     const hit = r.rows[0];
     if (!hit || hit.id === excludeId) return slug;
@@ -162,7 +172,8 @@ export interface MusicTrackInput {
 export async function upsertMusicTrack(campaignId: string, input: MusicTrackInput, id?: string): Promise<string> {
   await ensureSchema();
   const db = getDb();
-  const slug = await uniqueTrackSlug(campaignId, input.name, id);
+  const dmId = await dmIdForCampaign(campaignId);
+  const slug = await uniqueTrackSlug(dmId, input.name, id);
   const trackId = id ?? newId();
   let fileUrl = input.fileUrl;
   if (input.file && input.file.size > 0) {
@@ -171,20 +182,20 @@ export async function upsertMusicTrack(campaignId: string, input: MusicTrackInpu
   if (id) {
     if (fileUrl) {
       await db.execute({
-        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, file_url=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
-        args: [input.name, slug, input.tags ?? null, input.scene ?? null, fileUrl, id, campaignId],
+        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, file_url=?, updated_at=datetime('now') WHERE id=? AND dm_id=?",
+        args: [input.name, slug, input.tags ?? null, input.scene ?? null, fileUrl, id, dmId],
       });
     } else {
       await db.execute({
-        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
-        args: [input.name, slug, input.tags ?? null, input.scene ?? null, id, campaignId],
+        sql: "UPDATE music_tracks SET name=?, slug=?, tags=?, scene=?, updated_at=datetime('now') WHERE id=? AND dm_id=?",
+        args: [input.name, slug, input.tags ?? null, input.scene ?? null, id, dmId],
       });
     }
   } else {
     if (!fileUrl) throw new Error("A track file is required.");
     await db.execute({
-      sql: "INSERT INTO music_tracks (id, campaign_id, slug, name, tags, scene, file_url) VALUES (?,?,?,?,?,?,?)",
-      args: [trackId, campaignId, slug, input.name, input.tags ?? null, input.scene ?? null, fileUrl],
+      sql: "INSERT INTO music_tracks (id, dm_id, slug, name, tags, scene, file_url) VALUES (?,?,?,?,?,?,?)",
+      args: [trackId, dmId, slug, input.name, input.tags ?? null, input.scene ?? null, fileUrl],
     });
   }
   return trackId;
@@ -192,7 +203,8 @@ export async function upsertMusicTrack(campaignId: string, input: MusicTrackInpu
 
 export async function deleteMusicTrack(campaignId: string, id: string): Promise<void> {
   await ensureSchema();
-  await getDb().execute({ sql: "DELETE FROM music_tracks WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
+  const dmId = await dmIdForCampaign(campaignId);
+  await getDb().execute({ sql: "DELETE FROM music_tracks WHERE id = ? AND dm_id = ?", args: [id, dmId] });
 }
 
 // ---- Playlists --------------------------------------------------------

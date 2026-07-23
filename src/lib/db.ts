@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 3; // v3: roll bridge - roll_requests table, guild_links.roll_channel_id
+const SCHEMA_VERSION = 4; // v4: music shared per DM - music_tracks.dm_id (was campaign_id)
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
@@ -690,6 +690,43 @@ async function runMigrations(db: Client): Promise<void> {
   // post to. Plain nullable ADD COLUMN, no constraint gymnastics needed.
   if (!(await hasColumn(db, "guild_links", "roll_channel_id"))) {
     await db.execute("ALTER TABLE guild_links ADD COLUMN roll_channel_id TEXT");
+  }
+
+  // Music shared per DM (2026-07-20): music_tracks moves from campaign_id to
+  // dm_id so a DM's uploads are available across all their campaigns and
+  // survive deletion of the campaign they were first uploaded in. This needs
+  // the drop-and-rebuild dance (can't re-home a NOT NULL FK column in place),
+  // gated on the marker column. Ids are preserved so playlist_tracks,
+  // battle_state and scene references to music_tracks(id) stay valid
+  // (foreign_keys is already OFF from the top of this function, so dropping
+  // the old table doesn't cascade those child rows away). dm_id is backfilled
+  // from the uploading campaign's owner; a track whose campaign somehow
+  // vanished falls back to the founder account.
+  if (!(await hasColumn(db, "music_tracks", "dm_id"))) {
+    await db.batch(
+      [
+        `CREATE TABLE music_tracks_new (
+          id          TEXT PRIMARY KEY,
+          dm_id       TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+          slug        TEXT NOT NULL,
+          name        TEXT NOT NULL,
+          tags        TEXT,
+          scene       TEXT,
+          file_url    TEXT NOT NULL,
+          created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        )`,
+        `INSERT INTO music_tracks_new (id, dm_id, slug, name, tags, scene, file_url, created_at, updated_at)
+         SELECT m.id,
+           COALESCE((SELECT c.dm_id FROM campaigns c WHERE c.id = m.campaign_id), '${LEGACY_DM_ID}'),
+           m.slug, m.name, m.tags, m.scene, m.file_url, m.created_at, m.updated_at
+         FROM music_tracks m`,
+        "DROP TABLE music_tracks",
+        "ALTER TABLE music_tracks_new RENAME TO music_tracks",
+        "CREATE INDEX IF NOT EXISTS idx_music_tracks_dm ON music_tracks(dm_id)",
+      ],
+      "write"
+    );
   }
 
   await db.execute("PRAGMA foreign_keys = ON");
