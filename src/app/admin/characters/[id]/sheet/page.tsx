@@ -5,6 +5,7 @@ import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
+import { CharacterSheetView } from "@/components/CharacterSheetView";
 import type { CharacterSheetData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function AdminCharacterSheetPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { saved?: string };
+  searchParams: { saved?: string; edit?: string };
 }) {
   const campaignId = await getCurrentCampaignId();
   const character = await adminGetCharacter(campaignId, params.id);
@@ -53,15 +54,36 @@ export default async function AdminCharacterSheetPage({
     return patchLiveSheet(params.id, patch);
   }
 
+  const editing = Boolean(searchParams?.edit);
+
   return (
     <div>
       <Link href={`/admin/characters/${params.id}`} className="text-sm text-parchment/50 hover:text-gold">
         &larr; Back to {character.name}
       </Link>
-      <div className="mt-4 mb-6">
-        <h1 className="font-display text-2xl text-gold">Character Sheet: {character.name}</h1>
-      </div>
-      <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} saved={Boolean(searchParams?.saved)} />
+      {editing ? (
+        <>
+          <div className="mt-4 mb-6 flex items-center justify-between">
+            <h1 className="font-display text-2xl text-gold">Character Sheet: {character.name}</h1>
+            <Link href={`/admin/characters/${params.id}/sheet`} className="text-sm text-gold hover:underline">
+              &larr; Back to character view
+            </Link>
+          </div>
+          <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
+        </>
+      ) : (
+        <div className="mt-4">
+          <CharacterSheetView
+            characterName={character.name}
+            portraitPath={character.portraitPath}
+            data={sheetData}
+            editHref={`/admin/characters/${params.id}/sheet?edit=1`}
+            rollAction={rollAction}
+            livePatchAction={livePatchAction}
+            saved={Boolean(searchParams?.saved)}
+          />
+        </div>
+      )}
     </div>
   );
 }

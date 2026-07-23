@@ -5,17 +5,18 @@ import { getPlayerSession } from "@/lib/player-session";
 import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
+import { CharacterSheetView } from "@/components/CharacterSheetView";
 import type { CharacterSheetData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function MyCharacterSheetPage({ searchParams }: { searchParams: { saved?: string } }) {
+export default async function MyCharacterSheetPage({ searchParams }: { searchParams: { saved?: string; edit?: string } }) {
   const session = await getPlayerSession();
   if (!session.playerId) redirect("/login");
 
   await ensureSchema();
   const r = await getDb().execute({
-    sql: `SELECT c.id AS character_id, c.name AS character_name
+    sql: `SELECT c.id AS character_id, c.name AS character_name, c.portrait_path AS portrait_path
           FROM players p LEFT JOIN characters c ON c.id = p.character_id
           WHERE p.id = ?`,
     args: [session.playerId],
@@ -25,6 +26,7 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
 
   const characterId = row.character_id as string;
   const characterName = row.character_name as string;
+  const portraitPath = (row.portrait_path as string) ?? null;
   const sheetData = await getCharacterSheet(characterId);
 
   async function saveAction(formData: FormData) {
@@ -47,6 +49,8 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
     } catch {
       redirect("/me/sheet");
     }
+    // Land on the character page (not the form) - the reward for saving is
+    // seeing your character, dressed for the occasion.
     await saveCharacterSheet(characterId, parsed!);
     redirect("/me/sheet?saved=1");
   }
@@ -84,13 +88,34 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
     return patchLiveSheet(characterId, patch);
   }
 
+  const editing = Boolean(searchParams?.edit);
+
   return (
     <div>
       <Link href="/me" className="text-sm text-parchment/50 hover:text-gold">&larr; Back</Link>
-      <div className="mt-4 mb-6">
-        <h1 className="font-display text-2xl text-gold">Character Sheet</h1>
-      </div>
-      <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} saved={Boolean(searchParams?.saved)} />
+      {editing ? (
+        <>
+          <div className="mt-4 mb-6 flex items-center justify-between">
+            <h1 className="font-display text-2xl text-gold">Character Sheet</h1>
+            <Link href="/me/sheet" className="text-sm text-gold hover:underline">
+              &larr; Back to character view
+            </Link>
+          </div>
+          <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
+        </>
+      ) : (
+        <div className="mt-4">
+          <CharacterSheetView
+            characterName={characterName}
+            portraitPath={portraitPath}
+            data={sheetData}
+            editHref="/me/sheet?edit=1"
+            rollAction={rollAction}
+            livePatchAction={livePatchAction}
+            saved={Boolean(searchParams?.saved)}
+          />
+        </div>
+      )}
     </div>
   );
 }
