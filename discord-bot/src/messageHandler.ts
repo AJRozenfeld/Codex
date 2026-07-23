@@ -1,4 +1,4 @@
-import { Message, PermissionsBitField, TextChannel } from "discord.js";
+import { AttachmentBuilder, Message, PermissionsBitField, TextChannel } from "discord.js";
 import { getCampaignIdForGuild, getCharacterByMask, getOwnedCharacterId, getCharacterSheetData } from "./db.js";
 import { findRollTrigger, computeRoll, computeInitiative } from "./rolls.js";
 import { rememberRollChannel } from "./db.js";
@@ -19,7 +19,22 @@ const MASK_PATTERN = /^\[\[([^\]]+)\]\]:\s*([\s\S]*)$/;
 // ability alias. Checked BEFORE the generic roll trigger below so a message
 // never double-fires as both.
 const INIT_PATTERN = /\*init(?:iative)?\*/i;
+
+// Introduction (2026-07-20): [[mask]]: *introduction* has the character
+// introduce herself - her short bio posted under her name+portrait, with the
+// portrait attached as a separate, full-screen/downloadable file beneath it.
+// Anchored so it only fires when the message is JUST the introduction command
+// (optionally *-wrapped), never when the word appears inside roleplay prose.
+const INTRODUCTION_PATTERN = /^\*?\s*introduction\s*\*?$/i;
 const WEBHOOK_NAME = "Erendyl Codex Masks";
+
+/** A safe, extension-preserving filename for the portrait attachment. */
+function portraitFileName(name: string, url: string): string {
+  const base = name.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").toLowerCase() || "portrait";
+  const m = url.split("?")[0].match(/\.(png|jpe?g|gif|webp|avif)$/i);
+  const ext = m ? m[1].toLowerCase() : "png";
+  return `${base}.${ext}`;
+}
 
 const webhookCache = new Map<string, import("discord.js").Webhook>();
 
@@ -96,6 +111,25 @@ export async function handleMessage(message: Message): Promise<void> {
     trackRollChannel(message.guildId, message.channel.id);
     const webhook = await getChannelWebhook(message.channel);
     await message.delete();
+
+    // Introduction takes over the whole message: post the bio as the
+    // character, portrait attached as a clickable file beneath it, then stop
+    // (it's not a roll, so skip the trigger checks below).
+    if (INTRODUCTION_PATTERN.test(spoken.trim())) {
+      const bio = character.summary?.trim() || `*${character.name} offers no words about themselves.*`;
+      const hasImage = !!character.portraitPath && /^https?:\/\//i.test(character.portraitPath);
+      const files = hasImage
+        ? [new AttachmentBuilder(character.portraitPath as string, { name: portraitFileName(character.name, character.portraitPath as string) })]
+        : [];
+      await webhook.send({
+        content: bio.slice(0, 2000),
+        username: character.name,
+        avatarURL: character.portraitPath ?? undefined,
+        files,
+      });
+      return;
+    }
+
     await webhook.send({
       content: spoken || "*...*",
       username: character.name,
