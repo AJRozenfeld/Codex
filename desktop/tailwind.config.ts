@@ -1,0 +1,35 @@
+import type { Config } from "tailwindcss";
+
+// Same design tokens as the website (../tailwind.config.ts) - the app IS the
+// Codex, wearing a native window. Keep the two in sync when colors change.
+const config: Config = {
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        ink: "#0d0b10",
+        "ink-raised": "#221d29",
+        parchment: "#f1e8d4",
+        ember: "#d1854a",
+        gold: "#dab962",
+        "gold-dim": "#a08544",
+        blood: "#9a4040",
+        void: "#221d29",
+      },
+      fontFamily: {
+        display: ["Cinzel", "Georgia", "serif"],
+        body: ["Lora", "Georgia", "serif"],
+      },
+      boxShadow: {
+        card: "inset 0 1px 0 0 rgba(201,168,76,0.09), 0 10px 30px -14px rgba(0,0,0,0.7)",
+        "card-hover": "inset 0 1px 0 0 rgba(201,168,76,0.22), 0 16px 36px -12px rgba(0,0,0,0.75)",
+        glow: "0 0 0 1px rgba(201,168,76,0.35), 0 0 24px -2px rgba(201,168,76,0.35)",
+      },
+      letterSpacing: {
+        wider2: "0.14em",
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;

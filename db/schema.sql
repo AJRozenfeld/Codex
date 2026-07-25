@@ -974,3 +974,20 @@ CREATE TABLE IF NOT EXISTS roll_requests (
   processed_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_roll_requests_pending ON roll_requests(status, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Desktop app API tokens (2026-07-25): bearer tokens for the Codex Companion
+-- desktop client (/api/v1). The raw token is shown once at login and never
+-- stored - only its SHA-256 hex digest lives here, so a database leak leaks
+-- no usable credentials. Deleting a row revokes that device instantly, and
+-- tokens die with their player (ON DELETE CASCADE)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id           TEXT PRIMARY KEY,
+  player_id    TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  token_hash   TEXT NOT NULL UNIQUE,
+  label        TEXT,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  last_used_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_player ON api_tokens(player_id);

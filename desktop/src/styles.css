@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ported from the website's globals.css - the app IS the Codex. */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #100d0a;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(218, 185, 98, 0.09), transparent 38%),
+    radial-gradient(circle at 85% 0%, rgba(154, 64, 64, 0.09), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(209, 133, 74, 0.06), transparent 55%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 6%, transparent 94%, rgba(0, 0, 0, 0.4) 100%);
+  background-attachment: fixed;
+  color: #f1e8d4;
+  overflow: hidden; /* the app shell owns its own scroll areas */
+}
+
+/* subtle film-grain texture, CSS-only */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.prose-erendyl {
+  color: #f1e8d4;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+::selection {
+  background-color: rgba(218, 185, 98, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(218, 185, 98, 0.65);
+  outline-offset: 2px;
+}
+
+/* themed scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(218, 185, 98, 0.3);
+  border-radius: 999px;
+  border: 2px solid #0d0b10;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(218, 185, 98, 0.5);
+}
+
+.divider-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(218, 185, 98, 0.55), transparent);
+}
+
+.ornate-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(218, 185, 98, 0.6);
+}
+.ornate-divider::before,
+.ornate-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(218, 185, 98, 0.5));
+}
+.ornate-divider::after {
+  background: linear-gradient(to left, transparent, rgba(218, 185, 98, 0.5));
+}
+.ornate-divider > .glyph {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: currentColor;
+  flex: none;
+}
+
+/* card surface - gradients only (no image assets in the app bundle) */
+.card-surface {
+  background-image:
+    linear-gradient(160deg, rgba(218, 185, 98, 0.07), transparent 40%),
+    linear-gradient(rgba(28, 23, 18, 0.92), rgba(21, 17, 13, 0.96)),
+    radial-gradient(circle at 30% 20%, rgba(209, 133, 74, 0.25), transparent 60%);
+  background-size: cover;
+  background-position: center;
+}
+
+/* the "newly revealed" glint badge */
+@keyframes glint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(218, 185, 98, 0.5), 0 0 10px -2px rgba(218, 185, 98, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(218, 185, 98, 0.9), 0 0 18px 0 rgba(218, 185, 98, 0.8);
+  }
+}
+.glint {
+  animation: glint 2.2s ease-in-out infinite;
+}
+
+/* window drag region (custom titlebar) */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}

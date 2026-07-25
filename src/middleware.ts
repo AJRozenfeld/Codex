@@ -22,6 +22,13 @@ interface PlayerSessionData {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // The JSON API (desktop Companion app) authenticates every request itself
+  // via bearer tokens (see lib/api-auth.ts) and must return 401s, never
+  // login-page redirects - a native client can't follow those anywhere.
+  if (pathname.startsWith("/api/v1")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login") {
       return NextResponse.next();

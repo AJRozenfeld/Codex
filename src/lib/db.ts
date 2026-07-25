@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 4; // v4: music shared per DM - music_tracks.dm_id (was campaign_id)
+const SCHEMA_VERSION = 5; // v5: api_tokens - bearer auth for the desktop Companion app's /api/v1
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
