@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   "The Old Library" (WorldAnvil-inspired redesign, 2026-07-21).
+   Design intent: a candlelit reading room, not a neon crypt. Warm walnut
+   grounds, antique bronze accents, visible paper grain, structure drawn
+   with borders and rules rather than glows. Display type is larger and
+   calmer; glow effects are nearly retired.
+   Previous design frozen in design-backups/dark-fantasy-v2/.
+--------------------------------------------------------------------------- */
+
+:root {
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: Georgia, "Times New Roman", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #14100c;
+  background-image:
+    radial-gradient(circle at 20% 8%, rgba(201, 167, 101, 0.07), transparent 40%),
+    radial-gradient(circle at 82% 2%, rgba(150, 69, 59, 0.06), transparent 40%),
+    radial-gradient(circle at 50% 105%, rgba(192, 133, 82, 0.07), transparent 50%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 7%, transparent 93%, rgba(0, 0, 0, 0.45) 100%);
+  background-attachment: fixed;
+  color: #eadfc6;
+}
+
+/* paper grain - slightly stronger than before; it is what makes surfaces
+   feel printed rather than rendered */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* larger, calmer display type sitewide - Cormorant runs small, so headings
+   set in it get a gentle size lift and tighter color, no glow */
+.font-display {
+  letter-spacing: 0.015em;
+}
+
+.prose-erendyl {
+  color: #eadfc6;
+  line-height: 1.85;
+  font-size: 1.0625rem;
+}
+
+.prose-erendyl p + p {
+  margin-top: 1rem;
+}
+
+::selection {
+  background-color: rgba(201, 167, 101, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(201, 167, 101, 0.6);
+  outline-offset: 2px;
+}
+
+/* themed scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #14100c;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 167, 101, 0.28);
+  border-radius: 999px;
+  border: 2px solid #14100c;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 167, 101, 0.45);
+}
+
+/* plain gradient hairline, still used in a few tight spots */
+.divider-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 167, 101, 0.5), transparent);
+}
+
+/* ornamental divider - the chronicle flourish, now in quiet bronze */
+.ornate-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(201, 167, 101, 0.55);
+}
+.ornate-divider::before,
+.ornate-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 167, 101, 0.45));
+}
+.ornate-divider::after {
+  background: linear-gradient(to left, transparent, rgba(201, 167, 101, 0.45));
+}
+.ornate-divider > .glyph {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: currentColor;
+  flex: none;
+}
+
+/* shared card surface: warm leather under a soft lamp. A touch lighter than
+   the page so panels read as objects lying on the desk; the top edge takes a
+   fine bronze bevel instead of a sheen gradient */
+.card-surface {
+  background-image:
+    linear-gradient(170deg, rgba(201, 167, 101, 0.05), transparent 35%),
+    linear-gradient(rgba(32, 25, 19, 0.88), rgba(26, 20, 15, 0.92)),
+    url("/images/card-texture.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #241c15;
+  border-top: 1px solid rgba(201, 167, 101, 0.14);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+.card-surface:hover {
+  transform: translateY(-2px);
+}
+
+.card-static {
+  background-image:
+    linear-gradient(170deg, rgba(201, 167, 101, 0.04), transparent 40%),
+    linear-gradient(rgba(32, 25, 19, 0.9), rgba(26, 20, 15, 0.93)),
+    url("/images/card-texture.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #241c15;
+  border-top: 1px solid rgba(201, 167, 101, 0.12);
+}
+
+/* full-bleed hero photo, vignetted into the warm page ground */
+.hero-backdrop {
+  background-image:
+    radial-gradient(ellipse 75% 65% at 50% 30%, transparent 0%, rgba(20, 16, 12, 0.55) 55%, #14100c 100%),
+    url("/images/hero-bg.jpg");
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  filter: sepia(0.12);
+}
+
+/* glow retired to a whisper - candle, not neon */
+.text-glow {
+  text-shadow: 0 1px 12px rgba(201, 167, 101, 0.18);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
