@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Marcellus_SC, Alegreya } from "next/font/google";
+import { Cormorant_Garamond, Alegreya } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
-// "The Official Tome" type (2026-07-21): Marcellus SC for display - the
-// closest Google-hosted twin of the 5e books' humanist small-caps heading
-// face - with Alegreya for body text. (The community-recreated authentic
-// D&D faces are CC-licensed and could be self-hosted later if desired.)
-const marcellus = Marcellus_SC({
+// "The Old Library" type pairing (2026-07-21): Cormorant Garamond for
+// display - an elegant, humanist old-style serif that reads like a book
+// plate rather than an engraving - and Alegreya for body, a warm literary
+// serif designed for long-form reading. (Previously Cinzel + Lora; frozen
+// in design-backups/dark-fantasy-v2/.)
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });
@@ -29,11 +31,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${marcellus.variable} ${alegreya.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${alegreya.variable}`}>
       <body className="font-body min-h-screen flex flex-col relative">
         <NavBar />
         <main className="flex-1 mx-auto max-w-6xl w-full px-4 sm:px-6 py-10 relative z-10">{children}</main>
-        <footer className="border-t border-gold/15 py-6 text-center text-xs tracking-wide text-parchment/40">
+        <footer className="border-t border-gold/15 py-6 text-center text-xs tracking-wide text-parchment/35">
           The Erendyl Codex &middot; chronicled by the Dungeon Master
         </footer>
       </body>

@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   "Daylight Archive" (palette experiment, 2026-07-21): light gray paper,
-   sky-blue accents, dark slate text. Same type as The Old Library
-   (Cormorant Garamond + Alegreya). Frozen predecessors in design-backups/.
+   "The Official Tome" (2026-07-21): the 5e rulebook page. Soft mottled
+   parchment ground, near-black text, deep brick-red headings (centered,
+   as in the books), thin red rules, warm shadows. Display face: Marcellus
+   SC (Google twin of the books' heading font); body: Alegreya.
+   Frozen predecessors live in design-backups/.
 --------------------------------------------------------------------------- */
 
 :root {
@@ -17,35 +19,44 @@ html {
   scroll-behavior: smooth;
 }
 
+/* soft parchment: cream base with large, faint tan mottling - the aged-paper
+   blotches of a book page - plus grain that multiplies like print */
 body {
-  background-color: #e6eaee;
+  background-color: #f2ead2;
   background-image:
-    radial-gradient(circle at 20% 8%, rgba(74, 144, 194, 0.07), transparent 42%),
-    radial-gradient(circle at 82% 2%, rgba(93, 125, 153, 0.06), transparent 40%),
-    radial-gradient(circle at 50% 105%, rgba(74, 144, 194, 0.05), transparent 50%),
-    linear-gradient(180deg, rgba(45, 54, 64, 0.05) 0%, transparent 6%, transparent 94%, rgba(45, 54, 64, 0.07) 100%);
+    radial-gradient(ellipse 40% 30% at 18% 12%, rgba(196, 164, 105, 0.12), transparent 70%),
+    radial-gradient(ellipse 35% 28% at 85% 20%, rgba(196, 164, 105, 0.10), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 30% 78%, rgba(181, 146, 89, 0.10), transparent 70%),
+    radial-gradient(ellipse 38% 30% at 78% 85%, rgba(196, 164, 105, 0.11), transparent 70%),
+    linear-gradient(180deg, rgba(120, 85, 45, 0.05) 0%, transparent 8%, transparent 92%, rgba(120, 85, 45, 0.07) 100%);
   background-attachment: fixed;
-  color: #2d3640;
+  color: #1e1a14;
 }
 
-/* faint paper grain keeps surfaces printed rather than flat */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.03;
+  opacity: 0.05;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* the books center their headings - so do we. Scoped to content containers
+   so nav/footer chrome stays put; flex-row headers (title + button on one
+   line) keep their layout, their text simply centers within its box. */
+main h1, main h2, main h3, main h4 {
+  text-align: center;
 }
 
 .font-display {
-  letter-spacing: 0.015em;
+  letter-spacing: 0.02em;
 }
 
 .prose-erendyl {
-  color: #2d3640;
+  color: #1e1a14;
   line-height: 1.85;
   font-size: 1.0625rem;
 }
@@ -55,12 +66,12 @@ body::before {
 }
 
 ::selection {
-  background-color: rgba(74, 144, 194, 0.3);
-  color: #10151a;
+  background-color: rgba(110, 31, 20, 0.22);
+  color: #1e1a14;
 }
 
 :focus-visible {
-  outline: 2px solid rgba(74, 144, 194, 0.6);
+  outline: 2px solid rgba(110, 31, 20, 0.55);
   outline-offset: 2px;
 }
 
@@ -69,37 +80,38 @@ body::before {
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #e6eaee;
+  background: #f2ead2;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 194, 0.35);
+  background: rgba(110, 31, 20, 0.35);
   border-radius: 999px;
-  border: 2px solid #e6eaee;
+  border: 2px solid #f2ead2;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 194, 0.55);
+  background: rgba(110, 31, 20, 0.55);
 }
 
+/* the books' thin red rule */
 .divider-rule {
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(74, 144, 194, 0.5), transparent);
+  background: linear-gradient(to right, transparent, rgba(110, 31, 20, 0.55), transparent);
 }
 
 .ornate-divider {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: rgba(74, 144, 194, 0.6);
+  color: rgba(110, 31, 20, 0.6);
 }
 .ornate-divider::before,
 .ornate-divider::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(74, 144, 194, 0.45));
+  background: linear-gradient(to right, transparent, rgba(110, 31, 20, 0.5));
 }
 .ornate-divider::after {
-  background: linear-gradient(to left, transparent, rgba(74, 144, 194, 0.45));
+  background: linear-gradient(to left, transparent, rgba(110, 31, 20, 0.5));
 }
 .ornate-divider > .glyph {
   width: 6px;
@@ -109,16 +121,16 @@ body::before {
   flex: none;
 }
 
-/* cards: white paper sheets on the gray desk - the leather texture shows
-   through at a whisper for tactility */
+/* panels: slightly brighter parchment sheets on the page, like the books'
+   stat-block boxes - faint texture, hairline warm edge */
 .card-surface {
   background-image:
-    linear-gradient(rgba(253, 253, 254, 0.95), rgba(250, 251, 252, 0.96)),
+    linear-gradient(rgba(250, 243, 223, 0.93), rgba(247, 239, 216, 0.95)),
     url("/images/card-texture.jpg");
   background-size: cover;
   background-position: center;
-  background-color: #fdfdfe;
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  background-color: #faf3df;
+  border-top: 1px solid rgba(255, 252, 240, 0.9);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
 .card-surface:hover {
@@ -127,28 +139,26 @@ body::before {
 
 .card-static {
   background-image:
-    linear-gradient(rgba(253, 253, 254, 0.96), rgba(250, 251, 252, 0.97)),
+    linear-gradient(rgba(250, 243, 223, 0.94), rgba(247, 239, 216, 0.96)),
     url("/images/card-texture.jpg");
   background-size: cover;
   background-position: center;
-  background-color: #fdfdfe;
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  background-color: #faf3df;
+  border-top: 1px solid rgba(255, 252, 240, 0.9);
 }
 
-/* hero photo vignettes into the light ground; slight desaturation so the
-   dark painting sits calmly on paper */
 .hero-backdrop {
   background-image:
-    radial-gradient(ellipse 75% 65% at 50% 30%, transparent 0%, rgba(230, 234, 238, 0.6) 55%, #e6eaee 100%),
+    radial-gradient(ellipse 75% 65% at 50% 30%, transparent 0%, rgba(242, 234, 210, 0.55) 55%, #f2ead2 100%),
     url("/images/hero-bg.jpg");
   background-size: cover;
   background-position: center 35%;
   background-repeat: no-repeat;
-  filter: saturate(0.85);
+  filter: sepia(0.15) saturate(0.9);
 }
 
 .text-glow {
-  text-shadow: 0 1px 10px rgba(74, 144, 194, 0.25);
+  text-shadow: none;
 }
 
 @keyframes fade-in {

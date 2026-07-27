@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   "Daylight Archive" (palette experiment, 2026-07-21): light gray paper,
+   sky-blue accents, dark slate text. Same type as The Old Library
+   (Cormorant Garamond + Alegreya). Frozen predecessors in design-backups/.
+--------------------------------------------------------------------------- */
+
+:root {
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: Georgia, "Times New Roman", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #e6eaee;
+  background-image:
+    radial-gradient(circle at 20% 8%, rgba(74, 144, 194, 0.07), transparent 42%),
+    radial-gradient(circle at 82% 2%, rgba(93, 125, 153, 0.06), transparent 40%),
+    radial-gradient(circle at 50% 105%, rgba(74, 144, 194, 0.05), transparent 50%),
+    linear-gradient(180deg, rgba(45, 54, 64, 0.05) 0%, transparent 6%, transparent 94%, rgba(45, 54, 64, 0.07) 100%);
+  background-attachment: fixed;
+  color: #2d3640;
+}
+
+/* faint paper grain keeps surfaces printed rather than flat */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.03;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.font-display {
+  letter-spacing: 0.015em;
+}
+
+.prose-erendyl {
+  color: #2d3640;
+  line-height: 1.85;
+  font-size: 1.0625rem;
+}
+
+.prose-erendyl p + p {
+  margin-top: 1rem;
+}
+
+::selection {
+  background-color: rgba(74, 144, 194, 0.3);
+  color: #10151a;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(74, 144, 194, 0.6);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #e6eaee;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 194, 0.35);
+  border-radius: 999px;
+  border: 2px solid #e6eaee;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 194, 0.55);
+}
+
+.divider-rule {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(74, 144, 194, 0.5), transparent);
+}
+
+.ornate-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(74, 144, 194, 0.6);
+}
+.ornate-divider::before,
+.ornate-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(74, 144, 194, 0.45));
+}
+.ornate-divider::after {
+  background: linear-gradient(to left, transparent, rgba(74, 144, 194, 0.45));
+}
+.ornate-divider > .glyph {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: currentColor;
+  flex: none;
+}
+
+/* cards: white paper sheets on the gray desk - the leather texture shows
+   through at a whisper for tactility */
+.card-surface {
+  background-image:
+    linear-gradient(rgba(253, 253, 254, 0.95), rgba(250, 251, 252, 0.96)),
+    url("/images/card-texture.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #fdfdfe;
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+.card-surface:hover {
+  transform: translateY(-2px);
+}
+
+.card-static {
+  background-image:
+    linear-gradient(rgba(253, 253, 254, 0.96), rgba(250, 251, 252, 0.97)),
+    url("/images/card-texture.jpg");
+  background-size: cover;
+  background-position: center;
+  background-color: #fdfdfe;
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+/* hero photo vignettes into the light ground; slight desaturation so the
+   dark painting sits calmly on paper */
+.hero-backdrop {
+  background-image:
+    radial-gradient(ellipse 75% 65% at 50% 30%, transparent 0%, rgba(230, 234, 238, 0.6) 55%, #e6eaee 100%),
+    url("/images/hero-bg.jpg");
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  filter: saturate(0.85);
+}
+
+.text-glow {
+  text-shadow: 0 1px 10px rgba(74, 144, 194, 0.25);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
