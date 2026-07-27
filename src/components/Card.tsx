@@ -49,7 +49,7 @@ export function EntityCard({
 
 export function SectionHeading({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: ReactNode }) {
   return (
-    <div className="mb-8">
+    <div className="mb-8 text-center">
       {eyebrow && (
         <div className="text-xs uppercase tracking-[0.2em] text-ember mb-2">{eyebrow}</div>
       )}

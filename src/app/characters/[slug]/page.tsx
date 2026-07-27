@@ -17,22 +17,24 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
   return (
     <div>
       <Link href="/characters" className="text-sm text-parchment/50 hover:text-gold">&larr; All characters</Link>
-      <div className="mt-4 flex items-start gap-5">
+      <div className="mt-4 flex flex-col items-center">
         {character.portraitPath && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={character.portraitPath}
             alt={character.name}
-            className="h-24 w-24 sm:h-32 sm:w-32 rounded-lg object-cover border border-gold/20 flex-shrink-0"
+            className="h-28 w-28 sm:h-36 sm:w-36 rounded-full object-cover border-2 border-gold/30 shadow-card mb-5"
           />
         )}
-        <SectionHeading
-          eyebrow={[character.isPc ? "Player Character" : "NPC", character.race, character.charClass].filter(Boolean).join(" · ")}
-          title={character.name}
-        />
+        <div className="w-full">
+          <SectionHeading
+            eyebrow={[character.isPc ? "Player Character" : "NPC", character.race, character.charClass].filter(Boolean).join(" · ")}
+            title={character.name}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6 text-xs">
+      <div className="flex flex-wrap justify-center gap-2 mb-6 text-xs">
         {!character.isAlive && (
           <span className="rounded-full bg-blood/30 border border-blood/50 px-3 py-1 text-parchment/80">Deceased</span>
         )}
@@ -46,7 +48,7 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
         )}
       </div>
 
-      <p className="text-parchment/80 italic mb-6">{character.summary}</p>
+      <p className="text-parchment/80 italic mb-6 text-center max-w-3xl mx-auto">{character.summary}</p>
       <div className="prose-erendyl mb-12 whitespace-pre-line">{character.bio}</div>
 
       {factions.length > 0 && (

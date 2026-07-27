@@ -25,14 +25,23 @@ html {
    blotches of a book page - plus grain that multiplies like print */
 body {
   background-color: #f2ead2;
+  /* a real parchment texture (procedural fiber + mottle, seamless tile in
+     public/images/parchment.jpg) with faint tonal washes layered above */
   background-image:
-    radial-gradient(ellipse 40% 30% at 18% 12%, rgba(196, 164, 105, 0.12), transparent 70%),
-    radial-gradient(ellipse 35% 28% at 85% 20%, rgba(196, 164, 105, 0.10), transparent 70%),
-    radial-gradient(ellipse 45% 35% at 30% 78%, rgba(181, 146, 89, 0.10), transparent 70%),
-    radial-gradient(ellipse 38% 30% at 78% 85%, rgba(196, 164, 105, 0.11), transparent 70%),
-    linear-gradient(180deg, rgba(120, 85, 45, 0.05) 0%, transparent 8%, transparent 92%, rgba(120, 85, 45, 0.07) 100%);
+    linear-gradient(180deg, rgba(120, 85, 45, 0.05) 0%, transparent 8%, transparent 92%, rgba(120, 85, 45, 0.07) 100%),
+    radial-gradient(ellipse 45% 35% at 30% 78%, rgba(181, 146, 89, 0.08), transparent 70%),
+    url("/images/parchment.jpg");
+  background-size: auto, auto, 768px 768px;
+  background-repeat: no-repeat, no-repeat, repeat;
   background-attachment: fixed;
   color: #1e1a14;
+}
+
+/* placeholder text was near-invisible on parchment - dark warm grey instead */
+input::placeholder,
+textarea::placeholder {
+  color: #6d6353;
+  opacity: 1;
 }
 
 body::before {

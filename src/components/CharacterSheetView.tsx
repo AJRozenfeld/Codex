@@ -551,7 +551,7 @@ export function CharacterSheetView({
 
 function QuickAdjust({ label, tone, onApply }: { label: string; tone: "blood" | "green"; onApply: (n: number) => void }) {
   const [val, setVal] = useState("");
-  const color = tone === "blood" ? "border-blood/50 text-blood" : "border-green-500/50 text-green-400";
+  const color = tone === "blood" ? "border-blood/50 text-blood" : "border-[#5c7a5e]/60 text-[#4e6b50]";
   return (
     <span className="inline-flex items-center gap-1">
       <input
