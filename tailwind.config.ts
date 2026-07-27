@@ -30,6 +30,7 @@ const config: Config = {
       fontFamily: {
         display: ["var(--font-display)", "serif"],
         body: ["var(--font-body)", "serif"],
+        title: ["var(--font-title)", "serif"],
       },
       boxShadow: {
         card: "inset 0 1px 0 0 rgba(255,252,240,0.7), 0 6px 18px -10px rgba(90,60,30,0.35)",

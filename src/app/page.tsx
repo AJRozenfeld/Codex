@@ -31,7 +31,7 @@ export default async function HomePage() {
         <div className="text-xs uppercase tracking-[0.35em] text-ember mb-4 animate-fade-in">
           Welcome, traveler
         </div>
-        <h1 className="font-display text-5xl sm:text-6xl text-gold text-glow mb-5 animate-fade-in">
+        <h1 className="font-title text-6xl sm:text-7xl text-gold text-glow mb-5 animate-fade-in">
           The Erendyl Codex
         </h1>
         <div className="ornate-divider max-w-xs mx-auto mb-6">

@@ -40,7 +40,7 @@ export default async function NavBar() {
             aria-hidden
             className="h-7 w-7 object-contain drop-shadow-[0_0_5px_rgba(218,185,98,0.5)] group-hover:drop-shadow-[0_0_9px_rgba(218,185,98,0.8)] transition-all"
           />
-          <span className="font-display text-xl tracking-wide text-gold group-hover:text-parchment transition-colors">
+          <span className="font-title text-2xl tracking-wide text-gold group-hover:text-parchment transition-colors">
             Erendyl Codex
           </span>
         </Link>

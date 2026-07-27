@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   "The Official Tome" (2026-07-21): the 5e rulebook page. Soft mottled
-   parchment ground, near-black text, deep brick-red headings (centered,
-   as in the books), thin red rules, warm shadows. Display face: Marcellus
-   SC (Google twin of the books' heading font); body: Alegreya.
+   "The Official Tome" (2026-07-21; authentic fonts 2026-07-27): the 5e
+   rulebook page. Soft mottled parchment ground, near-black text, deep
+   brick-red headings (centered, as in the books), thin red rules, warm
+   shadows. Faces: the CC BY-SA community recreations of the real book
+   fonts (src/fonts/README.md) - Mr Eaves Small Caps for headings,
+   Bookinsanity for body, Nodesto Caps Condensed for the wordmark/hero.
    Frozen predecessors live in design-backups/.
 --------------------------------------------------------------------------- */
 
