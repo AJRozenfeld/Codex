@@ -25,9 +25,10 @@ body {
   background-image:
     linear-gradient(180deg, rgba(120, 85, 45, 0.05) 0%, transparent 8%, transparent 92%, rgba(120, 85, 45, 0.07) 100%),
     radial-gradient(ellipse 45% 35% at 30% 78%, rgba(181, 146, 89, 0.08), transparent 70%),
+    linear-gradient(rgba(242, 234, 210, 0.15), rgba(242, 234, 210, 0.15)),
     url("/images/parchment.jpg");
-  background-size: auto, auto, 768px 768px;
-  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: auto, auto, auto, 768px 768px;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
   background-attachment: fixed;
   color: #1e1a14;
 }
