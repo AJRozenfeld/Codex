@@ -12,11 +12,6 @@
    Frozen predecessors live in design-backups/.
 --------------------------------------------------------------------------- */
 
-:root {
-  --font-display: Georgia, "Times New Roman", serif;
-  --font-body: Georgia, "Times New Roman", serif;
-}
-
 html {
   scroll-behavior: smooth;
 }
