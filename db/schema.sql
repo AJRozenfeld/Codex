@@ -880,7 +880,9 @@ CREATE INDEX IF NOT EXISTS idx_battle_combatants_battle ON battle_combatants(bat
 -- bulk-import path used to seed the SRD monster list.
 CREATE TABLE IF NOT EXISTS creatures (
   id            TEXT PRIMARY KEY,
-  campaign_id   TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  -- NULL campaign_id = platform library row: shared read-only with every DM,
+  -- curated from the master console, copyable into any campaign.
+  campaign_id   TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
   slug          TEXT NOT NULL,
   name          TEXT NOT NULL,
   hp            INTEGER,
@@ -895,6 +897,8 @@ CREATE TABLE IF NOT EXISTS creatures (
   UNIQUE (campaign_id, slug)
 );
 CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creatures(campaign_id);
+-- library rows have no campaign, so UNIQUE(campaign_id, slug) can't police them (NULLs compare distinct)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_creatures_library_slug ON creatures(slug) WHERE campaign_id IS NULL;
 
 CREATE TABLE IF NOT EXISTS scenes (
   id          TEXT PRIMARY KEY,

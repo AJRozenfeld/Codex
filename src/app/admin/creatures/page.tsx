@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { listCreatureSummaries, upsertCreature } from "@/lib/creature-queries";
+import { listCreatureSummaries, upsertCreature, copyLibraryCreatureToCampaign, type CreatureSummary } from "@/lib/creature-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { Field } from "@/components/AdminForm";
 
@@ -15,9 +15,78 @@ async function createAction(formData: FormData) {
   redirect(`/admin/creatures/${id}`);
 }
 
+async function copyAction(id: string) {
+  "use server";
+  const campaignId = await getCurrentCampaignId();
+  const newId = await copyLibraryCreatureToCampaign(campaignId, id);
+  redirect(newId ? `/admin/creatures/${newId}` : "/admin/creatures");
+}
+
+function CreatureTable({ rows, library }: { rows: CreatureSummary[]; library: boolean }) {
+  return (
+    <div className="rounded-lg border border-gold/15 overflow-hidden shadow-card">
+      <table className="w-full text-sm">
+        <thead className="bg-void/70 text-ember/70 text-left text-xs uppercase tracking-widest border-b border-gold/15">
+          <tr>
+            <th className="px-4 py-2"></th>
+            <th className="px-4 py-2">Name</th>
+            <th className="px-4 py-2">Type</th>
+            <th className="px-4 py-2">CR</th>
+            <th className="px-4 py-2">HP</th>
+            <th className="px-4 py-2">AC</th>
+            <th className="px-4 py-2">Source</th>
+            <th className="px-4 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.id} className="border-t border-gold/10 hover:bg-void/30 transition-colors">
+              <td className="px-4 py-2">
+                {c.portraitPath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.portraitPath} alt="" className="h-8 w-8 rounded-full object-cover border border-gold/20" />
+                ) : (
+                  <span className="block h-8 w-8 rounded-full bg-void/60 border border-gold/10" />
+                )}
+              </td>
+              <td className="px-4 py-2 text-parchment">{c.name}</td>
+              <td className="px-4 py-2 text-parchment/50">{c.creatureType || "\u2014"}</td>
+              <td className="px-4 py-2 text-parchment/50">{c.challengeRating || "\u2014"}</td>
+              <td className="px-4 py-2 text-parchment/50">{c.hp ?? ""}</td>
+              <td className="px-4 py-2 text-parchment/50">{c.ac ?? ""}</td>
+              <td className="px-4 py-2 text-parchment/40 text-xs">{c.source || "\u2014"}</td>
+              <td className="px-4 py-2 text-right whitespace-nowrap">
+                {library ? (
+                  <span className="inline-flex items-center gap-3">
+                    <Link href={`/admin/creatures/${c.id}`} className="text-gold hover:underline">View</Link>
+                    <form action={copyAction.bind(null, c.id)} className="inline">
+                      <button type="submit" className="text-gold hover:underline">Copy to Campaign</button>
+                    </form>
+                  </span>
+                ) : (
+                  <Link href={`/admin/creatures/${c.id}`} className="text-gold hover:underline">Edit</Link>
+                )}
+              </td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={8} className="px-4 py-6 text-center text-parchment/40">
+                {library ? "The platform library is empty." : "No creatures of your own yet."}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function AdminCreaturesPage() {
   const campaignId = await getCurrentCampaignId();
-  const creatures = await listCreatureSummaries(campaignId);
+  const all = await listCreatureSummaries(campaignId);
+  const mine = all.filter((c) => !c.inLibrary);
+  const library = all.filter((c) => c.inLibrary);
 
   return (
     <div>
@@ -46,48 +115,15 @@ export default async function AdminCreaturesPage() {
         </button>
       </form>
 
-      <div className="rounded-lg border border-gold/15 overflow-hidden shadow-card">
-        <table className="w-full text-sm">
-          <thead className="bg-void/70 text-ember/70 text-left text-xs uppercase tracking-widest border-b border-gold/15">
-            <tr>
-              <th className="px-4 py-2"></th>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Type</th>
-              <th className="px-4 py-2">CR</th>
-              <th className="px-4 py-2">HP</th>
-              <th className="px-4 py-2">AC</th>
-              <th className="px-4 py-2">Source</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {creatures.map((c) => (
-              <tr key={c.id} className="border-t border-gold/10 hover:bg-void/30 transition-colors">
-                <td className="px-4 py-2">
-                  {c.portraitPath ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.portraitPath} alt="" className="h-8 w-8 rounded-full object-cover border border-gold/20" />
-                  ) : (
-                    <span className="block h-8 w-8 rounded-full bg-void/60 border border-gold/10" />
-                  )}
-                </td>
-                <td className="px-4 py-2 text-parchment">{c.name}</td>
-                <td className="px-4 py-2 text-parchment/50">{c.creatureType || "—"}</td>
-                <td className="px-4 py-2 text-parchment/50">{c.challengeRating || "—"}</td>
-                <td className="px-4 py-2 text-parchment/50">{c.hp ?? ""}</td>
-                <td className="px-4 py-2 text-parchment/50">{c.ac ?? ""}</td>
-                <td className="px-4 py-2 text-parchment/40 text-xs">{c.source || "—"}</td>
-                <td className="px-4 py-2 text-right">
-                  <Link href={`/admin/creatures/${c.id}`} className="text-gold hover:underline">Edit</Link>
-                </td>
-              </tr>
-            ))}
-            {creatures.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-parchment/40">No creatures yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <h2 className="font-display text-lg text-gold mb-3">Your Creatures</h2>
+      <CreatureTable rows={mine} library={false} />
+
+      <h2 className="font-display text-lg text-gold mt-10 mb-1">Platform Library</h2>
+      <p className="text-sm text-parchment/40 mb-3 max-w-2xl">
+        The shared bestiary every DM draws from. Use these directly in Scenes, or copy one into your
+        campaign to make it your own and tweak it.
+      </p>
+      <CreatureTable rows={library} library={true} />
     </div>
   );
 }

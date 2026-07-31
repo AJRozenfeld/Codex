@@ -15,14 +15,23 @@ import { defaultStatBlock, mergeStatBlockWithDefaults } from "./monster-stat-blo
 // character-sheet-shared.ts split for the same "big JSON blob" reason.
 // ---------------------------------------------------------------------------
 
-async function uniqueCreatureSlug(campaignId: string, name: string, excludeId?: string): Promise<string> {
+/** Where a creature lives: a campaign id, or null = the platform library -
+ *  the shared bestiary every DM can read and copy from (master-curated). */
+export type CreatureScope = string | null;
+
+function scopeWhere(scope: CreatureScope): { cond: string; args: string[] } {
+  return scope === null ? { cond: "campaign_id IS NULL", args: [] } : { cond: "campaign_id = ?", args: [scope] };
+}
+
+async function uniqueCreatureSlug(scope: CreatureScope, name: string, excludeId?: string): Promise<string> {
   const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "creature";
+  const { cond, args } = scopeWhere(scope);
   let slug = base;
   let n = 2;
   const db = getDb();
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const r = await db.execute({ sql: "SELECT id FROM creatures WHERE campaign_id = ? AND slug = ?", args: [campaignId, slug] });
+    const r = await db.execute({ sql: `SELECT id FROM creatures WHERE ${cond} AND slug = ?`, args: [...args, slug] });
     const hit = r.rows[0];
     if (!hit || hit.id === excludeId) return slug;
     slug = `${base}-${n++}`;
@@ -38,6 +47,7 @@ function rowToCreature(row: Record<string, unknown>): Creature {
   }
   return {
     id: row.id as string,
+    campaignId: (row.campaign_id as string | null) ?? null,
     slug: row.slug as string,
     name: row.name as string,
     hp: row.hp === null || row.hp === undefined ? null : Number(row.hp),
@@ -50,9 +60,14 @@ function rowToCreature(row: Record<string, unknown>): Creature {
   };
 }
 
+/** The campaign's own creatures PLUS every platform-library row - the
+ *  library is a shared shelf all DMs draw from (Scenes pickers included). */
 export async function listCreatures(campaignId: string): Promise<Creature[]> {
   await ensureSchema();
-  const r = await getDb().execute({ sql: "SELECT * FROM creatures WHERE campaign_id = ? ORDER BY name ASC", args: [campaignId] });
+  const r = await getDb().execute({
+    sql: "SELECT * FROM creatures WHERE campaign_id = ? OR campaign_id IS NULL ORDER BY name ASC",
+    args: [campaignId],
+  });
   return r.rows.map(rowToCreature);
 }
 
@@ -67,12 +82,14 @@ export interface CreatureSummary {
   ac: number | null;
   portraitPath: string | null;
   source: string | null;
+  /** True for platform-library rows (campaign_id NULL) - shared, read-only for DMs. */
+  inLibrary: boolean;
 }
 
 export async function listCreatureSummaries(campaignId: string): Promise<CreatureSummary[]> {
   await ensureSchema();
   const r = await getDb().execute({
-    sql: "SELECT id, slug, name, hp, ac, portrait_path, source, stat_block FROM creatures WHERE campaign_id = ? ORDER BY name ASC",
+    sql: "SELECT id, campaign_id, slug, name, hp, ac, portrait_path, source, stat_block FROM creatures WHERE campaign_id = ? OR campaign_id IS NULL ORDER BY name ASC",
     args: [campaignId],
   });
   return r.rows.map((row) => {
@@ -95,13 +112,24 @@ export async function listCreatureSummaries(campaignId: string): Promise<Creatur
       ac: row.ac === null || row.ac === undefined ? null : Number(row.ac),
       portraitPath: (row.portrait_path as string) ?? null,
       source: (row.source as string) ?? null,
+      inLibrary: row.campaign_id === null || row.campaign_id === undefined,
     };
   });
 }
 
 export async function getCreature(campaignId: string, id: string): Promise<Creature | null> {
   await ensureSchema();
-  const r = await getDb().execute({ sql: "SELECT * FROM creatures WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
+  const r = await getDb().execute({
+    sql: "SELECT * FROM creatures WHERE id = ? AND (campaign_id = ? OR campaign_id IS NULL)",
+    args: [id, campaignId],
+  });
+  const row = r.rows[0];
+  return row ? rowToCreature(row) : null;
+}
+
+export async function getLibraryCreature(id: string): Promise<Creature | null> {
+  await ensureSchema();
+  const r = await getDb().execute({ sql: "SELECT * FROM creatures WHERE id = ? AND campaign_id IS NULL", args: [id] });
   const row = r.rows[0];
   return row ? rowToCreature(row) : null;
 }
@@ -118,9 +146,18 @@ export interface CreatureInput {
 }
 
 export async function upsertCreature(campaignId: string, input: CreatureInput, id?: string): Promise<string> {
+  return upsertScoped(campaignId, input, id);
+}
+
+/** Master-console only at the call sites - writes a shared platform-library row. */
+export async function upsertLibraryCreature(input: CreatureInput, id?: string): Promise<string> {
+  return upsertScoped(null, input, id);
+}
+
+async function upsertScoped(scope: CreatureScope, input: CreatureInput, id?: string): Promise<string> {
   await ensureSchema();
   const db = getDb();
-  const slug = await uniqueCreatureSlug(campaignId, input.name, id);
+  const slug = await uniqueCreatureSlug(scope, input.name, id);
   const creatureId = id ?? newId();
   const statBlockJson = JSON.stringify(mergeStatBlockWithDefaults(input.statBlock ?? {}));
   const args = [
@@ -134,25 +171,49 @@ export async function upsertCreature(campaignId: string, input: CreatureInput, i
     input.source ?? null,
     statBlockJson,
   ];
+  const { cond, args: scopeArgs } = scopeWhere(scope);
   if (id) {
     await db.execute({
       sql: `UPDATE creatures SET name=?, slug=?, hp=?, ac=?, init_bonus=?, notes=?, portrait_path=?, source=?, stat_block=?, updated_at=datetime('now')
-            WHERE id=? AND campaign_id=?`,
-      args: [...args, id, campaignId],
+            WHERE id=? AND ${cond}`,
+      args: [...args, id, ...scopeArgs],
     });
   } else {
     await db.execute({
       sql: `INSERT INTO creatures (id, campaign_id, name, slug, hp, ac, init_bonus, notes, portrait_path, source, stat_block)
             VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      args: [creatureId, campaignId, ...args],
+      args: [creatureId, scope, ...args],
     });
   }
   return creatureId;
 }
 
+/** Clone a library monster into a campaign so the DM can homebrew-tweak their
+ *  own copy (the library row itself stays untouched and shared). */
+export async function copyLibraryCreatureToCampaign(campaignId: string, libraryId: string): Promise<string | null> {
+  const src = await getLibraryCreature(libraryId);
+  if (!src) return null;
+  return upsertScoped(campaignId, {
+    name: src.name,
+    hp: src.hp,
+    ac: src.ac,
+    initBonus: src.initBonus,
+    notes: src.notes ?? undefined,
+    portraitPath: src.portraitPath,
+    source: src.source,
+    statBlock: src.statBlock,
+  });
+}
+
 export async function deleteCreature(campaignId: string, id: string): Promise<void> {
   await ensureSchema();
   await getDb().execute({ sql: "DELETE FROM creatures WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
+}
+
+/** Master-console only at the call sites. */
+export async function deleteLibraryCreature(id: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM creatures WHERE id = ? AND campaign_id IS NULL", args: [id] });
 }
 
 // ---------------------------------------------------------------------------
@@ -175,17 +236,20 @@ export interface BulkImportResult {
   errors: { name: string; error: string }[];
 }
 
-export async function bulkImportCreatures(campaignId: string, rows: CreatureImportRow[]): Promise<BulkImportResult> {
+/** scope = a campaign id, or null to import into the shared platform library
+ *  (the latter is master-gated at the call site). */
+export async function bulkImportCreatures(scope: CreatureScope, rows: CreatureImportRow[]): Promise<BulkImportResult> {
   await ensureSchema();
   const db = getDb();
   const result: BulkImportResult = { created: 0, updated: 0, errors: [] };
 
-  // One upfront query for every existing slug in the campaign, instead of a
+  // One upfront query for every existing slug in the scope, instead of a
   // separate "does this slug exist?" round trip per imported row (a 47-row
   // SRD import was paying 47 of them).
+  const { cond, args: scopeArgs } = scopeWhere(scope);
   const existingRows = await db.execute({
-    sql: "SELECT id, slug FROM creatures WHERE campaign_id = ?",
-    args: [campaignId],
+    sql: `SELECT id, slug FROM creatures WHERE ${cond}`,
+    args: scopeArgs,
   });
   const idBySlug = new Map<string, string>(
     existingRows.rows.map((r) => [r.slug as string, r.id as string])
@@ -201,7 +265,7 @@ export async function bulkImportCreatures(campaignId: string, rows: CreatureImpo
       const slug =
         row.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "creature";
       const existingId = idBySlug.get(slug);
-      const savedId = await upsertCreature(campaignId, row, existingId);
+      const savedId = await upsertScoped(scope, row, existingId);
       // Keep the map current so a duplicate name later in the SAME import
       // updates the row just created instead of trying to insert it twice
       // (matches the old per-row-SELECT behavior exactly).

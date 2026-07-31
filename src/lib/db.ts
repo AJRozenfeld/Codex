@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 5; // v5: api_tokens - bearer auth for the desktop Companion app's /api/v1
+const SCHEMA_VERSION = 6; // v6: platform bestiary - creatures.campaign_id nullable (NULL = shared library row)
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
@@ -724,6 +724,46 @@ async function runMigrations(db: Client): Promise<void> {
         "DROP TABLE music_tracks",
         "ALTER TABLE music_tracks_new RENAME TO music_tracks",
         "CREATE INDEX IF NOT EXISTS idx_music_tracks_dm ON music_tracks(dm_id)",
+      ],
+      "write"
+    );
+  }
+
+  // Platform Bestiary (2026-07-27): creatures.campaign_id becomes nullable -
+  // NULL marks a shared library row every DM can read and copy into their
+  // campaigns, curated from the master console. A nullability change needs
+  // the drop-and-rebuild dance (ids preserved so scene_creatures FKs survive;
+  // foreign_keys is OFF from the top of this function). Gated on the
+  // NOT NULL flag on campaign_id itself - the statements pass can create the
+  // new partial index on the OLD table, so the index's existence proves
+  // nothing about nullability.
+  const creatureCols = await db.execute("PRAGMA table_info(creatures)");
+  const campaignCol = creatureCols.rows.find((r) => r.name === "campaign_id");
+  if (campaignCol && Number(campaignCol.notnull) === 1) {
+    await db.batch(
+      [
+        `CREATE TABLE creatures_new (
+          id            TEXT PRIMARY KEY,
+          campaign_id   TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+          slug          TEXT NOT NULL,
+          name          TEXT NOT NULL,
+          hp            INTEGER,
+          ac            INTEGER,
+          init_bonus    INTEGER NOT NULL DEFAULT 0,
+          notes         TEXT,
+          portrait_path TEXT,
+          source        TEXT,
+          stat_block    TEXT NOT NULL DEFAULT '{}',
+          created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (campaign_id, slug)
+        )`,
+        `INSERT INTO creatures_new (id, campaign_id, slug, name, hp, ac, init_bonus, notes, portrait_path, source, stat_block, created_at, updated_at)
+         SELECT id, campaign_id, slug, name, hp, ac, init_bonus, notes, portrait_path, source, stat_block, created_at, updated_at FROM creatures`,
+        "DROP TABLE creatures",
+        "ALTER TABLE creatures_new RENAME TO creatures",
+        "CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creatures(campaign_id)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_creatures_library_slug ON creatures(slug) WHERE campaign_id IS NULL",
       ],
       "write"
     );

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { bulkImportCreatures, type CreatureImportRow } from "@/lib/creature-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
+import { getMasterSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,15 @@ export const dynamic = "force-dynamic";
 async function importAction(formData: FormData): Promise<{ created: number; updated: number; errors: { name: string; error: string }[] } | { parseError: string }> {
   "use server";
   const campaignId = await getCurrentCampaignId();
+  // Destination "library" = the shared platform bestiary (NULL campaign):
+  // master-gated server-side, so the radio in the form is a claim, not a key.
+  const toLibrary = String(formData.get("destination") ?? "campaign") === "library";
+  if (toLibrary) {
+    const master = await getMasterSession();
+    if (!master.isMaster) {
+      return { parseError: "Importing to the platform library requires an active master session - log in at /master first." };
+    }
+  }
   const file = formData.get("file") as File | null;
   const pasted = String(formData.get("json") ?? "").trim();
   const text = file && file.size > 0 ? await file.text() : pasted;
@@ -28,7 +38,7 @@ async function importAction(formData: FormData): Promise<{ created: number; upda
   } catch (err) {
     return { parseError: err instanceof Error ? err.message : "Invalid JSON." };
   }
-  return bulkImportCreatures(campaignId, rows);
+  return bulkImportCreatures(toLibrary ? null : campaignId, rows);
 }
 
 export default async function AdminCreaturesImportPage({
@@ -112,6 +122,17 @@ export default async function AdminCreaturesImportPage({
             className="w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment text-xs font-mono focus:outline-none focus:border-gold/70"
           />
         </label>
+        <fieldset className="space-y-1">
+          <legend className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Import into</legend>
+          <label className="flex items-center gap-2 text-sm text-parchment/80">
+            <input type="radio" name="destination" value="campaign" defaultChecked className="accent-[#6e1f14]" />
+            This campaign
+          </label>
+          <label className="flex items-center gap-2 text-sm text-parchment/80">
+            <input type="radio" name="destination" value="library" className="accent-[#6e1f14]" />
+            Platform library (shared with every DM - requires a master session)
+          </label>
+        </fieldset>
         <button type="submit" className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold">
           Import
         </button>

@@ -273,6 +273,8 @@ export interface MonsterStatBlock {
 /** A reusable monster/creature library entry (Aviv's call: reusable AND ad-hoc, both supported). */
 export interface Creature {
   id: string;
+  /** Owning campaign - or null: a platform-library row, shared read-only with every DM. */
+  campaignId: string | null;
   slug: string;
   name: string;
   hp: number | null;
