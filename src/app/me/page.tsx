@@ -63,9 +63,18 @@ export default async function MyCharacterPage() {
           </div>
         </div>
       ) : (
-        <p className="text-parchment/50">
-          Your account isn&apos;t linked to a character yet. Ask your DM to connect one from the admin panel.
-        </p>
+        <div className="card-static rounded-lg border border-gold/15 shadow-card p-6">
+          <p className="text-parchment/70 mb-4">
+            You don&apos;t have a character yet. If your DM has opened character creation, you can forge one
+            now - otherwise, ask them to link one from the admin panel.
+          </p>
+          <Link
+            href="/me/create"
+            className="rounded-full bg-gold/90 text-ink px-5 py-2 text-sm font-medium hover:bg-gold"
+          >
+            Create Your Character
+          </Link>
+        </div>
       )}
       <div className="mt-6">
         <Link

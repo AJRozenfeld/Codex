@@ -937,6 +937,32 @@ CREATE TABLE IF NOT EXISTS spells (
 CREATE INDEX IF NOT EXISTS idx_spells_campaign ON spells(campaign_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_spells_library_slug ON spells(slug) WHERE campaign_id IS NULL;
 
+-- Character Creator (2026-07-31, SCHEMA v8). The Blueprint is the DM's
+-- per-campaign configuration of HOW characters are created (steps, stat
+-- methods, budgets, curated options); a draft is one player's in-progress
+-- walk through it, approved by the DM into a real character + sheet.
+CREATE TABLE IF NOT EXISTS creation_blueprints (
+  id           TEXT PRIMARY KEY,
+  campaign_id  TEXT NOT NULL UNIQUE REFERENCES campaigns(id) ON DELETE CASCADE,
+  enabled      INTEGER NOT NULL DEFAULT 0, -- enrollment toggle: players may start drafts
+  steps        TEXT NOT NULL DEFAULT '[]', -- JSON BlueprintStep[]
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS character_drafts (
+  id           TEXT PRIMARY KEY,
+  campaign_id  TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  player_id    TEXT NOT NULL UNIQUE REFERENCES players(id) ON DELETE CASCADE,
+  status       TEXT NOT NULL DEFAULT 'draft', -- draft | submitted | approved | rejected
+  data         TEXT NOT NULL DEFAULT '{}',    -- JSON: { answers: Record<stepId, StepAnswer> }
+  dm_note      TEXT,                          -- rejection feedback shown to the player
+  character_id TEXT REFERENCES characters(id) ON DELETE SET NULL, -- set on approval
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_drafts_campaign ON character_drafts(campaign_id);
+
 CREATE TABLE IF NOT EXISTS scenes (
   id          TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
