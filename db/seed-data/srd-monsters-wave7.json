@@ -1,0 +1,3083 @@
+[
+ {
+  "name": "Tiger",
+  "hp": 37,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "40 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 15,
+    "con": 14,
+    "int": 3,
+    "wis": 12,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +3, Stealth +6",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 13",
+   "languages": "",
+   "challengeRating": "1",
+   "xp": 200,
+   "traits": [
+    {
+     "name": "Keen Smell",
+     "text": "The tiger has advantage on Wisdom (Perception) checks that rely on smell."
+    },
+    {
+     "name": "Pounce",
+     "text": "If the tiger moves at least 20 ft. straight toward a creature and then hits it with a claw attack on the same turn, that target must succeed on a DC 13 Strength saving throw or be knocked prone. If the target is prone, the tiger can make one bite attack against it as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 8 (1d10 + 3) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Treant",
+  "hp": 138,
+  "ac": 16,
+  "initBonus": -1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Huge",
+   "creatureType": "Plant",
+   "alignment": "Chaotic Good",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 23,
+    "dex": 8,
+    "con": 21,
+    "int": 12,
+    "wis": 16,
+    "cha": 12
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "fire",
+   "damageResistances": "bludgeoning, piercing",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 13",
+   "languages": "Common, Druidic, Elvish, Sylvan",
+   "challengeRating": "9",
+   "xp": 5000,
+   "traits": [
+    {
+     "name": "False Appearance",
+     "text": "While the treant remains motionless, it is indistinguishable from a normal tree."
+    },
+    {
+     "name": "Siege Monster",
+     "text": "The treant deals double damage to objects and structures."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The treant makes two slam attacks."
+    },
+    {
+     "name": "Slam",
+     "text": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 16 (3d6 + 6) bludgeoning damage."
+    },
+    {
+     "name": "Rock",
+     "text": "Ranged Weapon Attack: +10 to hit, range 60/180 ft., one target. Hit: 28 (4d10 + 6) bludgeoning damage."
+    },
+    {
+     "name": "Animate Trees",
+     "text": "The treant magically animates one or two trees it can see within 60 feet of it. These trees have the same statistics as a treant, except they have Intelligence and Charisma scores of 1, they can't speak, and they have only the Slam action option. An animated tree acts as an ally of the treant. The tree remains animate for 1 day or until it dies; until the treant dies or is more than 120 feet from the tree; or until the treant takes a bonus action to turn it back into an inanimate tree. The tree then takes root if possible."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Tribal Warrior",
+  "hp": 11,
+  "ac": 12,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Any Alignment",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 13,
+    "dex": 11,
+    "con": 12,
+    "int": 8,
+    "wis": 11,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 10",
+   "languages": "any one language",
+   "challengeRating": "1/8",
+   "xp": 25,
+   "traits": [
+    {
+     "name": "Pack Tactics",
+     "text": "The warrior has advantage on an attack roll against a creature if at least one of the warrior's allies is within 5 ft. of the creature and the ally isn't incapacitated."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Spear",
+     "text": "Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d6 + 1) piercing damage, or 5 (1d8 + 1) piercing damage if used with two hands to make a melee attack."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Triceratops",
+  "hp": 95,
+  "ac": 13,
+  "initBonus": -1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Huge",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "50 ft.",
+   "abilityScores": {
+    "str": 22,
+    "dex": 9,
+    "con": 17,
+    "int": 2,
+    "wis": 11,
+    "cha": 5
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 10",
+   "languages": "",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Trampling Charge",
+     "text": "If the triceratops moves at least 20 ft. straight toward a creature and then hits it with a gore attack on the same turn, that target must succeed on a DC 13 Strength saving throw or be knocked prone. If the target is prone, the triceratops can make one stomp attack against it as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Gore",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 24 (4d8 + 6) piercing damage."
+    },
+    {
+     "name": "Stomp",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one prone creature. Hit: 22 (3d10 + 6) bludgeoning damage"
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Troll",
+  "hp": 84,
+  "ac": 15,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Giant",
+   "alignment": "Chaotic Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 13,
+    "con": 20,
+    "int": 7,
+    "wis": 9,
+    "cha": 7
+   },
+   "savingThrows": "",
+   "skills": "Perception +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 12",
+   "languages": "Giant",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Keen Smell",
+     "text": "The troll has advantage on Wisdom (Perception) checks that rely on smell."
+    },
+    {
+     "name": "Regeneration",
+     "text": "The troll regains 10 hit points at the start of its turn. If the troll takes acid or fire damage, this trait doesn't function at the start of the troll's next turn. The troll dies only if it starts its turn with 0 hit points and doesn't regenerate."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The troll makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 4) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Tyrannosaurus Rex",
+  "hp": 136,
+  "ac": 13,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Huge",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "50 ft.",
+   "abilityScores": {
+    "str": 25,
+    "dex": 10,
+    "con": 19,
+    "int": 2,
+    "wis": 12,
+    "cha": 9
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 14",
+   "languages": "",
+   "challengeRating": "8",
+   "xp": 3900,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The tyrannosaurus makes two attacks: one with its bite and one with its tail. It can't make both attacks against the same target."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 33 (4d12 + 7) piercing damage. If the target is a Medium or smaller creature, it is grappled (escape DC 17). Until this grapple ends, the target is restrained, and the tyrannosaurus can't bite another target."
+    },
+    {
+     "name": "Tail",
+     "text": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Unicorn",
+  "hp": 67,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Celestial",
+   "alignment": "Lawful Good",
+   "speed": "50 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 14,
+    "con": 15,
+    "int": 11,
+    "wis": 17,
+    "cha": 16
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "poison",
+   "conditionImmunities": "charmed, paralyzed, poisoned",
+   "senses": "darkvision 60 ft., passive Perception 13",
+   "languages": "Celestial, Elvish, Sylvan, telepathy 60 ft.",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Charge",
+     "text": "If the unicorn moves at least 20 ft. straight toward a target and then hits it with a horn attack on the same turn, the target takes an extra 9 (2d8) piercing damage. If the target is a creature, it must succeed on a DC 15 Strength saving throw or be knocked prone."
+    },
+    {
+     "name": "Innate Spellcasting",
+     "text": "The unicorn's innate spellcasting ability is Charisma (spell save DC 14). The unicorn can innately cast the following spells, requiring no components:\n\nAt will: detect evil and good, druidcraft, pass without trace\n1/day each: calm emotions, dispel evil and good, entangle"
+    },
+    {
+     "name": "Magic Resistance",
+     "text": "The unicorn has advantage on saving throws against spells and other magical effects."
+    },
+    {
+     "name": "Magic Weapons",
+     "text": "The unicorn's weapon attacks are magical."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The unicorn makes two attacks: one with its hooves and one with its horn."
+    },
+    {
+     "name": "Hooves",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) bludgeoning damage."
+    },
+    {
+     "name": "Horn",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 8 (1d8 + 4) piercing damage."
+    },
+    {
+     "name": "Healing Touch",
+     "text": "The unicorn touches another creature with its horn. The target magically regains 11 (2d8 + 2) hit points. In addition, the touch removes all diseases and neutralizes all poisons afflicting the target."
+    },
+    {
+     "name": "Teleport",
+     "text": "The unicorn magically teleports itself and up to three willing creatures it can see within 5 ft. of it, along with any equipment they are wearing or carrying, to a location the unicorn is familiar with, up to 1 mile away."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": [
+    {
+     "name": "Hooves",
+     "text": "The unicorn makes one attack with its hooves."
+    },
+    {
+     "name": "Shimmering Shield (Costs 2 Actions)",
+     "text": "The unicorn creates a shimmering, magical field around itself or another creature it can see within 60 ft. of it. The target gains a +2 bonus to AC until the end of the unicorn's next turn."
+    },
+    {
+     "name": "Heal Self (Costs 3 Actions)",
+     "text": "The unicorn magically regains 11 (2d8 + 2) hit points."
+    }
+   ]
+  }
+ },
+ {
+  "name": "Vampire Spawn",
+  "hp": 82,
+  "ac": 15,
+  "initBonus": 3,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Neutral Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 16,
+    "dex": 16,
+    "con": 16,
+    "int": 11,
+    "wis": 10,
+    "cha": 12
+   },
+   "savingThrows": "Dex +6, Wis +3",
+   "skills": "Perception +3, Stealth +6",
+   "damageVulnerabilities": "",
+   "damageResistances": "necrotic, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 13",
+   "languages": "the languages it knew in life",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Regeneration",
+     "text": "The vampire regains 10 hit points at the start of its turn if it has at least 1 hit point and isn't in sunlight or running water. If the vampire takes radiant damage or damage from holy water, this trait doesn't function at the start of the vampire's next turn."
+    },
+    {
+     "name": "Spider Climb",
+     "text": "The vampire can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+    },
+    {
+     "name": "Vampire Weaknesses",
+     "text": "The vampire has the following flaws:\nForbiddance. The vampire can't enter a residence without an invitation from one of the occupants.\nHarmed by Running Water. The vampire takes 20 acid damage when it ends its turn in running water.\nStake to the Heart. The vampire is destroyed if a piercing weapon made of wood is driven into its heart while it is incapacitated in its resting place.\nSunlight Hypersensitivity. The vampire takes 20 radiant damage when it starts its turn in sunlight. While in sunlight, it has disadvantage on attack rolls and ability checks."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The vampire makes two attacks, only one of which can be a bite attack."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one willing creature, or a creature that is grappled by the vampire, incapacitated, or restrained. Hit: 6 (1d6 + 3) piercing damage plus 7 (2d6) necrotic damage. The target's hit point maximum is reduced by an amount equal to the necrotic damage taken, and the vampire regains hit points equal to that amount. The reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0."
+    },
+    {
+     "name": "Claws",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one creature. Hit: 8 (2d4 + 3) slashing damage. Instead of dealing damage, the vampire can grapple the target (escape DC 13)."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Vampire, Bat Form",
+  "hp": 144,
+  "ac": 16,
+  "initBonus": 4,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Lawful Evil",
+   "speed": "5 ft., fly 30 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 18,
+    "con": 18,
+    "int": 17,
+    "wis": 15,
+    "cha": 18
+   },
+   "savingThrows": "Dex +9, Wis +7, Cha +9",
+   "skills": "Perception +7, Stealth +9",
+   "damageVulnerabilities": "",
+   "damageResistances": "necrotic, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 120 ft., passive Perception 17",
+   "languages": "the languages it knew in life",
+   "challengeRating": "13",
+   "xp": 10000,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "If the vampire isn't in sun light or running water, it can use its action to polymorph into a Tiny bat or a Medium cloud of mist, or back into its true form.\nWhile in bat form, the vampire can't speak, its walking speed is 5 feet, and it has a flying speed of 30 feet. Its statistics, other than its size and speed, are unchanged. Anything it is wearing transforms with it, but nothing it is carrying does. It reverts to its true form if it dies.\nWhile in mist form, the vampire can't take any actions, speak, or manipulate objects. It is weightless, has a flying speed of 20 feet, can hover, and can enter a hostile creature's space and stop there. In addition, if air can pass through a space, the mist can do so without squeezing, and it can't pass through water. It has advantage on Strength, Dexterity, and Constitution saving throws, and it is immune to all nonmagical damage, except the damage it takes from sunlight."
+    },
+    {
+     "name": "Legendary Resistance",
+     "text": "If the vampire fails a saving throw, it can choose to succeed instead."
+    },
+    {
+     "name": "Misty Escape",
+     "text": "When it drops to 0 hit points outside its resting place, the vampire transforms into a cloud of mist (as in the Shapechanger trait) instead of falling unconscious, provided that it isn't in sunlight or running water. If it can't transform, it is destroyed.\nWhile it has 0 hit points in mist form, it can't revert to its vampire form, and it must reach its resting place within 2 hours or be destroyed. Once in its resting place, it reverts to its vampire form. It is then paralyzed until it regains at least 1 hit point. After spending 1 hour in its resting place with 0 hit points, it regains 1 hit point."
+    },
+    {
+     "name": "Regeneration",
+     "text": "The vampire regains 20 hit points at the start of its turn if it has at least 1 hit point and isn't in sunlight or running water. If the vampire takes radiant damage or damage from holy water, this trait doesn't function at the start of the vampire's next turn."
+    },
+    {
+     "name": "Spider Climb",
+     "text": "The vampire can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+    },
+    {
+     "name": "Vampire Weaknesses",
+     "text": "The vampire has the following flaws:\nForbiddance. The vampire can't enter a residence without an invitation from one of the occupants.\nHarmed by Running Water. The vampire takes 20 acid damage if it ends its turn in running water.\nStake to the Heart. If a piercing weapon made of wood is driven into the vampire's heart while the vampire is incapacitated in its resting place, the vampire is paralyzed until the stake is removed.\nSunlight Hypersensitivity. The vampire takes 20 radiant damage when it starts its turn in sunlight. While in sunlight, it has disadvantage on attack rolls and ability checks."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one willing creature, or a creature that is grappled by the vampire, incapacitated, or restrained. Hit: 7 (1d6 + 4) piercing damage plus 10 (3d6) necrotic damage. The target's hit point maximum is reduced by an amount equal to the necrotic damage taken, and the vampire regains hit points equal to that amount. The reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0. A humanoid slain in this way and then buried in the ground rises the following night as a vampire spawn under the vampire's control."
+    },
+    {
+     "name": "Charm",
+     "text": "The vampire targets one humanoid it can see within 30 ft. of it. If the target can see the vampire, the target must succeed on a DC 17 Wisdom saving throw against this magic or be charmed by the vampire. The charmed target regards the vampire as a trusted friend to be heeded and protected. Although the target isn't under the vampire's control, it takes the vampire's requests or actions in the most favorable way it can, and it is a willing target for the vampire's bit attack.\nEach time the vampire or the vampire's companions do anything harmful to the target, it can repeat the saving throw, ending the effect on itself on a success. Otherwise, the effect lasts 24 hours or until the vampire is destroyed, is on a different plane of existence than the target, or takes a bonus action to end the effect."
+    },
+    {
+     "name": "Children of the Night",
+     "text": "The vampire magically calls 2d4 swarms of bats or rats, provided that the sun isn't up. While outdoors, the vampire can call 3d6 wolves instead. The called creatures arrive in 1d4 rounds, acting as allies of the vampire and obeying its spoken commands. The beasts remain for 1 hour, until the vampire dies, or until the vampire dismisses them as a bonus action."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": [
+    {
+     "name": "Move",
+     "text": "The vampire moves up to its speed without provoking opportunity attacks."
+    },
+    {
+     "name": "Unarmed Strike",
+     "text": "The vampire makes one unarmed strike."
+    },
+    {
+     "name": "Bite (Costs 2 Actions)",
+     "text": "The vampire makes one bite attack."
+    }
+   ]
+  }
+ },
+ {
+  "name": "Vampire, Mist Form",
+  "hp": 144,
+  "ac": 16,
+  "initBonus": 4,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Lawful Evil",
+   "speed": "fly 20 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 18,
+    "con": 18,
+    "int": 17,
+    "wis": 15,
+    "cha": 18
+   },
+   "savingThrows": "Dex +9, Wis +7, Cha +9",
+   "skills": "Perception +7, Stealth +9",
+   "damageVulnerabilities": "",
+   "damageResistances": "necrotic, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 120 ft., passive Perception 17",
+   "languages": "the languages it knew in life",
+   "challengeRating": "13",
+   "xp": 10000,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "If the vampire isn't in sun light or running water, it can use its action to polymorph into a Tiny bat or a Medium cloud of mist, or back into its true form.\nWhile in bat form, the vampire can't speak, its walking speed is 5 feet, and it has a flying speed of 30 feet. Its statistics, other than its size and speed, are unchanged. Anything it is wearing transforms with it, but nothing it is carrying does. It reverts to its true form if it dies.\nWhile in mist form, the vampire can't take any actions, speak, or manipulate objects. It is weightless, has a flying speed of 20 feet, can hover, and can enter a hostile creature's space and stop there. In addition, if air can pass through a space, the mist can do so without squeezing, and it can't pass through water. It has advantage on Strength, Dexterity, and Constitution saving throws, and it is immune to all nonmagical damage, except the damage it takes from sunlight."
+    },
+    {
+     "name": "Legendary Resistance",
+     "text": "If the vampire fails a saving throw, it can choose to succeed instead."
+    },
+    {
+     "name": "Misty Escape",
+     "text": "When it drops to 0 hit points outside its resting place, the vampire transforms into a cloud of mist (as in the Shapechanger trait) instead of falling unconscious, provided that it isn't in sunlight or running water. If it can't transform, it is destroyed.\nWhile it has 0 hit points in mist form, it can't revert to its vampire form, and it must reach its resting place within 2 hours or be destroyed. Once in its resting place, it reverts to its vampire form. It is then paralyzed until it regains at least 1 hit point. After spending 1 hour in its resting place with 0 hit points, it regains 1 hit point."
+    },
+    {
+     "name": "Regeneration",
+     "text": "The vampire regains 20 hit points at the start of its turn if it has at least 1 hit point and isn't in sunlight or running water. If the vampire takes radiant damage or damage from holy water, this trait doesn't function at the start of the vampire's next turn."
+    },
+    {
+     "name": "Spider Climb",
+     "text": "The vampire can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+    },
+    {
+     "name": "Vampire Weaknesses",
+     "text": "The vampire has the following flaws:\nForbiddance. The vampire can't enter a residence without an invitation from one of the occupants.\nHarmed by Running Water. The vampire takes 20 acid damage if it ends its turn in running water.\nStake to the Heart. If a piercing weapon made of wood is driven into the vampire's heart while the vampire is incapacitated in its resting place, the vampire is paralyzed until the stake is removed.\nSunlight Hypersensitivity. The vampire takes 20 radiant damage when it starts its turn in sunlight. While in sunlight, it has disadvantage on attack rolls and ability checks."
+    }
+   ],
+   "actions": [],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": [
+    {
+     "name": "Move",
+     "text": "The vampire moves up to its speed without provoking opportunity attacks."
+    },
+    {
+     "name": "Unarmed Strike",
+     "text": "The vampire makes one unarmed strike."
+    },
+    {
+     "name": "Bite (Costs 2 Actions)",
+     "text": "The vampire makes one bite attack."
+    }
+   ]
+  }
+ },
+ {
+  "name": "Vampire, Vampire Form",
+  "hp": 144,
+  "ac": 16,
+  "initBonus": 4,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Lawful Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 18,
+    "con": 18,
+    "int": 17,
+    "wis": 15,
+    "cha": 18
+   },
+   "savingThrows": "Dex +9, Wis +7, Cha +9",
+   "skills": "Perception +7, Stealth +9",
+   "damageVulnerabilities": "",
+   "damageResistances": "necrotic, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 120 ft., passive Perception 17",
+   "languages": "the languages it knew in life",
+   "challengeRating": "13",
+   "xp": 10000,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "If the vampire isn't in sun light or running water, it can use its action to polymorph into a Tiny bat or a Medium cloud of mist, or back into its true form.\nWhile in bat form, the vampire can't speak, its walking speed is 5 feet, and it has a flying speed of 30 feet. Its statistics, other than its size and speed, are unchanged. Anything it is wearing transforms with it, but nothing it is carrying does. It reverts to its true form if it dies.\nWhile in mist form, the vampire can't take any actions, speak, or manipulate objects. It is weightless, has a flying speed of 20 feet, can hover, and can enter a hostile creature's space and stop there. In addition, if air can pass through a space, the mist can do so without squeezing, and it can't pass through water. It has advantage on Strength, Dexterity, and Constitution saving throws, and it is immune to all nonmagical damage, except the damage it takes from sunlight."
+    },
+    {
+     "name": "Legendary Resistance",
+     "text": "If the vampire fails a saving throw, it can choose to succeed instead."
+    },
+    {
+     "name": "Misty Escape",
+     "text": "When it drops to 0 hit points outside its resting place, the vampire transforms into a cloud of mist (as in the Shapechanger trait) instead of falling unconscious, provided that it isn't in sunlight or running water. If it can't transform, it is destroyed.\nWhile it has 0 hit points in mist form, it can't revert to its vampire form, and it must reach its resting place within 2 hours or be destroyed. Once in its resting place, it reverts to its vampire form. It is then paralyzed until it regains at least 1 hit point. After spending 1 hour in its resting place with 0 hit points, it regains 1 hit point."
+    },
+    {
+     "name": "Regeneration",
+     "text": "The vampire regains 20 hit points at the start of its turn if it has at least 1 hit point and isn't in sunlight or running water. If the vampire takes radiant damage or damage from holy water, this trait doesn't function at the start of the vampire's next turn."
+    },
+    {
+     "name": "Spider Climb",
+     "text": "The vampire can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+    },
+    {
+     "name": "Vampire Weaknesses",
+     "text": "The vampire has the following flaws:\nForbiddance. The vampire can't enter a residence without an invitation from one of the occupants.\nHarmed by Running Water. The vampire takes 20 acid damage if it ends its turn in running water.\nStake to the Heart. If a piercing weapon made of wood is driven into the vampire's heart while the vampire is incapacitated in its resting place, the vampire is paralyzed until the stake is removed.\nSunlight Hypersensitivity. The vampire takes 20 radiant damage when it starts its turn in sunlight. While in sunlight, it has disadvantage on attack rolls and ability checks."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The vampire makes two attacks, only one of which can be a bite attack."
+    },
+    {
+     "name": "Unarmed Strike",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one creature. Hit: 8 (1d8 + 4) bludgeoning damage. Instead of dealing damage, the vampire can grapple the target (escape DC 18)."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one willing creature, or a creature that is grappled by the vampire, incapacitated, or restrained. Hit: 7 (1d6 + 4) piercing damage plus 10 (3d6) necrotic damage. The target's hit point maximum is reduced by an amount equal to the necrotic damage taken, and the vampire regains hit points equal to that amount. The reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0. A humanoid slain in this way and then buried in the ground rises the following night as a vampire spawn under the vampire's control."
+    },
+    {
+     "name": "Charm",
+     "text": "The vampire targets one humanoid it can see within 30 ft. of it. If the target can see the vampire, the target must succeed on a DC 17 Wisdom saving throw against this magic or be charmed by the vampire. The charmed target regards the vampire as a trusted friend to be heeded and protected. Although the target isn't under the vampire's control, it takes the vampire's requests or actions in the most favorable way it can, and it is a willing target for the vampire's bit attack.\nEach time the vampire or the vampire's companions do anything harmful to the target, it can repeat the saving throw, ending the effect on itself on a success. Otherwise, the effect lasts 24 hours or until the vampire is destroyed, is on a different plane of existence than the target, or takes a bonus action to end the effect."
+    },
+    {
+     "name": "Children of the Night",
+     "text": "The vampire magically calls 2d4 swarms of bats or rats, provided that the sun isn't up. While outdoors, the vampire can call 3d6 wolves instead. The called creatures arrive in 1d4 rounds, acting as allies of the vampire and obeying its spoken commands. The beasts remain for 1 hour, until the vampire dies, or until the vampire dismisses them as a bonus action."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": [
+    {
+     "name": "Move",
+     "text": "The vampire moves up to its speed without provoking opportunity attacks."
+    },
+    {
+     "name": "Unarmed Strike",
+     "text": "The vampire makes one unarmed strike."
+    },
+    {
+     "name": "Bite (Costs 2 Actions)",
+     "text": "The vampire makes one bite attack."
+    }
+   ]
+  }
+ },
+ {
+  "name": "Veteran",
+  "hp": 58,
+  "ac": 17,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Any Alignment",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 16,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+   },
+   "savingThrows": "",
+   "skills": "Athletics +5, Perception +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "any one language (usually Common)",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The veteran makes two longsword attacks. If it has a shortsword drawn, it can also make a shortsword attack."
+    },
+    {
+     "name": "Longsword",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage, or 8 (1d10 + 3) slashing damage if used with two hands."
+    },
+    {
+     "name": "Shortsword",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage."
+    },
+    {
+     "name": "Heavy Crossbow",
+     "text": "Ranged Weapon Attack: +3 to hit, range 100/400 ft., one target. Hit: 6 (1d10 + 1) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Violet Fungus",
+  "hp": 18,
+  "ac": 5,
+  "initBonus": -5,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Plant",
+   "alignment": "Unaligned",
+   "speed": "5 ft.",
+   "abilityScores": {
+    "str": 3,
+    "dex": 1,
+    "con": 10,
+    "int": 1,
+    "wis": 3,
+    "cha": 1
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "blinded, blinded, frightened",
+   "senses": "blindsight 30 ft. (blind beyond this radius), passive Perception 6",
+   "languages": "",
+   "challengeRating": "1/4",
+   "xp": 50,
+   "traits": [
+    {
+     "name": "False Appearance",
+     "text": "While the violet fungus remains motionless, it is indistinguishable from an ordinary fungus."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The fungus makes 1d4 Rotting Touch attacks."
+    },
+    {
+     "name": "Rotting Touch",
+     "text": "Melee Weapon Attack: +2 to hit, reach 10 ft., one creature. Hit: 4 (1d8) necrotic damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Vrock",
+  "hp": 104,
+  "ac": 15,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Fiend",
+   "alignment": "Chaotic Evil",
+   "speed": "40 ft., fly 60 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 15,
+    "con": 18,
+    "int": 8,
+    "wis": 13,
+    "cha": 8
+   },
+   "savingThrows": "Dex +5, Wis +4, Cha +2",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "cold, fire, lightning, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "poison",
+   "conditionImmunities": "poisoned",
+   "senses": "darkvision 120 ft., passive Perception 11",
+   "languages": "Abyssal, telepathy 120 ft.",
+   "challengeRating": "6",
+   "xp": 2300,
+   "traits": [
+    {
+     "name": "Magic Resistance",
+     "text": "The vrock has advantage on saving throws against spells and other magical effects."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The vrock makes two attacks: one with its beak and one with its talons."
+    },
+    {
+     "name": "Beak",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) piercing damage."
+    },
+    {
+     "name": "Talons",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 14 (2d10 + 3) slashing damage."
+    },
+    {
+     "name": "Spores",
+     "text": "A 15-foot-radius cloud of toxic spores extends out from the vrock. The spores spread around corners. Each creature in that area must succeed on a DC 14 Constitution saving throw or become poisoned. While poisoned in this way, a target takes 5 (1d10) poison damage at the start of each of its turns. A target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. Emptying a vial of holy water on the target also ends the effect on it."
+    },
+    {
+     "name": "Stunning Screech",
+     "text": "The vrock emits a horrific screech. Each creature within 20 feet of it that can hear it and that isn't a demon must succeed on a DC 14 Constitution saving throw or be stunned until the end of the vrock's next turn ."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Vulture",
+  "hp": 5,
+  "ac": 10,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "10 ft., fly 50 ft.",
+   "abilityScores": {
+    "str": 7,
+    "dex": 10,
+    "con": 13,
+    "int": 2,
+    "wis": 12,
+    "cha": 4
+   },
+   "savingThrows": "",
+   "skills": "Perception +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 13",
+   "languages": "",
+   "challengeRating": "0",
+   "xp": 10,
+   "traits": [
+    {
+     "name": "Keen Sight and Smell",
+     "text": "The vulture has advantage on Wisdom (Perception) checks that rely on sight or smell."
+    },
+    {
+     "name": "Pack Tactics",
+     "text": "The vulture has advantage on an attack roll against a creature if at least one of the vulture's allies is within 5 ft. of the creature and the ally isn't incapacitated."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Beak",
+     "text": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Warhorse",
+  "hp": 19,
+  "ac": 11,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "60 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 12,
+    "con": 13,
+    "int": 2,
+    "wis": 12,
+    "cha": 7
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 11",
+   "languages": "",
+   "challengeRating": "1/2",
+   "xp": 100,
+   "traits": [
+    {
+     "name": "Trampling Charge",
+     "text": "If the horse moves at least 20 ft. straight toward a creature and then hits it with a hooves attack on the same turn, that target must succeed on a DC 14 Strength saving throw or be knocked prone. If the target is prone, the horse can make another attack with its hooves against it as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Hooves",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) bludgeoning damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Warhorse Skeleton",
+  "hp": 22,
+  "ac": 13,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Undead",
+   "alignment": "Lawful Evil",
+   "speed": "60 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 12,
+    "con": 15,
+    "int": 2,
+    "wis": 8,
+    "cha": 5
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "bludgeoning",
+   "damageResistances": "",
+   "damageImmunities": "poison",
+   "conditionImmunities": "exhaustion, poisoned",
+   "senses": "darkvision 60 ft., passive Perception 9",
+   "languages": "",
+   "challengeRating": "1/2",
+   "xp": 100,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Hooves",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) bludgeoning damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Water Elemental",
+  "hp": 114,
+  "ac": 14,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Elemental",
+   "alignment": "Neutral",
+   "speed": "30 ft., swim 90 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 14,
+    "con": 18,
+    "int": 5,
+    "wis": 10,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "acid, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "poison",
+   "conditionImmunities": "exhaustion, grappled, paralyzed, petrified, poisoned, prone, restrained, unconscious",
+   "senses": "darkvision 60 ft., passive Perception 10",
+   "languages": "Aquan",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Water Form",
+     "text": "The elemental can enter a hostile creature's space and stop there. It can move through a space as narrow as 1 inch wide without squeezing."
+    },
+    {
+     "name": "Freeze",
+     "text": "If the elemental takes cold damage, it partially freezes; its speed is reduced by 20 ft. until the end of its next turn."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The elemental makes two slam attacks."
+    },
+    {
+     "name": "Slam",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage."
+    },
+    {
+     "name": "Whelm",
+     "text": "Each creature in the elemental's space must make a DC 15 Strength saving throw. On a failure, a target takes 13 (2d8 + 4) bludgeoning damage. If it is Large or smaller, it is also grappled (escape DC 14). Until this grapple ends, the target is restrained and unable to breathe unless it can breathe water. If the saving throw is successful, the target is pushed out of the elemental's space.\nThe elemental can grapple one Large creature or up to two Medium or smaller creatures at one time. At the start of each of the elemental's turns, each target grappled by it takes 13 (2d8 + 4) bludgeoning damage. A creature within 5 feet of the elemental can pull a creature or object out of it by taking an action to make a DC 14 Strength and succeeding."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Weasel",
+  "hp": 1,
+  "ac": 13,
+  "initBonus": 3,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Tiny",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 3,
+    "dex": 16,
+    "con": 8,
+    "int": 2,
+    "wis": 12,
+    "cha": 3
+   },
+   "savingThrows": "",
+   "skills": "Perception +3, Stealth +5",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 13",
+   "languages": "",
+   "challengeRating": "0",
+   "xp": 10,
+   "traits": [
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The weasel has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 1 piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werebear, Bear Form",
+  "hp": 135,
+  "ac": 11,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Good",
+   "speed": "40 ft., climb 30 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 10,
+    "con": 17,
+    "int": 11,
+    "wis": 12,
+    "cha": 12
+   },
+   "savingThrows": "",
+   "skills": "Perception +7",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 17",
+   "languages": "",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werebear can use its action to polymorph into a Large bear-humanoid hybrid or into a Large bear, or back into its true form, which is humanoid. Its statistics, other than its size and AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The werebear has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "In bear form, the werebear makes two claw attacks. In humanoid form, it makes two greataxe attacks. In hybrid form, it can attack like a bear or a humanoid."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d10 + 4) piercing damage. If the target is a humanoid, it must succeed on a DC 14 Constitution saving throw or be cursed with werebear lycanthropy."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werebear, Human Form",
+  "hp": 135,
+  "ac": 10,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Good",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 10,
+    "con": 17,
+    "int": 11,
+    "wis": 12,
+    "cha": 12
+   },
+   "savingThrows": "",
+   "skills": "Perception +7",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 17",
+   "languages": "Common",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werebear can use its action to polymorph into a Large bear-humanoid hybrid or into a Large bear, or back into its true form, which is humanoid. Its statistics, other than its size and AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The werebear has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "In bear form, the werebear makes two claw attacks. In humanoid form, it makes two greataxe attacks. In hybrid form, it can attack like a bear or a humanoid."
+    },
+    {
+     "name": "Greataxe",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 10 (1d12 + 4) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werebear, Hybrid Form",
+  "hp": 135,
+  "ac": 11,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Good",
+   "speed": "40 ft., climb 30 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 10,
+    "con": 17,
+    "int": 11,
+    "wis": 12,
+    "cha": 12
+   },
+   "savingThrows": "",
+   "skills": "Perception +7",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 17",
+   "languages": "Common",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werebear can use its action to polymorph into a Large bear-humanoid hybrid or into a Large bear, or back into its true form, which is humanoid. Its statistics, other than its size and AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The werebear has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "In bear form, the werebear makes two claw attacks. In humanoid form, it makes two greataxe attacks. In hybrid form, it can attack like a bear or a humanoid."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d10 + 4) piercing damage. If the target is a humanoid, it must succeed on a DC 14 Constitution saving throw or be cursed with werebear lycanthropy."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage."
+    },
+    {
+     "name": "Greataxe",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 10 (1d12 + 4) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wereboar, Boar Form",
+  "hp": 78,
+  "ac": 11,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Evil",
+   "speed": "40 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 10,
+    "con": 15,
+    "int": 10,
+    "wis": 11,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wereboar can use its action to polymorph into a boar-humanoid hybrid or into a boar, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Charge (Boar or Hybrid Form Only)",
+     "text": "If the wereboar moves at least 15 feet straight toward a target and then hits it with its tusks on the same turn, the target takes an extra 7 (2d6) slashing damage. If the target is a creature, it must succeed on a DC 13 Strength saving throw or be knocked prone."
+    },
+    {
+     "name": "Relentless",
+     "text": "If the wereboar takes 14 damage or less that would reduce it to 0 hit points, it is reduced to 1 hit point instead."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Tusks",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage. If the target is a humanoid, it must succeed on a DC 12 Constitution saving throw or be cursed with wereboar lycanthropy."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wereboar, Human Form",
+  "hp": 78,
+  "ac": 10,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 10,
+    "con": 15,
+    "int": 10,
+    "wis": 11,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "Common (can't speak in boar form)",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wereboar can use its action to polymorph into a boar-humanoid hybrid or into a boar, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Relentless",
+     "text": "If the wereboar takes 14 damage or less that would reduce it to 0 hit points, it is reduced to 1 hit point instead."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wereboar makes two attacks, only one of which can be with its tusks."
+    },
+    {
+     "name": "Maul",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) bludgeoning damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wereboar, Hybrid Form",
+  "hp": 78,
+  "ac": 11,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 10,
+    "con": 15,
+    "int": 10,
+    "wis": 11,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "Common",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wereboar can use its action to polymorph into a boar-humanoid hybrid or into a boar, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Charge (Boar or Hybrid Form Only)",
+     "text": "If the wereboar moves at least 15 feet straight toward a target and then hits it with its tusks on the same turn, the target takes an extra 7 (2d6) slashing damage. If the target is a creature, it must succeed on a DC 13 Strength saving throw or be knocked prone."
+    },
+    {
+     "name": "Relentless",
+     "text": "If the wereboar takes 14 damage or less that would reduce it to 0 hit points, it is reduced to 1 hit point instead."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wereboar makes two attacks, only one of which can be with its tusks."
+    },
+    {
+     "name": "Maul",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) bludgeoning damage."
+    },
+    {
+     "name": "Tusks",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage. If the target is a humanoid, it must succeed on a DC 12 Constitution saving throw or be cursed with wereboar lycanthropy."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wererat, Human Form",
+  "hp": 33,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Lawful Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 10,
+    "dex": 15,
+    "con": 12,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "Common",
+   "challengeRating": "2",
+   "xp": 450,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wererat can use its action to polymorph into a rat-humanoid hybrid or into a giant rat, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The wererat has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wererat makes two attacks, only one of which can be a bite."
+    },
+    {
+     "name": "Shortsword",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+    },
+    {
+     "name": "Hand Crossbow",
+     "text": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wererat, Hybrid Form",
+  "hp": 33,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Lawful Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 10,
+    "dex": 15,
+    "con": 12,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 12",
+   "languages": "Common",
+   "challengeRating": "2",
+   "xp": 450,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wererat can use its action to polymorph into a rat-humanoid hybrid or into a giant rat, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The wererat has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wererat makes two attacks, only one of which can be a bite."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage. If the target is a humanoid, it must succeed on a DC 11 Constitution saving throw or be cursed with wererat lycanthropy."
+    },
+    {
+     "name": "Shortsword",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+    },
+    {
+     "name": "Hand Crossbow",
+     "text": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wererat, Rat Form",
+  "hp": 33,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Lawful Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 10,
+    "dex": 15,
+    "con": 12,
+    "int": 11,
+    "wis": 10,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +2, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 12",
+   "languages": "",
+   "challengeRating": "2",
+   "xp": 450,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The wererat can use its action to polymorph into a rat-humanoid hybrid or into a giant rat, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Smell",
+     "text": "The wererat has advantage on Wisdom (Perception) checks that rely on smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage. If the target is a humanoid, it must succeed on a DC 11 Constitution saving throw or be cursed with wererat lycanthropy."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Weretiger, Human Form",
+  "hp": 120,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 15,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 11
+   },
+   "savingThrows": "",
+   "skills": "Perception +5, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 15",
+   "languages": "Common",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The weretiger can use its action to polymorph into a tiger-humanoid hybrid or into a tiger, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The weretiger has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "In humanoid form, the weretiger makes two scimitar attacks or two longbow attacks. In hybrid form, it can attack like a humanoid or make two claw attacks."
+    },
+    {
+     "name": "Scimitar",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage."
+    },
+    {
+     "name": "Longbow",
+     "text": "Ranged Weapon Attack: +4 to hit, range 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Weretiger, Hybrid Form",
+  "hp": 120,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 15,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 11
+   },
+   "savingThrows": "",
+   "skills": "Perception +5, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 15",
+   "languages": "Common",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The weretiger can use its action to polymorph into a tiger-humanoid hybrid or into a tiger, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The weretiger has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    },
+    {
+     "name": "Pounce",
+     "text": "If the weretiger moves at least 15 feet straight toward a creature and then hits it with a claw attack on the same turn, that target must succeed on a DC 14 Strength saving throw or be knocked prone. If the target is prone, the weretiger can make one bite attack against it as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "In humanoid form, the weretiger makes two scimitar attacks or two longbow attacks. In hybrid form, it can attack like a humanoid or make two claw attacks."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 8 (1d10 + 3) piercing damage. If the target is a humanoid, it must succeed on a DC 13 Constitution saving throw or be cursed with weretiger lycanthropy."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage."
+    },
+    {
+     "name": "Scimitar",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage."
+    },
+    {
+     "name": "Longbow",
+     "text": "Ranged Weapon Attack: +4 to hit, range 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Weretiger, Tiger Form",
+  "hp": 120,
+  "ac": 12,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Neutral",
+   "speed": "40 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 15,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 11
+   },
+   "savingThrows": "",
+   "skills": "Perception +5, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 15",
+   "languages": "",
+   "challengeRating": "4",
+   "xp": 1100,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The weretiger can use its action to polymorph into a tiger-humanoid hybrid or into a tiger, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The weretiger has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    },
+    {
+     "name": "Pounce",
+     "text": "If the weretiger moves at least 15 feet straight toward a creature and then hits it with a claw attack on the same turn, that target must succeed on a DC 14 Strength saving throw or be knocked prone. If the target is prone, the weretiger can make one bite attack against it as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 8 (1d10 + 3) piercing damage. If the target is a humanoid, it must succeed on a DC 13 Constitution saving throw or be cursed with weretiger lycanthropy."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werewolf, Human Form",
+  "hp": 58,
+  "ac": 11,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Chaotic Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 15,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 14",
+   "languages": "Common",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werewolf can use its action to polymorph into a wolf-humanoid hybrid or into a wolf, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The werewolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The werewolf makes two attacks: two with its spear (humanoid form) or one with its bite and one with its claws (hybrid form)."
+    },
+    {
+     "name": "Spear",
+     "text": "Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one creature. Hit: 5 (1d6 + 2) piercing damage, or 6 (1d8 + 2) piercing damage if used with two hands to make a melee attack."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werewolf, Hybrid Form",
+  "hp": 58,
+  "ac": 12,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Chaotic Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 15,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 14",
+   "languages": "Common",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werewolf can use its action to polymorph into a wolf-humanoid hybrid or into a wolf, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The werewolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The werewolf makes two attacks: two with its spear (humanoid form) or one with its bite and one with its claws (hybrid form)."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage. If the target is a humanoid, it must succeed on a DC 12 Constitution saving throw or be cursed with werewolf lycanthropy."
+    },
+    {
+     "name": "Claws",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 7 (2d4 + 2) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Werewolf, Wolf Form",
+  "hp": 58,
+  "ac": 12,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Humanoid",
+   "alignment": "Chaotic Evil",
+   "speed": "40 ft.",
+   "abilityScores": {
+    "str": 15,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 11,
+    "cha": 10
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "conditionImmunities": "",
+   "senses": "passive Perception 14",
+   "languages": "",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [
+    {
+     "name": "Shapechanger",
+     "text": "The werewolf can use its action to polymorph into a wolf-humanoid hybrid or into a wolf, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies."
+    },
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The werewolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage. If the target is a humanoid, it must succeed on a DC 12 Constitution saving throw or be cursed with werewolf lycanthropy."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "White Dragon Wyrmling",
+  "hp": 32,
+  "ac": 16,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Evil",
+   "speed": "30 ft., burrow 15 ft., fly 60 ft., swim 30 ft.",
+   "abilityScores": {
+    "str": 14,
+    "dex": 10,
+    "con": 14,
+    "int": 5,
+    "wis": 10,
+    "cha": 11
+   },
+   "savingThrows": "Dex +2, Con +4, Wis +2, Cha +2",
+   "skills": "Perception +4, Stealth +2",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "cold",
+   "conditionImmunities": "",
+   "senses": "blindsight 10 ft., darkvision 60 ft., passive Perception 14",
+   "languages": "Draconic",
+   "challengeRating": "2",
+   "xp": 450,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (1d10 + 2) piercing damage plus 2 (1d4) cold damage."
+    },
+    {
+     "name": "Cold Breath",
+     "text": "The dragon exhales an icy blast of hail in a 15-foot cone. Each creature in that area must make a DC 12 Constitution saving throw, taking 22 (5d8) cold damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wight",
+  "hp": 45,
+  "ac": 14,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Neutral Evil",
+   "speed": "30 ft.",
+   "abilityScores": {
+    "str": 15,
+    "dex": 14,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 15
+   },
+   "savingThrows": "",
+   "skills": "Perception +3, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "necrotic, bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "damageImmunities": "poison",
+   "conditionImmunities": "exhaustion, poisoned",
+   "senses": "darkvision 60 ft., passive Perception 13",
+   "languages": "the languages it knew in life",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [
+    {
+     "name": "Sunlight Sensitivity",
+     "text": "While in sunlight, the wight has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wight makes two longsword attacks or two longbow attacks. It can use its Life Drain in place of one longsword attack."
+    },
+    {
+     "name": "Life Drain",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 5 (1d6 + 2) necrotic damage. The target must succeed on a DC 13 Constitution saving throw or its hit point maximum is reduced by an amount equal to the damage taken. This reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0.\nA humanoid slain by this attack rises 24 hours later as a zombie under the wight's control, unless the humanoid is restored to life or its body is destroyed. The wight can have no more than twelve zombies under its control at one time."
+    },
+    {
+     "name": "Longsword",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) slashing damage, or 7 (1d10 + 2) slashing damage if used with two hands."
+    },
+    {
+     "name": "Longbow",
+     "text": "Ranged Weapon Attack: +4 to hit, range 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Will-o'-Wisp",
+  "hp": 22,
+  "ac": 19,
+  "initBonus": 9,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Tiny",
+   "creatureType": "Undead",
+   "alignment": "Chaotic Evil",
+   "speed": "0 ft., fly 50 ft. (hover)",
+   "abilityScores": {
+    "str": 1,
+    "dex": 28,
+    "con": 10,
+    "int": 13,
+    "wis": 14,
+    "cha": 11
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "acid, cold, fire, necrotic, thunder, bludgeoning, piercing, and slashing from nonmagical weapons",
+   "damageImmunities": "lightning, poison",
+   "conditionImmunities": "exhaustion, grappled, paralyzed, poisoned, prone, restrained, unconscious",
+   "senses": "darkvision 120 ft., passive Perception 12",
+   "languages": "the languages it knew in life",
+   "challengeRating": "2",
+   "xp": 450,
+   "traits": [
+    {
+     "name": "Consume Life",
+     "text": "As a bonus action, the will-o'-wisp can target one creature it can see within 5 ft. of it that has 0 hit points and is still alive. The target must succeed on a DC 10 Constitution saving throw against this magic or die. If the target dies, the will-o'-wisp regains 10 (3d6) hit points."
+    },
+    {
+     "name": "Ephemeral",
+     "text": "The will-o'-wisp can't wear or carry anything."
+    },
+    {
+     "name": "Incorporeal Movement",
+     "text": "The will-o'-wisp can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+    },
+    {
+     "name": "Variable Illumination",
+     "text": "The will-o'-wisp sheds bright light in a 5- to 20-foot radius and dim light for an additional number of ft. equal to the chosen radius. The will-o'-wisp can alter the radius as a bonus action."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Shock",
+     "text": "Melee Spell Attack: +4 to hit, reach 5 ft., one creature. Hit: 9 (2d8) lightning damage."
+    },
+    {
+     "name": "Invisibility",
+     "text": "The will-o'-wisp and its light magically become invisible until it attacks or uses its Consume Life, or until its concentration ends (as if concentrating on a spell)."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Winter Wolf",
+  "hp": 75,
+  "ac": 13,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Monstrosity",
+   "alignment": "Neutral Evil",
+   "speed": "50 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 13,
+    "con": 14,
+    "int": 7,
+    "wis": 12,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +5, Stealth +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "cold",
+   "conditionImmunities": "",
+   "senses": "passive Perception 15",
+   "languages": "Common, Giant, Winter Wolf",
+   "challengeRating": "3",
+   "xp": 700,
+   "traits": [
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    },
+    {
+     "name": "Pack Tactics",
+     "text": "The wolf has advantage on an attack roll against a creature if at least one of the wolf's allies is within 5 ft. of the creature and the ally isn't incapacitated."
+    },
+    {
+     "name": "Snow Camouflage",
+     "text": "The wolf has advantage on Dexterity (Stealth) checks made to hide in snowy terrain."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) piercing damage. If the target is a creature, it must succeed on a DC 14 Strength saving throw or be knocked prone."
+    },
+    {
+     "name": "Cold Breath",
+     "text": "The wolf exhales a blast of freezing wind in a 15-foot cone. Each creature in that area must make a DC 12 Dexterity saving throw, taking 18 (4d8) cold damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wolf",
+  "hp": 11,
+  "ac": 13,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Beast",
+   "alignment": "Unaligned",
+   "speed": "40 ft.",
+   "abilityScores": {
+    "str": 12,
+    "dex": 15,
+    "con": 12,
+    "int": 3,
+    "wis": 12,
+    "cha": 6
+   },
+   "savingThrows": "",
+   "skills": "Perception +3, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "passive Perception 13",
+   "languages": "",
+   "challengeRating": "1/4",
+   "xp": 50,
+   "traits": [
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    },
+    {
+     "name": "Pack Tactics",
+     "text": "The wolf has advantage on an attack roll against a creature if at least one of the wolf's allies is within 5 ft. of the creature and the ally isn't incapacitated."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4 + 2) piercing damage. If the target is a creature, it must succeed on a DC 11 Strength saving throw or be knocked prone."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Worg",
+  "hp": 26,
+  "ac": 13,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Monstrosity",
+   "alignment": "Neutral Evil",
+   "speed": "50 ft.",
+   "abilityScores": {
+    "str": 16,
+    "dex": 13,
+    "con": 13,
+    "int": 7,
+    "wis": 11,
+    "cha": 8
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 14",
+   "languages": "Goblin, Worg",
+   "challengeRating": "1/2",
+   "xp": 100,
+   "traits": [
+    {
+     "name": "Keen Hearing and Smell",
+     "text": "The worg has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) piercing damage. If the target is a creature, it must succeed on a DC 13 Strength saving throw or be knocked prone."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wraith",
+  "hp": 67,
+  "ac": 13,
+  "initBonus": 3,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Neutral Evil",
+   "speed": "0 ft., fly 60 ft. (hover)",
+   "abilityScores": {
+    "str": 6,
+    "dex": 16,
+    "con": 16,
+    "int": 12,
+    "wis": 14,
+    "cha": 15
+   },
+   "savingThrows": "",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "acid, cold, fire, lightning, thunder, bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered",
+   "damageImmunities": "necrotic, poison",
+   "conditionImmunities": "charmed, exhaustion, grappled, paralyzed, petrified, poisoned, prone, restrained",
+   "senses": "darkvision 60 ft., passive Perception 12",
+   "languages": "the languages it knew in life",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Incorporeal Movement",
+     "text": "The wraith can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+    },
+    {
+     "name": "Sunlight Sensitivity",
+     "text": "While in sunlight, the wraith has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Life Drain",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one creature. Hit: 21 (4d8 + 3) necrotic damage. The target must succeed on a DC 14 Constitution saving throw or its hit point maximum is reduced by an amount equal to the damage taken. This reduction lasts until the target finishes a long rest. The target dies if this effect reduces its hit point maximum to 0."
+    },
+    {
+     "name": "Create Specter",
+     "text": "The wraith targets a humanoid within 10 feet of it that has been dead for no longer than 1 minute and died violently. The target's spirit rises as a specter in the space of its corpse or in the nearest unoccupied space. The specter is under the wraith's control. The wraith can have no more than seven specters under its control at one time."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Wyvern",
+  "hp": 110,
+  "ac": 13,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Unaligned",
+   "speed": "20 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 10,
+    "con": 16,
+    "int": 5,
+    "wis": 12,
+    "cha": 6
+   },
+   "savingThrows": "",
+   "skills": "Perception +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., passive Perception 14",
+   "languages": "",
+   "challengeRating": "6",
+   "xp": 2300,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The wyvern makes two attacks: one with its bite and one with its stinger. While flying, it can use its claws in place of one other attack."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one creature. Hit: 11 (2d6 + 4) piercing damage."
+    },
+    {
+     "name": "Claws",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage."
+    },
+    {
+     "name": "Stinger",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one creature. Hit: 11 (2d6 + 4) piercing damage. The target must make a DC 15 Constitution saving throw, taking 24 (7d6) poison damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Xorn",
+  "hp": 73,
+  "ac": 19,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Elemental",
+   "alignment": "Neutral",
+   "speed": "20 ft., burrow 20 ft.",
+   "abilityScores": {
+    "str": 17,
+    "dex": 10,
+    "con": 22,
+    "int": 11,
+    "wis": 10,
+    "cha": 11
+   },
+   "savingThrows": "",
+   "skills": "Perception +6, Stealth +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "piercing and slashing from nonmagical weapons that aren't adamantine",
+   "damageImmunities": "",
+   "conditionImmunities": "",
+   "senses": "darkvision 60 ft., tremorsense 60 ft., passive Perception 16",
+   "languages": "Terran",
+   "challengeRating": "5",
+   "xp": 1800,
+   "traits": [
+    {
+     "name": "Earth Glide",
+     "text": "The xorn can burrow through nonmagical, unworked earth and stone. While doing so, the xorn doesn't disturb the material it moves through."
+    },
+    {
+     "name": "Stone Camouflage",
+     "text": "The xorn has advantage on Dexterity (Stealth) checks made to hide in rocky terrain."
+    },
+    {
+     "name": "Treasure Sense",
+     "text": "The xorn can pinpoint, by scent, the location of precious metals and stones, such as coins and gems, within 60 ft. of it."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The xorn makes three claw attacks and one bite attack."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (3d6 + 3) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Black Dragon",
+  "hp": 127,
+  "ac": 18,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Evil",
+   "speed": "40 ft., fly 80 ft., swim 40 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 14,
+    "con": 17,
+    "int": 12,
+    "wis": 11,
+    "cha": 15
+   },
+   "savingThrows": "Dex +5, Con +6, Wis +3, Cha +5",
+   "skills": "Perception +6, Stealth +5",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "acid",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 16",
+   "languages": "Common, Draconic",
+   "challengeRating": "7",
+   "xp": 2900,
+   "traits": [
+    {
+     "name": "Amphibious",
+     "text": "The dragon can breathe air and water."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 4 (1d8) acid damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    },
+    {
+     "name": "Acid Breath",
+     "text": "The dragon exhales acid in a 30-foot line that is 5 feet wide. Each creature in that line must make a DC 14 Dexterity saving throw, taking 49 (11d8) acid damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Blue Dragon",
+  "hp": 152,
+  "ac": 18,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Lawful Evil",
+   "speed": "40 ft., burrow 20 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 21,
+    "dex": 10,
+    "con": 19,
+    "int": 14,
+    "wis": 13,
+    "cha": 17
+   },
+   "savingThrows": "Dex +4, Con +8, Wis +5, Cha +7",
+   "skills": "Perception +9, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "lightning",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 19",
+   "languages": "Common, Draconic",
+   "challengeRating": "9",
+   "xp": 5000,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 16 (2d10 + 5) piercing damage plus 5 (1d10) lightning damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 12 (2d6 + 5) slashing damage."
+    },
+    {
+     "name": "Lightning Breath",
+     "text": "The dragon exhales lightning in a 60-foot line that is 5 feet wide. Each creature in that line must make a DC 16 Dexterity saving throw, taking 55 (10d10) lightning damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Brass Dragon",
+  "hp": 110,
+  "ac": 17,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Good",
+   "speed": "40 ft., burrow 20 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 10,
+    "con": 17,
+    "int": 12,
+    "wis": 11,
+    "cha": 15
+   },
+   "savingThrows": "Dex +3, Con +6, Wis +3, Cha +5",
+   "skills": "Perception +6, Persuasion +5, Stealth +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "fire",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 16",
+   "languages": "Common, Draconic",
+   "challengeRating": "6",
+   "xp": 2300,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    },
+    {
+     "name": "Breath Weapons",
+     "text": "The dragon uses one of the following breath weapons.\nFire Breath. The dragon exhales fire in a 40-foot line that is 5 feet wide. Each creature in that line must make a DC 14 Dexterity saving throw, taking 42 (12d6) fire damage on a failed save, or half as much damage on a successful one.\nSleep Breath. The dragon exhales sleep gas in a 30-foot cone. Each creature in that area must succeed on a DC 14 Constitution saving throw or fall unconscious for 5 minutes. This effect ends for a creature if the creature takes damage or someone uses an action to wake it."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Bronze Dragon",
+  "hp": 142,
+  "ac": 18,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Lawful Good",
+   "speed": "40 ft., fly 80 ft., swim 40 ft.",
+   "abilityScores": {
+    "str": 21,
+    "dex": 10,
+    "con": 19,
+    "int": 14,
+    "wis": 13,
+    "cha": 17
+   },
+   "savingThrows": "Dex +3, Con +7, Wis +4, Cha +6",
+   "skills": "Insight +4, Perception +7, Stealth +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "lightning",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 17",
+   "languages": "Common, Draconic",
+   "challengeRating": "8",
+   "xp": 3900,
+   "traits": [
+    {
+     "name": "Amphibious",
+     "text": "The dragon can breathe air and water."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 16 (2d10 + 5) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 12 (2d6 + 5) slashing damage."
+    },
+    {
+     "name": "Breath Weapons",
+     "text": "The dragon uses one of the following breath weapons.\nLightning Breath. The dragon exhales lightning in a 60-foot line that is 5 feet wide. Each creature in that line must make a DC 15 Dexterity saving throw, taking 55 (10d10) lightning damage on a failed save, or half as much damage on a successful one.\nRepulsion Breath. The dragon exhales repulsion energy in a 30-foot cone. Each creature in that area must succeed on a DC 15 Strength saving throw. On a failed save, the creature is pushed 40 feet away from the dragon."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Copper Dragon",
+  "hp": 119,
+  "ac": 17,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Good",
+   "speed": "40 ft., climb 40 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 12,
+    "con": 17,
+    "int": 16,
+    "wis": 13,
+    "cha": 15
+   },
+   "savingThrows": "Dex +4, Con +6, Wis +4, Cha +5",
+   "skills": "Deception +5, Perception +7, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "acid",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 17",
+   "languages": "Common, Draconic",
+   "challengeRating": "7",
+   "xp": 2900,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    },
+    {
+     "name": "Breath Weapons",
+     "text": "The dragon uses one of the following breath weapons.\nAcid Breath. The dragon exhales acid in an 40-foot line that is 5 feet wide. Each creature in that line must make a DC 14 Dexterity saving throw, taking 40 (9d8) acid damage on a failed save, or half as much damage on a successful one.\nSlowing Breath. The dragon exhales gas in a 30-foot cone. Each creature in that area must succeed on a DC 14 Constitution saving throw. On a failed save, the creature can't use reactions, its speed is halved, and it can't make more than one attack on its turn. In addition, the creature can use either an action or a bonus action on its turn, but not both. These effects last for 1 minute. The creature can repeat the saving throw at the end of each of its turns, ending the effect on itself with a successful save."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Gold Dragon",
+  "hp": 178,
+  "ac": 18,
+  "initBonus": 2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Lawful Good",
+   "speed": "40 ft., fly 80 ft., swim 40 ft.",
+   "abilityScores": {
+    "str": 23,
+    "dex": 14,
+    "con": 21,
+    "int": 16,
+    "wis": 13,
+    "cha": 20
+   },
+   "savingThrows": "Dex +6, Con +9, Wis +5, Cha +9",
+   "skills": "Insight +5, Perception +9, Persuasion +9, Stealth +6",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "fire",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 19",
+   "languages": "Common, Draconic",
+   "challengeRating": "10",
+   "xp": 5900,
+   "traits": [
+    {
+     "name": "Amphibious",
+     "text": "The dragon can breathe air and water."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) slashing damage."
+    },
+    {
+     "name": "Breath Weapons",
+     "text": "The dragon uses one of the following breath weapons.\nFire Breath. The dragon exhales fire in a 30-foot cone. Each creature in that area must make a DC 17 Dexterity saving throw, taking 55 (10d10) fire damage on a failed save, or half as much damage on a successful one.\nWeakening Breath. The dragon exhales gas in a 30-foot cone. Each creature in that area must succeed on a DC 17 Strength saving throw or have disadvantage on Strength-based attack rolls, Strength checks, and Strength saving throws for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Green Dragon",
+  "hp": 136,
+  "ac": 18,
+  "initBonus": 1,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Lawful Evil",
+   "speed": "40 ft., fly 80 ft., swim 40 ft.",
+   "abilityScores": {
+    "str": 19,
+    "dex": 12,
+    "con": 17,
+    "int": 16,
+    "wis": 13,
+    "cha": 15
+   },
+   "savingThrows": "Dex +4, Con +6, Wis +4, Cha +5",
+   "skills": "Deception +5, Perception +7, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "poison",
+   "conditionImmunities": "poisoned",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 17",
+   "languages": "Common, Draconic",
+   "challengeRating": "8",
+   "xp": 3900,
+   "traits": [
+    {
+     "name": "Amphibious",
+     "text": "The dragon can breathe air and water."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 7 (2d6) poison damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    },
+    {
+     "name": "Poison Breath",
+     "text": "The dragon exhales poisonous gas in a 30-foot cone. Each creature in that area must make a DC 14 Constitution saving throw, taking 42 (12d6) poison damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Red Dragon",
+  "hp": 178,
+  "ac": 18,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Evil",
+   "speed": "40 ft., climb 40 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 23,
+    "dex": 10,
+    "con": 21,
+    "int": 14,
+    "wis": 11,
+    "cha": 19
+   },
+   "savingThrows": "Dex +4, Con +9, Wis +4, Cha +8",
+   "skills": "Perception +8, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "fire",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 18",
+   "languages": "Common, Draconic",
+   "challengeRating": "10",
+   "xp": 5900,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage plus 3 (1d6) fire damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) slashing damage."
+    },
+    {
+     "name": "Fire Breath",
+     "text": "The dragon exhales fire in a 30-foot cone. Each creature in that area must make a DC 17 Dexterity saving throw, taking 56 (16d6) fire damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young Silver Dragon",
+  "hp": 168,
+  "ac": 18,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Lawful Good",
+   "speed": "40 ft., fly 80 ft.",
+   "abilityScores": {
+    "str": 23,
+    "dex": 10,
+    "con": 21,
+    "int": 14,
+    "wis": 11,
+    "cha": 19
+   },
+   "savingThrows": "Dex +4, Con +9, Wis +4, Cha +8",
+   "skills": "Arcana +6, History +6, Perception +8, Stealth +4",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "cold",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 18",
+   "languages": "Common, Draconic",
+   "challengeRating": "9",
+   "xp": 5000,
+   "traits": [],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) slashing damage."
+    },
+    {
+     "name": "Breath Weapons",
+     "text": "The dragon uses one of the following breath weapons.\nCold Breath. The dragon exhales an icy blast in a 30-foot cone. Each creature in that area must make a DC 17 Constitution saving throw, taking 54 (12d8) cold damage on a failed save, or half as much damage on a successful one.\nParalyzing Breath. The dragon exhales paralyzing gas in a 30-foot cone. Each creature in that area must succeed on a DC 17 Constitution saving throw or be paralyzed for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Young White Dragon",
+  "hp": 133,
+  "ac": 17,
+  "initBonus": 0,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Large",
+   "creatureType": "Dragon",
+   "alignment": "Chaotic Evil",
+   "speed": "40 ft., burrow 20 ft., fly 80 ft., swim 40 ft.",
+   "abilityScores": {
+    "str": 18,
+    "dex": 10,
+    "con": 18,
+    "int": 6,
+    "wis": 11,
+    "cha": 12
+   },
+   "savingThrows": "Dex +3, Con +7, Wis +3, Cha +4",
+   "skills": "Perception +6, Stealth +3",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "cold",
+   "conditionImmunities": "",
+   "senses": "blindsight 30 ft., darkvision 120 ft., passive Perception 16",
+   "languages": "Common, Draconic",
+   "challengeRating": "6",
+   "xp": 2300,
+   "traits": [
+    {
+     "name": "Ice Walk",
+     "text": "The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, difficult terrain composed of ice or snow doesn't cost it extra movement."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Multiattack",
+     "text": "The dragon makes three attacks: one with its bite and two with its claws."
+    },
+    {
+     "name": "Bite",
+     "text": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 4 (1d8) cold damage."
+    },
+    {
+     "name": "Claw",
+     "text": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage."
+    },
+    {
+     "name": "Cold Breath",
+     "text": "The dragon exhales an icy blast in a 30-foot cone. Each creature in that area must make a DC 15 Constitution saving throw, taking 45 (10d8) cold damage on a failed save, or half as much damage on a successful one."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ },
+ {
+  "name": "Zombie",
+  "hp": 22,
+  "ac": 8,
+  "initBonus": -2,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "statBlock": {
+   "size": "Medium",
+   "creatureType": "Undead",
+   "alignment": "Neutral Evil",
+   "speed": "20 ft.",
+   "abilityScores": {
+    "str": 13,
+    "dex": 6,
+    "con": 16,
+    "int": 3,
+    "wis": 6,
+    "cha": 5
+   },
+   "savingThrows": "Wis +0",
+   "skills": "",
+   "damageVulnerabilities": "",
+   "damageResistances": "",
+   "damageImmunities": "poison",
+   "conditionImmunities": "poisoned",
+   "senses": "darkvision 60 ft., passive Perception 8",
+   "languages": "understands all languages it spoke in life but can't speak",
+   "challengeRating": "1/4",
+   "xp": 50,
+   "traits": [
+    {
+     "name": "Undead Fortitude",
+     "text": "If damage reduces the zombie to 0 hit points, it must make a Constitution saving throw with a DC of 5+the damage taken, unless the damage is radiant or from a critical hit. On a success, the zombie drops to 1 hit point instead."
+    }
+   ],
+   "actions": [
+    {
+     "name": "Slam",
+     "text": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) bludgeoning damage."
+    }
+   ],
+   "bonusActions": [],
+   "reactions": [],
+   "legendaryActions": []
+  }
+ }
+]
