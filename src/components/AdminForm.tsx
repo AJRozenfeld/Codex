@@ -180,9 +180,13 @@ export function FormActions({ deleteAction }: { deleteAction?: (formData: FormDa
         Save
       </button>
       {deleteAction && (
-        <form action={deleteAction}>
-          <button type="submit" className="text-sm text-blood hover:underline">Delete</button>
-        </form>
+        // formAction, NOT a nested <form>: nested forms are invalid HTML, the
+        // browser parser splits them during SSR and hydration silently loses
+        // the action binding - every Delete rendered that way was a dead
+        // button (found 2026-07-31 trying to delete a library creature).
+        <button type="submit" formAction={deleteAction} className="text-sm text-blood hover:underline">
+          Delete
+        </button>
       )}
     </div>
   );
