@@ -271,6 +271,52 @@ export interface MonsterStatBlock {
 }
 
 /** A reusable monster/creature library entry (Aviv's call: reusable AND ad-hoc, both supported). */
+export interface EquipmentDetails {
+  /** One-line mechanical summary, e.g. "Martial Melee Weapon - 1d8 slashing - Versatile (1d10)". */
+  statLine: string;
+  description: string;
+}
+
+export interface EquipmentItem {
+  id: string;
+  /** Owning campaign - or null: a platform-library row, shared read-only with every DM. */
+  campaignId: string | null;
+  slug: string;
+  name: string;
+  category: string | null;
+  rarity: string | null;
+  cost: string | null;
+  weight: string | null;
+  source: string | null;
+  details: EquipmentDetails;
+}
+
+export interface SpellDetails {
+  castingTime: string;
+  range: string;
+  components: string;
+  duration: string;
+  /** Comma-separated class list, e.g. "Sorcerer, Wizard". */
+  classes: string;
+  description: string;
+  higherLevel: string;
+  ritual: boolean;
+  concentration: boolean;
+}
+
+export interface Spell {
+  id: string;
+  /** Owning campaign - or null: a platform-library row, shared read-only with every DM. */
+  campaignId: string | null;
+  slug: string;
+  name: string;
+  /** 0 = cantrip. */
+  level: number;
+  school: string | null;
+  source: string | null;
+  details: SpellDetails;
+}
+
 export interface Creature {
   id: string;
   /** Owning campaign - or null: a platform-library row, shared read-only with every DM. */

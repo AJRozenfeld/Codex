@@ -900,6 +900,43 @@ CREATE INDEX IF NOT EXISTS idx_creatures_campaign ON creatures(campaign_id);
 -- library rows have no campaign, so UNIQUE(campaign_id, slug) can't police them (NULLs compare distinct)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_creatures_library_slug ON creatures(slug) WHERE campaign_id IS NULL;
 
+-- Equipment & Spell libraries (2026-07-31, SCHEMA v7). Same scoping rule as
+-- creatures: NULL campaign_id = platform library row, shared read-only with
+-- every DM, master-curated, copyable into campaigns for homebrew.
+CREATE TABLE IF NOT EXISTS equipment_items (
+  id            TEXT PRIMARY KEY,
+  campaign_id   TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug          TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  category      TEXT, -- Weapon / Armor / Adventuring Gear / Magic Item categories, etc.
+  rarity        TEXT, -- magic items only; NULL for mundane gear
+  cost          TEXT, -- e.g. "15 gp"
+  weight        TEXT, -- e.g. "3 lb."
+  source        TEXT,
+  details       TEXT NOT NULL DEFAULT '{}', -- JSON: { statLine, description }
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_equipment_campaign ON equipment_items(campaign_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_equipment_library_slug ON equipment_items(slug) WHERE campaign_id IS NULL;
+
+CREATE TABLE IF NOT EXISTS spells (
+  id            TEXT PRIMARY KEY,
+  campaign_id   TEXT REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug          TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  level         INTEGER NOT NULL DEFAULT 0, -- 0 = cantrip
+  school        TEXT,
+  source        TEXT,
+  details       TEXT NOT NULL DEFAULT '{}', -- JSON: castingTime/range/components/duration/classes/description/higherLevel/ritual/concentration
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_spells_campaign ON spells(campaign_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_spells_library_slug ON spells(slug) WHERE campaign_id IS NULL;
+
 CREATE TABLE IF NOT EXISTS scenes (
   id          TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,

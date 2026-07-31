@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 6; // v6: platform bestiary - creatures.campaign_id nullable (NULL = shared library row)
+const SCHEMA_VERSION = 7; // v7: equipment_items + spells library tables (created by the statements pass; no data migration needed)
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {

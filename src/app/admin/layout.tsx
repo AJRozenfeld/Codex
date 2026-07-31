@@ -23,6 +23,8 @@ const sections = [
   { href: "/admin/music", label: "Music" },
   { href: "/admin/playlists", label: "Playlists" },
   { href: "/admin/creatures", label: "Creatures" },
+  { href: "/admin/equipment", label: "Equipment" },
+  { href: "/admin/spells", label: "Spells" },
   { href: "/admin/scenes", label: "Scenes" },
   { href: "/admin/discord", label: "Discord" },
 ];

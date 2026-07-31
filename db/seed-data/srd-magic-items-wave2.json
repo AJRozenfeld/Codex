@@ -1,0 +1,1454 @@
+[
+ {
+  "name": "Hammer of Thunderbolts",
+  "category": "Weapon",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, legendary",
+   "description": "Weapon (maul), legendary\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon.\n\nGiant's Bane (Requires Attunement). You must be wearing a belt of giant strength (any variety) and gauntlets of ogre power to attune to this weapon. The attunement ends if you take off either of those items. While you are attuned to this weapon and holding it, your Strength score increases by 4 and can exceed 20, but not 30. When you roll a 20 on an attack roll made with this weapon against a giant, the giant must succeed on a DC 17 Constitution saving throw or die.\n\nThe hammer also has 5 charges. While attuned to it, you can expend 1 charge and make a ranged weapon attack with the hammer, hurling it as if it had the thrown property with a normal range of 20 feet and a long range of 60 feet. If the attack hits, the hammer unleashes a thunderclap audible out to 300 feet. The target and every creature within 30 feet of it must succeed on a DC 17 Constitution saving throw or be stunned until the end of your next turn. The hammer regains 1d4 + 1 expended charges daily at dawn."
+  }
+ },
+ {
+  "name": "Handy Haversack",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThis backpack has a central pouch and two side pouches, each of which is an extradimensional space. Each side pouch can hold up to 20 pounds of material, not exceeding a volume of 2 cubic feet. The large central pouch can hold up to 8 cubic feet or 80 pounds of material. The backpack always weighs 5 pounds, regardless of its contents.\n\nPlacing an object in the haversack follows the normal rules for interacting with objects. Retrieving an item from the haversack requires you to use an action. When you reach into the haversack for a specific item, the item is always magically on top.\n\nThe haversack has a few limitations. If it is overloaded, or if a sharp object pierces it or tears it, the haversack ruptures and is destroyed. If the haversack is destroyed, its contents are lost forever, although an artifact always turns up again somewhere. If the haversack is turned inside out, its contents spill forth, unharmed, and the haversack must be put right before it can be used again. If a breathing creature is placed within the haversack, the creature can survive for up to 10 minutes, after which time it begins to suffocate.\n\nPlacing the haversack inside an extradimensional space created by a bag of holding, portable hole, or similar item instantly destroys both items and opens a gate to the Astral Plane. The gate originates where the one item was placed inside the other. Any creature within 10 feet of the gate is sucked through it and deposited in a random location on the Astral Plane. The gate then closes. The gate is one-way only and can't be reopened."
+  }
+ },
+ {
+  "name": "Hat of Disguise",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nWhile wearing this hat, you can use an action to cast the disguise self spell from it at will. The spell ends if the hat is removed."
+  }
+ },
+ {
+  "name": "Headband of Intellect",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nYour Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is already 19 or higher."
+  }
+ },
+ {
+  "name": "Helm of Brilliance",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nThis dazzling helm is set with 1d10 diamonds, 2d10 rubies, 3d10 fire opals, and 4d10 opals. Any gem pried from the helm crumbles to dust. When all the gems are removed or destroyed, the helm loses its magic.\n\nYou gain the following benefits while wearing it:\n\nYou can use an action to cast one of the following spells (save DC 18), using one of the helm's gems of the specified type as a component: daylight (opal), fireball (fire opal), prismatic spray (diamond), or wall of fire (ruby). The gem is destroyed when the spell is cast and disappears from the helm.\n\nAs long as it has at least one diamond, the helm emits dim light in a 30-foot radius when at least one undead is within that area. Any undead that starts its turn in that area takes 1d6 radiant damage.\n\nAs long as the helm has at least one ruby, you have resistance to fire damage.\n\nAs long as the helm has at least one fire opal, you can use an action and speak a command word to cause one weapon you are holding to burst into flames. The flames emit bright light in a 10-foot radius and dim light for an additional 10 feet. The flames are harmless to you and the weapon. When you hit with an attack using the blazing weapon, the target takes an extra 1d6 fire damage. The flames last until you use a bonus action to speak the command word again or until you drop or stow the weapon.\n\nRoll a d20 if you are wearing the helm and take fire damage as a result of failing a saving throw against a spell. On a roll of 1, the helm emits beams of light from its remaining gems. Each creature within 60 feet of the helm other than you must succeed on a DC 17 Dexterity saving throw or be struck by a beam, taking radiant damage equal to the number of gems in the helm. The helm and its gems are then destroyed."
+  }
+ },
+ {
+  "name": "Helm of Comprehending Languages",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon\n\nWhile wearing this helm, you can use an action to cast the comprehend languages spell from it at will."
+  }
+ },
+ {
+  "name": "Helm of Telepathy",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nWhile wearing this helm, you can use an action to cast the detect thoughts spell (save DC 13) from it. As long as you maintain concentration on the spell, you can use a bonus action to send a telepathic message to a creature you are focused on. It can reply-using a bonus action to do so-while your focus on it continues.\n\nWhile focusing on a creature with detect thoughts, you can use an action to cast the suggestion spell (save DC 13) from the helm on that creature. Once used, the suggestion property can't be used again until the next dawn."
+  }
+ },
+ {
+  "name": "Helm of Teleportation",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nThis helm has 3 charges. While wearing it, you can use an action and expend 1 charge to cast the teleport spell from it. The helm regains 1d3\n\nexpended charges daily at dawn."
+  }
+ },
+ {
+  "name": "Holy Avenger",
+  "category": "Weapon",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, legendary",
+   "description": "Weapon (any sword), legendary (requires attunement by a paladin)\n\nYou gain a +3 bonus to attack and damage rolls made with this magic weapon. When you hit a fiend or an undead with it, that creature takes an extra 2d10 radiant damage.\n\nWhile you hold the drawn sword, it creates an aura in a 10-foot radius around you. You and all creatures friendly to you in the aura have advantage on saving throws against spells and other magical effects. If you have 17 or more levels in the paladin class, the radius of the aura increases to 30 feet."
+  }
+ },
+ {
+  "name": "Horn of Blasting",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nYou can use an action to speak the horn's command word and then blow the horn, which emits a thunderous blast in a 30-foot cone that is audible 600 feet away. Each creature in the cone must make a DC 15 Constitution saving throw. On a failed save, a creature takes 5d6 thunder damage and is deafened for 1 minute. On a successful save, a creature takes half as much damage and isn't deafened. Creatures and objects made of glass or crystal have disadvantage on the saving throw and take 10d6 thunder damage instead of 5d6.\n\nEach use of the horn's magic has a 20 percent chance of causing the horn to explode. The explosion deals 10d6 fire damage to the blower and destroys the horn."
+  }
+ },
+ {
+  "name": "Horn of Valhalla",
+  "category": "Wondrous Items",
+  "rarity": "Varies",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, varies",
+   "description": "Wondrous item, rare (silver or brass), very rare (bronze) or legendary (iron)\n\nYou can use an action to blow this horn. In response, warrior spirits from the Valhalla appear within 60 feet of you. They use the statistics of a berserker. They return to Valhalla after 1 hour or when they drop to 0 hit points. Once you use the horn, it can't be used again until 7 days have passed.\n\nFour types of horn of Valhalla are known to exist, each made of a different metal. The horn's type determines how many berserkers answer its summons, as well as the requirement for its use. The GM chooses the horn's type or determines it randomly.\n\n| d100 | Horn Type | Berserkers Summoned | Requirement |\n\n|---|---|---|---|\n\n| 01-40 | Silver | 2d4 + 2 | None |\n\n| 41-75 | Brass | 3d4 + 3 | Proficiency with all simple weapons |\n\n| 76-90 | Bronze | 4d4 + 4 | Proficiency with all medium armor |\n\n| 91-00 | Iron | 5d4 + 5 | Proficiency with all martial weapons |\n\nIf you blow the horn without meeting its requirement, the summoned berserkers attack you. If you meet the requirement, they are friendly to you and your companions and follow your commands."
+  }
+ },
+ {
+  "name": "Horseshoes of Speed",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThese iron horseshoes come in a set of four. While all four shoes are affixed to the hooves of a horse or similar creature, they increase the creature's walking speed by 30 feet."
+  }
+ },
+ {
+  "name": "Horseshoes of a Zephyr",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThese iron horseshoes come in a set of four. While all four shoes are affixed to the hooves of a horse or similar creature, they allow the creature to move normally while floating 4 inches above the ground. This effect means the creature can cross or stand above nonsolid or unstable surfaces, such as water or lava. The creature leaves no tracks and ignores difficult terrain. In addition, the creature can move at normal speed for up to 12 hours a day without suffering exhaustion from a forced march."
+  }
+ },
+ {
+  "name": "Immovable Rod",
+  "category": "Rod",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Rod, uncommon",
+   "description": "Rod, uncommon\n\nThis flat iron rod has a button on one end. You can use an action to press the button, which causes the rod to become magically fixed in place. Until you or another creature uses an action to push the button again, the rod doesn't move, even if it is defying gravity. The rod can hold up to 8,000 pounds of weight. More weight causes the rod to deactivate and fall. A creature can use an action to make a DC 30 Strength check, moving the fixed rod up to 10 feet on a success."
+  }
+ },
+ {
+  "name": "Instant Fortress",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nYou can use an action to place this 1-inch metal cube on the ground and speak its command word. The cube rapidly grows into a fortress that remains until you use an action to speak the command word that dismisses it, which works only if the fortress is empty.\n\nThe fortress is a square tower, 20 feet on a side and 30 feet high, with arrow slits on all sides and a battlement atop it. Its interior is divided into two floors, with a ladder running along one wall to connect them. The ladder ends at a trapdoor leading to the roof. When activated, the tower has a small door on the side facing you. The door opens only at your command, which you can speak as a bonus action. It is immune to the knock spell and similar magic, such as that of a chime of opening.\n\nEach creature in the area where the fortress appears must make a DC 15 Dexterity saving throw, taking 10d10 bludgeoning damage on a failed save, or half as much damage on a successful one. In either case, the creature is pushed to an unoccupied space outside but next to the fortress. Objects in the area that aren't being worn or carried take this damage and are pushed automatically.\n\nThe tower is made of adamantine, and its magic prevents it from being tipped over. The roof, the door, and the walls each have 100 hit points,\n\nimmunity to damage from nonmagical weapons excluding siege weapons, and resistance to all other damage. Only a wish spell can repair the fortress (this use of the spell counts as replicating a spell of 8th level or lower). Each casting of wish causes the roof, the door, or one wall to regain 50 hit points."
+  }
+ },
+ {
+  "name": "Ioun Stone",
+  "category": "Wondrous Items",
+  "rarity": "Varies",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, varies",
+   "description": "Wondrous item, varies (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Absorption (Very Rare).*** While this pale lavender ellipsoid orbits your head, you can use your reaction to cancel a spell of 4th level or lower cast by a creature you can see and targeting only you.\n\nOnce the stone has canceled 20 levels of spells, it burns out and turns dull gray, losing its magic. If you are targeted by a spell whose level is higher than the number of spell levels the stone has left, the stone can't cancel it.\n\n***Agility (Very Rare).*** Your Dexterity score increases by 2, to a maximum of 20, while this deep red sphere orbits your head.\n\n***Awareness (Rare).*** You can't be surprised while this dark blue rhomboid orbits your head.\n\n***Fortitude (Very Rare).*** Your Constitution score increases by 2, to a maximum of 20, while this pink rhomboid orbits your head.\n\n***Greater Absorption (Legendary).*** While this marbled lavender and green ellipsoid orbits your head, you can use your reaction to cancel a spell of 8th level or lower cast by a creature you can see and targeting only you.\n\nOnce the stone has canceled 50 levels of spells, it burns out and turns dull gray, losing its magic. If you are targeted by a spell whose level is higher than the number of spell levels the stone has left, the stone can't cancel it.\n\n***Insight (Very Rare).*** Your Wisdom score increases by 2, to a maximum of 20, while this incandescent blue sphere orbits your head.\n\n***Intellect (Very Rare).*** Your Intelligence score increases by 2, to a maximum of 20, while this marbled scarlet and blue sphere orbits your head.\n\n***Leadership (Very Rare).*** Your Charisma score increases by 2, to a maximum of 20, while this marbled pink and green sphere orbits your head.\n\n***Mastery (Legendary).*** Your proficiency bonus increases by 1 while this pale green prism orbits your head.\n\n***Protection (Rare).*** You gain a +1 bonus to AC while this dusty rose prism orbits your head.\n\n***Regeneration (Legendary).*** You regain 15 hit points at the end of each hour this pearly white spindle orbits your head, provided that you have at least 1 hit point.\n\n***Reserve (Rare).*** This vibrant purple prism stores spells cast into it, holding them until you use them. The stone can store up to 3 levels worth of spells at a time. When found, it contains 1d4 - 1 levels of stored spells chosen by the GM.\n\nAny creature can cast a spell of 1st through 3rd level into the stone by touching it as the spell is cast. The spell has no effect, other than to be stored in the stone. If the stone can't hold the spell, the spell is expended without effect. The level of the slot used to cast the spell determines how much space it uses.\n\nWhile this stone orbits your head, you can cast any spell stored in it. The spell uses the slot level, spell save DC, spell attack bonus, and spellcasting ability of the original caster, but is otherwise treated as if you cast the spell. The spell cast from the stone is no longer stored in it, freeing up space.\n\n***Strength (Very Rare).*** Your Strength score increases by 2, to a maximum of 20, while this pale blue rhomboid orbits your head.\n\n***Sustenance (Rare).*** You don't need to eat or drink while this clear spindle orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Absorption",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Absorption.*** While this pale lavender ellipsoid orbits your head, you can use your reaction to cancel a spell of 4th level or lower cast by a creature you can see and targeting only you.\n\nOnce the stone has canceled 20 levels of spells, it burns out and turns dull gray, losing its magic. If you are targeted by a spell whose level is higher than the number of spell levels the stone has left, the stone can't cancel it."
+  }
+ },
+ {
+  "name": "Ioun Stone of Agility",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Agility.*** Your Dexterity score increases by 2, to a maximum of 20, while this deep red sphere orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Awareness",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Awareness.*** You can't be surprised while this dark blue rhomboid orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Fortitude",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Fortitude.*** Your Constitution score increases by 2, to a maximum of 20, while this pink rhomboid orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Greater Absorption",
+  "category": "Wondrous Items",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, legendary",
+   "description": "Wondrous item, legendary (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Greater Absorption.*** While this marbled lavender and green ellipsoid orbits your head, you can use your reaction to cancel a spell of 8th level or lower cast by a creature you can see and targeting only you.\n\nOnce the stone has canceled 50 levels of spells, it burns out and turns dull gray, losing its magic. If you are targeted by a spell whose level is higher than the number of spell levels the stone has left, the stone can't cancel it."
+  }
+ },
+ {
+  "name": "Ioun Stone of Insight",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Insight.*** Your Wisdom score increases by 2, to a maximum of 20, while this incandescent blue sphere orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Intellect",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Intellect.*** Your Intelligence score increases by 2, to a maximum of 20, while this marbled scarlet and blue sphere orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Leadership",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Leadership.*** Your Charisma score increases by 2, to a maximum of 20, while this marbled pink and green sphere orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Mastery",
+  "category": "Wondrous Items",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, legendary",
+   "description": "Wondrous item, legendary (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Mastery.*** Your proficiency bonus increases by 1 while this pale green prism orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Protection",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Protection.*** You gain a +1 bonus to AC while this dusty rose prism orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Regeneration",
+  "category": "Wondrous Items",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, legendary",
+   "description": "Wondrous item, legendary (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Regeneration.*** You regain 15 hit points at the end of each hour this pearly white spindle orbits your head, provided that you have at least 1 hit point."
+  }
+ },
+ {
+  "name": "Ioun Stone of Reserve",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Reserve.*** This vibrant purple prism stores spells cast into it, holding them until you use them. The stone can store up to 3 levels worth of spells at a time. When found, it contains 1d4 - 1 levels of stored spells chosen by the GM.\n\nAny creature can cast a spell of 1st through 3rd level into the stone by touching it as the spell is cast. The spell has no effect, other than to be stored in the stone. If the stone can't hold the spell, the spell is expended without effect. The level of the slot used to cast the spell determines how much space it uses.\n\nWhile this stone orbits your head, you can cast any spell stored in it. The spell uses the slot level, spell save DC, spell attack bonus, and spellcasting ability of the original caster, but is otherwise treated as if you cast the spell. The spell cast from the stone is no longer stored in it, freeing up space."
+  }
+ },
+ {
+  "name": "Ioun Stone of Strength",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Strength.*** Your Strength score increases by 2, to a maximum of 20, while this pale blue rhomboid orbits your head."
+  }
+ },
+ {
+  "name": "Ioun Stone of Sustenance",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nAn Ioun stone is named after Ioun, a god of knowledge and prophecy revered on some worlds. Many types of Ioun stone exist, each type a distinct combination of shape and color.\n\nWhen you use an action to toss one of these stones into the air, the stone orbits your head at a distance of 1d3 feet and confers a benefit to you. Thereafter, another creature must use an action to grasp or net the stone to separate it from you, either by making a successful attack roll against AC 24 or a successful DC 24 Dexterity (Acrobatics) check. You can use an action to seize and stow the stone, ending its effect.\n\nA stone has AC 24, 10 hit points, and resistance to all damage. It is considered to be an object that is being worn while it orbits your head.\n\n***Sustenance.*** You don't need to eat or drink while this clear spindle orbits your head."
+  }
+ },
+ {
+  "name": "Iron Bands of Binding",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThis rusty iron sphere measures 3 inches in diameter and weighs 1 pound. You can use an action to speak the command word and throw the sphere at a Huge or smaller creature you can see within 60 feet of you. As the sphere moves through the air, it opens into a tangle of metal bands.\n\nMake a ranged attack roll with an attack bonus equal to your Dexterity modifier plus your proficiency bonus. On a hit, the target is restrained until you take a bonus action to speak the command word again to release it. Doing so, or missing with the attack, causes the bands to contract and become a sphere once more.\n\nA creature, including the one restrained, can use an action to make a DC 20 Strength check to break the iron bands. On a success, the item is destroyed, and the restrained creature is freed. If the check fails, any further attempts made by that creature automatically fail until 24 hours have elapsed.\n\nOnce the bands are used, they can't be used again until the next dawn."
+  }
+ },
+ {
+  "name": "Iron Flask",
+  "category": "Wondrous Items",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, legendary",
+   "description": "Wondrous item, legendary\n\nThis iron bottle has a brass stopper. You can use an action to speak the flask's command word, targeting a creature that you can see within 60 feet of you. If the target is native to a plane of existence other than the one you're on, the target must succeed on a DC 17 Wisdom saving throw or be trapped in the flask. If the target has been trapped by the flask before, it has advantage on the saving throw. Once trapped, a creature remains in the flask until released. The flask can hold only one creature at a time. A creature trapped in the flask doesn't need to breathe, eat, or drink and doesn't age.\n\nYou can use an action to remove the flask's stopper and release the creature the flask contains. The creature is friendly to you and your companions for 1 hour and obeys your commands for that duration. If you give no commands or give it a command that is likely to result in its death, it defends itself but otherwise takes no actions. At the end of the duration, the creature acts in accordance with its normal disposition and alignment.\n\nAn identify spell reveals that a creature is inside the flask, but the only way to determine the type of creature is to open the flask. A newly discovered bottle might already contain a creature chosen by the GM or determined randomly.\n\n| d100 | Contents |\n\n|---|---|\n\n| 1-50 | Empty |\n\n| 51-54 | Demon (type 1) |\n\n| 55-58 | Demon (type 2) |\n\n| 59-62 | Demon (type 3) |\n\n| 63-64 | Demon (type 4) |\n\n| 65 | Demon (type 5) |\n\n| 66 | Demon (type 6) |\n\n| 67 | Deva |\n\n| 68-69 | Devil (greater) |\n\n| 70-73 | Devil (lesser) |\n\n| 74-75 | Djinni |\n\n| 76-77 | Efreeti |\n\n| 78-83 | Elemental (any) |\n\n| 84-86 | Invisible stalker |\n\n| 87-90 | Night hag |\n\n| 91 | Planetar |\n\n| 92-95 | Salamander |\n\n| 96 | Solar |\n\n| 97-99 | Succubus/incubus |\n\n| 100 | Xorn |"
+  }
+ },
+ {
+  "name": "Iron Horn of Valhalla",
+  "category": "Wondrous Items",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, legendary",
+   "description": "Wondrous item, legendary\n\nYou can use an action to blow this horn. In response, 5d4 + 5 warrior spirits from the Valhalla appear within 60 feet of you. They use the statistics of a berserker. They return to Valhalla after 1 hour or when they drop to 0 hit points. Once you use the horn, it can't be used again until 7 days have passed.\n\nIf you blow the horn without having proficiency with all martial weapons, the summoned berserkers attack you. If you meet the requirement, they are friendly to you and your companions and follow your commands."
+  }
+ },
+ {
+  "name": "Ivory Goats Figurine of Wondrous Power",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nA figurine of wondrous power is a statuette of a beast small enough to fit in a pocket. If you use an action to speak the command word and throw the figurine to a point on the ground within 60 feet of you, the figurine becomes a living creature. If the space where the creature would appear is occupied by other creatures or objects, or if there isn't enough space for the creature, the figurine doesn't become a creature.\n\nThe creature is friendly to you and your companions. It understands your languages and obeys your spoken commands. If you issue no commands, the creature defends itself but takes no other actions.\n\nThe creature exists for a duration specific to each figurine. At the end of the duration, the creature reverts to its figurine form. It reverts to a figurine early if it drops to 0 hit points or if you use an action to speak the command word again while touching it. When the creature becomes a figurine again, its property can't be used again until a certain amount of time has passed, as specified in the figurine's description.\n\n***Ivory Goats.*** These ivory statuettes of goats are always created in sets of three. Each goat looks unique and functions differently from the others. Their properties are as follows:\n\nThe goat of traveling can become a Large goat with the same statistics as a riding horse. It has 24 charges, and each hour or portion thereof it spends in beast form costs 1 charge. While it has charges, you can use it as often as you wish. When it runs out of charges, it reverts to a figurine and can't be used again until 7 days have passed, when it regains all its charges.\n\nThe goat of travail becomes a giant goat for up to 3 hours. Once it has been used, it can't be used again until 30 days have passed.\n\nThe goat of terror becomes a giant goat for up to 3 hours. The goat can't attack, but you can remove its horns and use them as weapons. One horn becomes a +1 lance, and the other becomes a +2 longsword. Removing a horn requires an action, and the weapons disappear and the horns return when the goat reverts to figurine form. In addition, the goat radiates a 30-foot-radius aura of terror while you are riding it. Any creature hostile to you that starts its turn in the aura must succeed on a DC 15 Wisdom saving throw or be frightened of the goat for 1 minute, or until the goat reverts to figurine form. The frightened creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. Once it successfully saves against the effect, a creature is immune to the goat's aura for the next 24 hours. Once the figurine has been used, it can't be used again until 15 days have passed."
+  }
+ },
+ {
+  "name": "Javelin of Lightning",
+  "category": "Weapon",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, uncommon",
+   "description": "Weapon (javelin), uncommon\n\nThis javelin is a magic weapon. When you hurl it and speak its command word, it transforms into a bolt of lightning, forming a line 5 feet wide that extends out from you to a target within 120 feet. Each creature in the line excluding you and the target must make a DC 13 Dexterity saving throw, taking 4d6 lightning damage on a failed save, and half as much damage on a successful one. The lightning bolt turns back into a javelin when it reaches the target. Make a ranged weapon attack against the target. On a hit, the target takes damage from the javelin plus 4d6 lightning damage.\n\nThe javelin's property can't be used again until the next dawn. In the meantime, the javelin can still be used as a magic weapon."
+  }
+ },
+ {
+  "name": "Lantern of Revealing",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon\n\nWhile lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding bright light in a 30-foot radius and dim light for an additional 30 feet. Invisible creatures and objects are visible as long as they are in the lantern's bright light. You can use an action to lower the hood, reducing the light to dim light in a 5 foot radius."
+  }
+ },
+ {
+  "name": "Luck Blade",
+  "category": "Weapon",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, legendary",
+   "description": "Weapon (any sword), legendary (requires attunement)\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon. While the sword is on your person, you also gain a +1 bonus to saving throws.\n\n***Luck.*** If the sword is on your person, you can call on its luck (no action required) to reroll one attack roll, ability check, or saving throw you dislike. You must use the second roll. This property can't be used again until the next dawn.\n\n***Wish.*** The sword has 1d4 - 1 charges. While holding it, you can use an action to expend 1 charge and cast the wish spell from it. This property can't be used again until the next dawn. The sword loses this property if it has no charges."
+  }
+ },
+ {
+  "name": "Mace of Disruption",
+  "category": "Weapon",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, rare",
+   "description": "Weapon (mace), rare (requires attunement)\n\nWhen you hit a fiend or an undead with this magic weapon, that creature takes an extra 2d6 radiant damage. If the target has 25 hit points or fewer after taking this damage, it must succeed on a DC 15 Wisdom saving throw or be destroyed. On a successful save, the creature becomes frightened of you until the end of your next turn.\n\nWhile you hold this weapon, it sheds bright light in a 20-foot radius and dim light for an additional 20 feet."
+  }
+ },
+ {
+  "name": "Mace of Smiting",
+  "category": "Weapon",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, rare",
+   "description": "Weapon (mace), rare\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon. The bonus increases to +3 when you use the mace to attack a construct.\n\nWhen you roll a 20 on an attack roll made with this weapon, the target takes an extra 2d6 bludgeoning damage, or 4d6 bludgeoning damage if it's a construct. If a construct has 25 hit points or fewer after taking this damage, it is destroyed."
+  }
+ },
+ {
+  "name": "Mace of Terror",
+  "category": "Weapon",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, rare",
+   "description": "Weapon (mace), rare (requires attunement)\n\nThis magic weapon has 3 charges. While holding it, you can use an action and expend 1 charge to release a wave of terror. Each creature of your choice in a 30-foot radius extending from you must succeed on a DC 15 Wisdom saving throw or become frightened of you for 1 minute. While it is frightened in this way, a creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If it has nowhere it can move, the creature can use the Dodge action. At the end of each of its turns, a creature can repeat the saving throw, ending the effect on itself on a success.\n\nThe mace regains 1d3 expended charges daily at dawn."
+  }
+ },
+ {
+  "name": "Mantle of Spell Resistance",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement)\n\nYou have advantage on saving throws against spells while you wear this cloak."
+  }
+ },
+ {
+  "name": "Manual of Bodily Health",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis book contains health and diet tips, and its words are charged with magic. If you spend 48 hours over a period of 6 days or fewer studying the book's contents and practicing its guidelines, your Constitution score increases by 2, as does your maximum for that score. The manual then loses its magic, but regains it in a century."
+  }
+ },
+ {
+  "name": "Manual of Clay Golems",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis tome contains information and incantations necessary to make a clay golem. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.\n\nTo create a golem, you must spend 30 days, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 65,000 gp to purchase supplies.\n\nOnce you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+  }
+ },
+ {
+  "name": "Manual of Flesh Golems",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis tome contains information and incantations necessary to make a flesh golem. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.\n\nTo create a golem, you must spend 60 days, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 50,000 gp to purchase supplies.\n\nOnce you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+  }
+ },
+ {
+  "name": "Manual of Gainful Exercise",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis book describes fitness exercises, and its words are charged with magic. If you spend 48 hours over a period of 6 days or fewer studying the book's contents and practicing its guidelines, your Strength score increases by 2, as does your maximum for that score. The manual then loses its magic, but regains it in a century."
+  }
+ },
+ {
+  "name": "Manual of Golems",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis tome contains information and incantations necessary to make a particular type of golem. The GM chooses the type or determines it randomly. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.\n\n| d20 | Golem | Time | Cost |\n\n|---|---|---|---|\n\n| 1-5 | Clay | 30 days | 65,000 gp |\n\n| 6-17 | Flesh | 60 days | 50,000 gp |\n\n| 18 | Iron | 120 days | 100,000 gp |\n\n| 19-20 | Stone | 90 days | 80,000 gp |\n\nTo create a golem, you must spend the time shown on the table, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay the specified cost to purchase supplies.\n\nOnce you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+  }
+ },
+ {
+  "name": "Manual of Iron Golems",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis tome contains information and incantations necessary to make an iron golem. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.\n\nTo create a golem, you must spend 120 days, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 100,000 gp to purchase supplies.\n\nOnce you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+  }
+ },
+ {
+  "name": "Manual of Quickness of Action",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis book contains coordination and balance exercises, and its words are charged with magic. If you spend 48 hours over a period of 6 days or fewer studying the book's contents and practicing its guidelines, your Dexterity score increases by 2, as does your maximum for that score. The manual then loses its magic, but regains it in a century."
+  }
+ },
+ {
+  "name": "Manual of Stone Golems",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nThis tome contains information and incantations necessary to make a stone golem. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.\n\nTo create a golem, you must spend 90 days, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 80,000 gp to purchase supplies.\n\nOnce you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+  }
+ },
+ {
+  "name": "Marble Elephant Figurine of Wondrous Power",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nA figurine of wondrous power is a statuette of a beast small enough to fit in a pocket. If you use an action to speak the command word and throw the figurine to a point on the ground within 60 feet of you, the figurine becomes a living creature. If the space where the creature would appear is occupied by other creatures or objects, or if there isn't enough space for the creature, the figurine doesn't become a creature.\n\nThe creature is friendly to you and your companions. It understands your languages and obeys your spoken commands. If you issue no commands, the creature defends itself but takes no other actions.\n\nThe creature exists for a duration specific to each figurine. At the end of the duration, the creature reverts to its figurine form. It reverts to a figurine early if it drops to 0 hit points or if you use an action to speak the command word again while touching it. When the creature becomes a figurine again, its property can't be used again until a certain amount of time has passed, as specified in the figurine's description.\n\n***Marble Elephant.*** This marble statuette is about 4 inches high and long. It can become an elephant for up to 24 hours. Once it has been used, it can't be used again until 7 days have passed."
+  }
+ },
+ {
+  "name": "Marvelous Pigments",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nTypically found in 1d4 pots inside a fine wooden box with a brush (weighing 1 pound in total), these pigments allow you to create three-dimensional objects by painting them in two dimensions. The paint flows from the brush to form the desired object as you concentrate on its image.\n\nEach pot of paint is sufficient to cover 1,000 square feet of a surface, which lets you create inanimate objects or terrain features-such as a door, a pit, flowers, trees, cells, rooms, or weapons- that are up to 10,000 cubic feet. It takes 10 minutes to cover 100 square feet.\n\nWhen you complete the painting, the object or terrain feature depicted becomes a real, nonmagical object. Thus, painting a door on a wall creates an actual door that can be opened to whatever is beyond. Painting a pit on a floor creates a real pit, and its depth counts against the total area of objects you create.\n\nNothing created by the pigments can have a value greater than 25 gp. If you paint an object of greater value (such as a diamond or a pile of gold), the object looks authentic, but close inspection reveals it is made from paste, bone, or some other worthless material.\n\nIf you paint a form of energy such as fire or lightning, the energy appears but dissipates as soon as you complete the painting, doing no harm to anything."
+  }
+ },
+ {
+  "name": "Medallion of Thoughts",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nThe medallion has 3 charges. While wearing it, you can use an action and expend 1 charge to cast the detect thoughts spell (save DC 13) from it. The medallion regains 1d3 expended charges daily at dawn."
+  }
+ },
+ {
+  "name": "Mirror of Life Trapping",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nWhen this 4-foot-tall mirror is viewed indirectly, its surface shows faint images of creatures. The mirror weighs 50 pounds, and it has AC 11, 10 hit points, and vulnerability to bludgeoning damage. It shatters and is destroyed when reduced to 0 hit points.\n\nIf the mirror is hanging on a vertical surface and you are within 5 feet of it, you can use an action to speak its command word and activate it. It remains activated until you use an action to speak the command word again.\n\nAny creature other than you that sees its reflection in the activated mirror while within 30 feet of it must succeed on a DC 15 Charisma saving throw or be trapped, along with anything it is wearing or carrying, in one of the mirror's twelve extradimensional cells. This saving throw is made with advantage if the creature knows the mirror's nature, and constructs succeed on the saving throw automatically.\n\nAn extradimensional cell is an infinite expanse filled with thick fog that reduces visibility to 10 feet. Creatures trapped in the mirror's cells don't age, and they don't need to eat, drink, or sleep. A creature trapped within a cell can escape using magic that permits planar travel. Otherwise, the creature is confined to the cell until freed.\n\nIf the mirror traps a creature but its twelve extradimensional cells are already occupied, the mirror frees one trapped creature at random to accommodate the new prisoner. A freed creature appears in an unoccupied space within sight of the mirror but facing away from it. If the mirror is shattered, all creatures it contains are freed and appear in unoccupied spaces near it.\n\nWhile within 5 feet of the mirror, you can use an action to speak the name of one creature trapped in it or call out a particular cell by number. The creature named or contained in the named cell appears as an image on the mirror's surface. You and the creature can then communicate normally.\n\nIn a similar way, you can use an action to speak a second command word and free one creature trapped in the mirror. The freed creature appears, along with its possessions, in the unoccupied space nearest to the mirror and facing away from it."
+  }
+ },
+ {
+  "name": "Mithral Armor",
+  "category": "Armor",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Armor, uncommon",
+   "description": "Armor (medium or heavy), uncommon\n\nMithral is a light, flexible metal. A mithral chain shirt or breastplate can be worn under normal clothes. If the armor normally imposes disadvantage on Dexterity (Stealth) checks or has a Strength requirement, the mithral version of the armor doesn't."
+  }
+ },
+ {
+  "name": "Necklace of Adaptation",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nWhile wearing this necklace, you can breathe normally in any environment, and you have advantage on saving throws made against harmful gases and vapors (such as cloudkill and stinking cloud effects, inhaled poisons, and the breath weapons of some dragons)."
+  }
+ },
+ {
+  "name": "Necklace of Fireballs",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThis necklace has 1d6 + 3 beads hanging from it. You can use an action to detach a bead and throw it up to 60 feet away. When it reaches the end of its trajectory, the bead detonates as a 3rd-level fireball spell (save DC 15).\n\nYou can hurl multiple beads, or even the whole necklace, as one action. When you do so, increase the level of the fireball by 1 for each bead beyond the first."
+  }
+ },
+ {
+  "name": "Necklace of Prayer Beads",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare (requires attunement by a cleric, druid, or paladin)\n\nThis necklace has 1d4 + 2 magic beads made from aquamarine, black pearl, or topaz. It also has many nonmagical beads made from stones such as amber, bloodstone, citrine, coral, jade, pearl, or quartz. If a magic bead is removed from the necklace, that bead loses its magic.\n\nSix types of magic beads exist. The GM decides the type of each bead on the necklace or determines it randomly. A necklace can have more than one bead of the same type. To use one, you must be wearing the necklace. Each bead contains a spell that you can cast from it as a bonus action (using your spell save DC if a save is necessary). Once a magic bead's spell is cast, that bead can't be used again until the next dawn.\n\n| d20 | Bead of... | Spell |\n\n|---|---|---|\n\n| 1-6 | Blessing | Bless |\n\n| 7-12 | Curing | Cure wounds (2nd level) or lesser restoration |\n\n| 13-16 | Favor | Greater restoration |\n\n| 17-18 | Smiting | Branding smite |\n\n| 19 | Summons | Planar ally |\n\n| 20 | Wind walking | Wind walk |"
+  }
+ },
+ {
+  "name": "Nine Lives Stealer",
+  "category": "Weapon",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, very rare",
+   "description": "Weapon (any sword), very rare (requires attunement)\n\nYou gain a +2 bonus to attack and damage rolls made with this magic weapon.\n\nThe sword has 1d8 + 1 charges. If you score a critical hit against a creature that has fewer than 100 hit points, it must succeed on a DC 15 Constitution saving throw or be slain instantly as the sword tears its life force from its body (a construct or an undead is immune). The sword loses 1 charge if the creature is slain. When the sword has no charges remaining, it loses this property."
+  }
+ },
+ {
+  "name": "Oathbow",
+  "category": "Weapon",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Weapon, very rare",
+   "description": "Weapon (longbow), very rare (requires attunement)\n\nWhen you nock an arrow on this bow, it whispers in Elvish, \"Swift defeat to my enemies.\" When you use this weapon to make a ranged attack, you can, as a command phrase, say, \"Swift death to you who have wronged me.\" The target of your attack becomes your sworn enemy until it dies or until dawn seven days later. You can have only one such sworn enemy at a time. When your sworn enemy dies, you can choose a new one after the next dawn.\n\nWhen you make a ranged attack roll with this weapon against your sworn enemy, you have advantage on the roll. In addition, your target gains no benefit from cover, other than total cover, and you suffer no disadvantage due to long range. If the attack hits, your sworn enemy takes an extra 3d6 piercing damage.\n\nWhile your sworn enemy lives, you have disadvantage on attack rolls with all other weapons."
+  }
+ },
+ {
+  "name": "Obsidian Steed Figurine of Wondrous Power",
+  "category": "Wondrous Items",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, very rare",
+   "description": "Wondrous item, very rare\n\nA figurine of wondrous power is a statuette of a beast small enough to fit in a pocket. If you use an action to speak the command word and throw the figurine to a point on the ground within 60 feet of you, the figurine becomes a living creature. If the space where the creature would appear is occupied by other creatures or objects, or if there isn't enough space for the creature, the figurine doesn't become a creature.\n\nThe creature is friendly to you and your companions. It understands your languages and obeys your spoken commands. If you issue no commands, the creature defends itself but takes no other actions.\n\nThe creature exists for a duration specific to each figurine. At the end of the duration, the creature reverts to its figurine form. It reverts to a figurine early if it drops to 0 hit points or if you use an action to speak the command word again while touching it. When the creature becomes a figurine again, its property can't be used again until a certain amount of time has passed, as specified in the figurine's description.\n\n***Obsidian Steed.*** This polished obsidian horse can become a nightmare for up to 24 hours. The nightmare fights only to defend itself. Once it has been used, it can't be used again until 5 days have passed.\n\nIf you have a good alignment, the figurine has a 10 percent chance each time you use it to ignore your orders, including a command to revert to figurine form. If you mount the nightmare while it is ignoring your orders, you and the nightmare are instantly transported to a random location on the plane of Hades, where the nightmare reverts to figurine form."
+  }
+ },
+ {
+  "name": "Oil of Etherealness",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nBeads of this cloudy gray oil form on the outside of its container and quickly evaporate. The oil can cover a Medium or smaller creature, along with the equipment it's wearing and carrying (one additional vial is required for each size category above Medium). Applying the oil takes 10 minutes. The affected creature then gains the effect of the etherealness spell for 1 hour."
+  }
+ },
+ {
+  "name": "Oil of Sharpness",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nThis clear, gelatinous oil sparkles with tiny, ultrathin silver shards. The oil can coat one slashing or piercing weapon or up to 5 pieces of slashing or piercing ammunition. Applying the oil takes 1 minute. For 1 hour, the coated item is magical and has a +3 bonus to attack and damage rolls."
+  }
+ },
+ {
+  "name": "Oil of Slipperiness",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nThis sticky black unguent is thick and heavy in the container, but it flows quickly when poured. The oil can cover a Medium or smaller creature, along with the equipment it's wearing and carrying (one additional vial is required for each size category above Medium). Applying the oil takes 10 minutes. The affected creature then gains the effect of a freedom of movement spell for 8 hours.\n\nAlternatively, the oil can be poured on the ground as an action, where it covers a 10-foot square, duplicating the effect of the grease spell in that area for 8 hours."
+  }
+ },
+ {
+  "name": "Onyx Dog Figurine of Wondrous Power",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nA figurine of wondrous power is a statuette of a beast small enough to fit in a pocket. If you use an action to speak the command word and throw the figurine to a point on the ground within 60 feet of you, the figurine becomes a living creature. If the space where the creature would appear is occupied by other creatures or objects, or if there isn't enough space for the creature, the figurine doesn't become a creature.\n\nThe creature is friendly to you and your companions. It understands your languages and obeys your spoken commands. If you issue no commands, the creature defends itself but takes no other actions.\n\nThe creature exists for a duration specific to each figurine. At the end of the duration, the creature reverts to its figurine form. It reverts to a figurine early if it drops to 0 hit points or if you use an action to speak the command word again while touching it. When the creature becomes a figurine again, its property can't be used again until a certain amount of time has passed, as specified in the figurine's description.\n\n***Onyx Dog.*** This onyx statuette of a dog can become a mastiff for up to 6 hours. The mastiff has an Intelligence of 8 and can speak Common. It also has darkvision out to a range of 60 feet and can see invisible creatures and objects within that range. Once it has been used, it can't be used again until 7 days have passed."
+  }
+ },
+ {
+  "name": "Orb of Dragonkind",
+  "category": "Wondrous Items",
+  "rarity": "Artifact",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, artifact",
+   "description": "Wondrous item, artifact (requires attunement)\n\nAges past, elves and humans waged a terrible war against evil dragons. When the world seemed doomed, powerful wizards came together and worked their greatest magic, forging five Orbs of Dragonkind (or Dragon Orbs) to help them defeat the dragons. One orb was taken to each of the five wizard towers, and there they were used to speed the war toward a victorious end. The wizards used the orbs to lure dragons to them, then destroyed the dragons with powerful magic.\n\nAs the wizard towers fell in later ages, the orbs were destroyed or faded into legend, and only three are thought to survive. Their magic has been warped and twisted over the centuries, so although their primary purpose of calling dragons still functions, they also allow some measure of control over dragons.\n\nEach orb contains the essence of an evil dragon, a presence that resents any attempt to coax magic from it. Those lacking in force of personality might find themselves enslaved to an orb.\n\nAn orb is an etched crystal globe about 10 inches in diameter. When used, it grows to about 20 inches in diameter, and mist swirls inside it.\n\nWhile attuned to an orb, you can use an action to peer into the orb's depths and speak its command word. You must then make a DC 15 Charisma check. On a successful check, you control the orb for as long as you remain attuned to it. On a failed check, you become charmed by the orb for as long as you remain attuned to it.\n\nWhile you are charmed by the orb, you can't voluntarily end your attunement to it, and the orb casts suggestion on you at will (save DC 18), urging you to work toward the evil ends it desires. The dragon essence within the orb might want many things: the annihilation of a particular people, freedom from the orb, to spread suffering in the world, to advance the worship of Tiamat, or something else the GM decides.\n\n***Random Properties.*** An Orb of Dragonkind has the following random properties:\n\n2 minor beneficial properties\n\n1 minor detrimental property\n\n1 major detrimental property\n\n***Spells.*** The orb has 7 charges and regains 1d4 + 3 expended charges daily at dawn. If you control the orb, you can use an action and expend 1 or more charges to cast one of the following spells (save DC 18) from it: cure wounds (5th-level version, 3 charges), daylight (1 charge), death ward (2 charges), or scrying (3 charges).\n\nYou can also use an action to cast the detect magic spell from the orb without using any charges.\n\n***Call Dragons.*** While you control the orb, you can use an action to cause the artifact to issue a telepathic call that extends in all directions for 40 miles. Evil dragons in range feel compelled to come to the orb as soon as possible by the most direct route. Dragon deities such as Tiamat are unaffected by this call. Dragons drawn to the orb might be hostile toward you for compelling them against their will. Once you have used this property, it can't be used again for 1 hour.\n\n***Destroying an Orb.*** An Orb of Dragonkind appears fragile but is impervious to most damage, including the attacks and breath weapons of dragons. A disintegrate spell or one good hit from a +3 magic weapon is sufficient to destroy an orb, however."
+  }
+ },
+ {
+  "name": "Pearl of Power",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement by a spellcaster)\n\nWhile this pearl is on your person, you can use an action to speak its command word and regain one expended spell slot. If the expended slot was of 4th level or higher, the new slot is 3rd level. Once you use the pearl, it can't be used again until the next dawn."
+  }
+ },
+ {
+  "name": "Periapt of Health",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon\n\nYou are immune to contracting any disease while you wear this pendant. If you are already infected with a disease, the effects of the disease are suppressed you while you wear the pendant."
+  }
+ },
+ {
+  "name": "Periapt of Proof against Poison",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThis delicate silver chain has a brilliant-cut black gem pendant. While you wear it, poisons have no effect on you. You are immune to the poisoned condition and have immunity to poison damage."
+  }
+ },
+ {
+  "name": "Periapt of Wound Closure",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nWhile you wear this pendant, you stabilize whenever you are dying at the start of your turn. In addition, whenever you roll a Hit Die to regain hit points, double the number of hit points it restores."
+  }
+ },
+ {
+  "name": "Philter of Love",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nThe next time you see a creature within 10 minutes after drinking this philter, you become charmed by that creature for 1 hour. If the creature is of a species and gender you are normally attracted to, you regard it as your true love while you are charmed. This potion's rose-hued, effervescent liquid contains one easy-to-miss bubble shaped like a heart."
+  }
+ },
+ {
+  "name": "Pipes of Haunting",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon\n\nYou must be proficient with wind instruments to use these pipes. They have 3 charges. You can use an action to play them and expend 1 charge to create an eerie, spellbinding tune. Each creature within 30 feet of you that hears you play must succeed on a DC 15 Wisdom saving throw or become frightened of you for 1 minute. If you wish, all creatures in the area that aren't hostile toward you automatically succeed on the saving throw. A creature that fails the saving throw can repeat it at the end of each of its turns, ending the effect on itself on a success. A creature that succeeds on its saving throw is immune to the effect of these pipes for 24 hours. The pipes regain 1d3 expended charges daily at dawn."
+  }
+ },
+ {
+  "name": "Pipes of the Sewers",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon (requires attunement)\n\nYou must be proficient with wind instruments to use these pipes. While you are attuned to the pipes, ordinary rats and giant rats are indifferent toward you and will not attack you unless you threaten or harm them.\n\nThe pipes have 3 charges. If you play the pipes as an action, you can use a bonus action to expend 1 to 3 charges, calling forth one swarm of rats with each expended charge, provided that enough rats are within half a mile of you to be called in this fashion (as determined by the GM). If there aren't enough rats to form a swarm, the charge is wasted. Called swarms move toward the music by the shortest available route but aren't under your control otherwise. The pipes regain 1d3 expended charges daily at dawn.\n\nWhenever a swarm of rats that isn't under another creature's control comes within 30 feet of you while you are playing the pipes, you can make a Charisma check contested by the swarm's Wisdom check. If you lose the contest, the swarm behaves as it normally would and can't be swayed by the pipes' music for the next 24 hours. If you win the contest, the swarm is swayed by the pipes' music and becomes friendly to you and your companions for as long as you continue to play the pipes each round as an action. A friendly swarm obeys your commands. If you issue no commands to a friendly swarm, it defends itself but otherwise takes no actions. If a friendly swarm starts its turn and can't hear the pipes' music, your control over that swarm ends, and the swarm behaves as it normally would and can't be swayed by the pipes' music for the next 24 hours."
+  }
+ },
+ {
+  "name": "Plate Armor of Etherealness",
+  "category": "Armor",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Armor, legendary",
+   "description": "Armor (plate), legendary (requires attunement)\n\nWhile you're wearing this armor, you can speak its command word as an action to gain the effect of the etherealness spell, which last for 10 minutes or until you remove the armor or use an action to speak the command word again. This property of the armor can't be used again until the next dawn."
+  }
+ },
+ {
+  "name": "Portable Hole",
+  "category": "Wondrous Items",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, rare",
+   "description": "Wondrous item, rare\n\nThis fine black cloth, soft as silk, is folded up to the dimensions of a handkerchief. It unfolds into a circular sheet 6 feet in diameter.\n\nYou can use an action to unfold a portable hole and place it on or against a solid surface, whereupon the portable hole creates an extradimensional hole 10 feet deep. The cylindrical space within the hole exists on a different plane, so it can't be used to create open passages. Any creature inside an open portable hole can exit the hole by climbing out of it.\n\nYou can use an action to close a portable hole by taking hold of the edges of the cloth and folding it up. Folding the cloth closes the hole, and any creatures or objects within remain in the extradimensional space. No matter what's in it, the hole weighs next to nothing.\n\nIf the hole is folded up, a creature within the hole's extradimensional space can use an action to make a DC 10 Strength check. On a successful check, the creature forces its way out and appears within 5 feet of the portable hole or the creature carrying it. A breathing creature within a closed portable hole can survive for up to 10 minutes, after which time it begins to suffocate.\n\nPlacing a portable hole inside an extradimensional space created by a bag of holding, handy haversack, or similar item instantly destroys both items and opens a gate to the Astral Plane. The gate originates where the one item was placed inside the other. Any creature within 10 feet of the gate is sucked through it and deposited in a random location on the Astral Plane. The gate then closes. The gate is one-way only and can't be reopened."
+  }
+ },
+ {
+  "name": "Potion of Acid Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to acid damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Animal Friendship",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you can cast the animal friendship spell (save DC 13) for 1 hour at will. Agitating this muddy liquid brings little bits into view: a fish scale, a hummingbird tongue, a cat claw, or a squirrel hair."
+  }
+ },
+ {
+  "name": "Potion of Clairvoyance",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, you gain the effect of the clairvoyance spell. An eyeball bobs in this yellowish liquid but vanishes when the potion is opened."
+  }
+ },
+ {
+  "name": "Potion of Climbing",
+  "category": "Potion",
+  "rarity": "Common",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, common",
+   "description": "Potion, common\n\nWhen you drink this potion, you gain a climbing speed equal to your walking speed for 1 hour. During this time, you have advantage on Strength (Athletics) checks you make to climb. The potion is separated into brown, silver, and gray layers resembling bands of stone. Shaking the bottle fails to mix the colors."
+  }
+ },
+ {
+  "name": "Potion of Cloud Giant Strength",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nWhen you drink this potion, your Strength score changes to 27 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a cloud giant."
+  }
+ },
+ {
+  "name": "Potion of Cold Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to cold damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Diminution",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, you gain the \"reduce\" effect of the enlarge/reduce spell for 1d4 hours (no concentration required). The red in the potion's liquid continuously contracts to a tiny bead and then expands to color the clear liquid around it. Shaking the bottle fails to interrupt this process."
+  }
+ },
+ {
+  "name": "Potion of Fire Giant Strength",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, your Strength score changes to 25 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a fire giant."
+  }
+ },
+ {
+  "name": "Potion of Fire Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to fire damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Flying",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nWhen you drink this potion, you gain a flying speed equal to your walking speed for 1 hour and can hover. If you're in the air when the potion wears off, you fall unless you have some other means of staying aloft. This potion's clear liquid floats at the top of its container and has cloudy white impurities drifting in it."
+  }
+ },
+ {
+  "name": "Potion of Force Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to force damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Frost Giant Strength",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, your Strength score changes to 23 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a frost giant."
+  }
+ },
+ {
+  "name": "Potion of Gaseous Form",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, you gain the effect of the gaseous form spell for 1 hour (no concentration required) or until you end the effect as a bonus action. This potion's container seems to hold fog that moves and pours like water."
+  }
+ },
+ {
+  "name": "Potion of Giant Strength",
+  "category": "Potion",
+  "rarity": "Varies",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, varies",
+   "description": "Potion, varies\n\nWhen you drink this potion, your Strength score changes for 1 hour. The type of giant determines the score (see the table below). The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a giant of the appropriate type. The potion of frost giant strength and the potion of stone giant strength have the same effect.\n\n| Type of Giant | Strength | Rarity |\n\n|---|---|---|\n\n| Hill giant | 21 | Uncommon |\n\n| Frost/stone giant | 23 | Rare |\n\n| Fire giant | 25 | Rare |\n\n| Cloud giant | 27 | Very rare |\n\n| Storm giant | 29 | Legendary |"
+  }
+ },
+ {
+  "name": "Potion of Greater Healing",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nYou regain 4d4 + 4 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+  }
+ },
+ {
+  "name": "Potion of Growth",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain the \"enlarge\" effect of the enlarge/reduce spell for 1d4 hours (no concentration required). The red in the potion's liquid continuously expands from a tiny bead to color the clear liquid around it and then contracts. Shaking the bottle fails to interrupt this process."
+  }
+ },
+ {
+  "name": "Potion of Healing",
+  "category": "Potion",
+  "rarity": "Common",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, common",
+   "description": "Potion, common\n\nYou regain 2d4 + 2 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+  }
+ },
+ {
+  "name": "Potion of Heroism",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nFor 1 hour after drinking it, you gain 10 temporary hit points that last for 1 hour. For the same duration, you are under the effect of the bless spell (no concentration required). This blue potion bubbles and steams as if boiling."
+  }
+ },
+ {
+  "name": "Potion of Hill Giant Strength",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, your Strength score changes to 21 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a hill giant."
+  }
+ },
+ {
+  "name": "Potion of Invisibility",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nThis potion's container looks empty but feels as though it holds liquid. When you drink it, you become invisible for 1 hour. Anything you wear or carry is invisible with you. The effect ends early if you attack or cast a spell."
+  }
+ },
+ {
+  "name": "Potion of Lightning Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to lightning damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Mind Reading",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, you gain the effect of the detect thoughts spell (save DC 13). The potion's dense, purple liquid has an ovoid cloud of pink floating in it."
+  }
+ },
+ {
+  "name": "Potion of Necrotic Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to necrotic damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Poison",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nThis concoction looks, smells, and tastes like a potion of healing or other beneficial potion. However, it is actually poison masked by illusion magic. An identify spell reveals its true nature.\n\nIf you drink it, you take 3d6 poison damage, and you must succeed on a DC 13 Constitution saving throw or be poisoned. At the start of each of your turns while you are poisoned in this way, you take 3d6 poison damage. At the end of each of your turns, you can repeat the saving throw. On a successful save, the poison damage you take on your subsequent turns decreases by 1d6. The poison ends when the damage decreases to 0."
+  }
+ },
+ {
+  "name": "Potion of Poison Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to poison damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Psychic Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to psychic damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Radiant Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to radiant damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to one type of damage for 1 hour. The GM chooses the type or determines it randomly from the options below.\n\n| d10 | Damage Type |\n\n|---|---|\n\n| 1 | Acid |\n\n| 2 | Cold |\n\n| 3 | Fire |\n\n| 4 | Force |\n\n| 5 | Lightning |\n\n| 6 | Necrotic |\n\n| 7 | Poison |\n\n| 8 | Psychic |\n\n| 9 | Radiant |\n\n| 10 | Thunder |"
+  }
+ },
+ {
+  "name": "Potion of Speed",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nWhen you drink this potion, you gain the effect of the haste spell for 1 minute (no concentration required). The potion's yellow fluid is streaked with black and swirls on its own."
+  }
+ },
+ {
+  "name": "Potion of Stone Giant Strength",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nWhen you drink this potion, your Strength score changes to 23 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a stone giant."
+  }
+ },
+ {
+  "name": "Potion of Storm Giant Strength",
+  "category": "Potion",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, legendary",
+   "description": "Potion, legendary\n\nWhen you drink this potion, your Strength score changes to 29 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.\n\nThis potion's transparent liquid has floating in it a sliver of fingernail from a storm giant."
+  }
+ },
+ {
+  "name": "Potion of Superior Healing",
+  "category": "Potion",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, rare",
+   "description": "Potion, rare\n\nYou regain 8d4 + 8 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+  }
+ },
+ {
+  "name": "Potion of Supreme Healing",
+  "category": "Potion",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, very rare",
+   "description": "Potion, very rare\n\nYou regain 10d4 + 20 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+  }
+ },
+ {
+  "name": "Potion of Thunder Resistance",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nWhen you drink this potion, you gain resistance to thunder damage for 1 hour."
+  }
+ },
+ {
+  "name": "Potion of Water Breathing",
+  "category": "Potion",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Potion, uncommon",
+   "description": "Potion, uncommon\n\nYou can breathe underwater for 1 hour after drinking this potion. Its cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it."
+  }
+ },
+ {
+  "name": "Red Dragon Scale Mail",
+  "category": "Armor",
+  "rarity": "Very Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Armor, very rare",
+   "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a red dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to fire damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest red dragon within 30 miles of you. This special action can't be used again until the next dawn."
+  }
+ },
+ {
+  "name": "Restorative Ointment",
+  "category": "Wondrous Items",
+  "rarity": "Uncommon",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Wondrous Items, uncommon",
+   "description": "Wondrous item, uncommon\n\nThis glass jar, 3 inches in diameter, contains 1d4 + 1 doses of a thick mixture that smells faintly of aloe. The jar and its contents weigh 1/2 pound.\n\nAs an action, one dose of the ointment can be swallowed or applied to the skin. The creature that receives it regains 2d8 + 2 hit points, ceases to be poisoned, and is cured of any disease."
+  }
+ },
+ {
+  "name": "Ring of Acid Resistance",
+  "category": "Ring",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, rare",
+   "description": "Ring, rare (requires attunement)\n\nYou have resistance to acid damage while wearing this pearl ring."
+  }
+ },
+ {
+  "name": "Ring of Air Elemental Command",
+  "category": "Ring",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, legendary",
+   "description": "Ring, legendary (requires attunement)\n\nThis ring is linked to the Elemental Plane of Air.\n\nWhile wearing this ring, you have advantage on attack rolls against air elementals, and they have disadvantage on attack rolls against you. In addition, you have access to properties based on the Elemental Plane of Air.\n\nThe ring has 5 charges. It regains 1d4 + 1 expended charges daily at dawn. Spells cast from the ring have a save DC of 17.\n\nYou can expend 2 of the ring's charges to cast dominate monster on an air elemental. In addition, when you fall, you descend 60 feet per round and take no damage from falling. You can also speak and understand Auran.\n\nIf you help slay an air elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou have resistance to lightning damage.\n\nYou have a flying speed equal to your walking speed and can hover.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: chain lightning (3 charges), gust of wind (2 charges), or wind wall (1 charge)."
+  }
+ },
+ {
+  "name": "Ring of Animal Influence",
+  "category": "Ring",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, rare",
+   "description": "Ring, rare\n\nThis ring has 3 charges, and it regains 1d3 expended charges daily at dawn. While wearing the ring, you can use an action to expend 1 of its charges to cast one of the following spells:\n\nAnimal friendship (save DC 13)\n\nFear (save DC 13), targeting only beasts that have an Intelligence of 3 or lower\n\nSpeak with animals"
+  }
+ },
+ {
+  "name": "Ring of Cold Resistance",
+  "category": "Ring",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, rare",
+   "description": "Ring, rare (requires attunement)\n\nYou have resistance to cold damage while wearing this tourmaline ring."
+  }
+ },
+ {
+  "name": "Ring of Djinni Summoning",
+  "category": "Ring",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, legendary",
+   "description": "Ring, legendary (requires attunement)\n\nWhile wearing this ring, you can speak its command word as an action to summon a particular djinni from the Elemental Plane of Air. The djinni appears in an unoccupied space you choose within 120 feet of you. It remains as long as you concentrate (as if concentrating on a spell), to a maximum of 1 hour, or until it drops to 0 hit points. It then returns to its home plane.\n\nWhile summoned, the djinni is friendly to you and your companions. It obeys any commands you give it, no matter what language you use. If you fail to command it, the djinni defends itself against attackers but takes no other actions.\n\nAfter the djinni departs, it can't be summoned again for 24 hours, and the ring becomes nonmagical if the djinni dies."
+  }
+ },
+ {
+  "name": "Ring of Earth Elemental Command",
+  "category": "Ring",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, legendary",
+   "description": "Ring, legendary (requires attunement)\n\nThis ring is linked to the Elemental Plane of Earth.\n\nWhile wearing this ring, you have advantage on attack rolls against earth elementals, and they have disadvantage on attack rolls against you. In addition, you have access to properties based on the Elemental Plane of Earth.\n\nThe ring has 5 charges. It regains 1d4 + 1 expended charges daily at dawn. Spells cast from the ring have a save DC of 17.\n\nYou can expend 2 of the ring's charges to cast dominate monster on an earth elemental. In addition, you can move in difficult terrain that is composed of rubble, rocks, or dirt as if it were normal terrain. You can also speak and understand Terran.\n\nIf you help slay an earth elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou have resistance to acid damage.\n\nYou can move through solid earth or rock as if those areas were difficult terrain. If you end your turn there, you are shunted out to the nearest unoccupied space you last occupied.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: stone shape (2 charges), stoneskin (3 charges), or wall of stone (3 charges)."
+  }
+ },
+ {
+  "name": "Ring of Elemental Command",
+  "category": "Ring",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, legendary",
+   "description": "Ring, legendary (requires attunement)\n\nThis ring is linked to one of the four Elemental Planes. The GM chooses or randomly determines the linked plane.\n\nWhile wearing this ring, you have advantage on attack rolls against elementals from the linked plane, and they have disadvantage on attack rolls against you. In addition, you have access to properties based on the linked plane.\n\nThe ring has 5 charges. It regains 1d4 + 1 expended charges daily at dawn. Spells cast from the ring have a save DC of 17.\n\n***Ring of Air Elemental Command.*** You can expend 2 of the ring's charges to cast dominate monster on an air elemental. In addition, when you fall, you descend 60 feet per round and take no damage from falling. You can also speak and understand Auran.\n\nIf you help slay an air elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou have resistance to lightning damage.\n\nYou have a flying speed equal to your walking speed and can hover.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: chain lightning (3 charges), gust of wind (2 charges), or wind wall (1 charge).\n\n***Ring of Earth Elemental Command.*** You can expend 2 of the ring's charges to cast dominate monster on an earth elemental. In addition, you can move in difficult terrain that is composed of rubble, rocks, or dirt as if it were normal terrain. You can also speak and understand Terran.\n\nIf you help slay an earth elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou have resistance to acid damage.\n\nYou can move through solid earth or rock as if those areas were difficult terrain. If you end your turn there, you are shunted out to the nearest unoccupied space you last occupied.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: stone shape (2 charges), stoneskin (3 charges), or wall of stone (3 charges).\n\n***Ring of Fire Elemental Command.*** You can expend 2 of the ring's charges to cast dominate monster on a fire elemental. In addition, you have resistance to fire damage. You can also speak and understand Ignan.\n\nIf you help slay a fire elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou are immune to fire damage.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: burning hands (1 charge), fireball (2 charges), and wall of fire (3 charges).\n\n***Ring of Water Elemental Command.*** You can expend 2 of the ring's charges to cast dominate monster on a water elemental. In addition, you can stand on and walk across liquid surfaces as if they were solid ground. You can also speak and understand Aquan.\n\nIf you help slay a water elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou can breathe underwater and have a swimming speed equal to your walking speed.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: create or destroy water (1 charge), control water (3 charges), ice storm (2 charges), or wall of ice (3 charges)."
+  }
+ },
+ {
+  "name": "Ring of Evasion",
+  "category": "Ring",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, rare",
+   "description": "Ring, rare (requires attunement)\n\nThis ring has 3 charges, and it regains 1d3 expended charges daily at dawn. When you fail a Dexterity saving throw while wearing it, you can use your reaction to expend 1 of its charges to succeed on that saving throw instead."
+  }
+ },
+ {
+  "name": "Ring of Feather Falling",
+  "category": "Ring",
+  "rarity": "Rare",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, rare",
+   "description": "Ring, rare (requires attunement)\n\nWhen you fall while wearing this ring, you descend 60 feet per round and take no damage from falling."
+  }
+ },
+ {
+  "name": "Ring of Fire Elemental Command",
+  "category": "Ring",
+  "rarity": "Legendary",
+  "cost": null,
+  "weight": null,
+  "source": "SRD 5.1 (CC BY 4.0)",
+  "details": {
+   "statLine": "Ring, legendary",
+   "description": "Ring, legendary (requires attunement)\n\nThis ring is linked to the Elemental Plane of Fire.\n\nWhile wearing this ring, you have advantage on attack rolls against fire elementals, and they have disadvantage on attack rolls against you. In addition, you have access to properties based on the Elemental Plane of Fire.\n\nThe ring has 5 charges. It regains 1d4 + 1 expended charges daily at dawn. Spells cast from the ring have a save DC of 17.\n\nYou can expend 2 of the ring's charges to cast dominate monster on a fire elemental. In addition, you have resistance to fire damage. You can also speak and understand Ignan.\n\nIf you help slay a fire elemental while attuned to the ring, you gain access to the following additional properties:\n\nYou are immune to fire damage.\n\nYou can cast the following spells from the ring, expending the necessary number of charges: burning hands (1 charge), fireball (2 charges), and wall of fire (3 charges)."
+  }
+ }
+]
