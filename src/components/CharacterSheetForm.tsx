@@ -4,6 +4,26 @@ import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
 import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, newCustomAction, describeActionRoll } from "@/lib/character-sheet-shared";
 import { LibraryPickerButton } from "@/components/LibraryPicker";
+/** The little "?" at the far right of collapsed spell/weapon rows - hovering
+ *  it shows the entry's description in a floating card, so a player can read
+ *  what a spell does without expanding the editor. CSS-only (group-hover). */
+function DescHint({ title, text }: { title: string; text: string }) {
+  if (!text.trim()) return null;
+  return (
+    <span className="relative group/hint inline-flex shrink-0">
+      <span
+        aria-label={`About ${title}`}
+        className="h-5 w-5 rounded-full border border-gold/40 text-gold/70 text-[11px] leading-none flex items-center justify-center cursor-help select-none group-hover/hint:bg-gold/10 group-hover/hint:text-gold"
+      >
+        ?
+      </span>
+      <span className="pointer-events-none absolute right-0 top-6 z-40 hidden group-hover/hint:block w-80 rounded-lg border border-gold/30 bg-void shadow-card-hover p-3 text-left">
+        <span className="block text-parchment text-xs font-semibold mb-1">{title}</span>
+        <span className="block text-parchment/75 text-xs whitespace-pre-line max-h-64 overflow-y-auto">{text}</span>
+      </span>
+    </span>
+  );
+}
 import type { PickerItem } from "@/lib/library-picker-actions";
 import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "@/lib/types";
 import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
@@ -524,6 +544,7 @@ export function CharacterSheetForm({
                 <button type="button" onClick={() => toggleSpellExpanded(atk.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
                   Edit
                 </button>
+                <DescHint title={atk.name || "Unnamed weapon"} text={atk.description} />
               </div>
             ) : (
             <div key={atk.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
@@ -813,6 +834,7 @@ export function CharacterSheetForm({
                 <button type="button" onClick={() => toggleSpellExpanded(sp.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
                   Edit
                 </button>
+                <DescHint title={sp.name || "Unnamed spell"} text={sp.description} />
               </div>
             ) : (
             <div key={sp.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
