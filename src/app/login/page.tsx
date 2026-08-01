@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { LEGACY_DM_ID } from "@/lib/db";
 import { playerLogin } from "@/lib/dm-queries";
 import { getPlayerSession } from "@/lib/player-session";
+import { headers } from "next/headers";
+import { checkLoginAllowed, noteLoginFailure, noteLoginSuccess, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,16 @@ async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
+  const ip = clientIp(headers().get("x-forwarded-for"));
+  const gate = await checkLoginAllowed("player:" + LEGACY_DM_ID, username, ip);
+  if (!gate.allowed) redirect(`/login?locked=${gate.retryMinutes}`);
+
   const playerId = await playerLogin(LEGACY_DM_ID, username, password);
   if (!playerId) {
+    await noteLoginFailure("player:" + LEGACY_DM_ID, username, ip);
     redirect("/login?error=1");
   }
+  await noteLoginSuccess("player:" + LEGACY_DM_ID, username);
 
   const session = await getPlayerSession();
   session.playerId = playerId;
@@ -26,7 +34,7 @@ async function loginAction(formData: FormData) {
   redirect("/me");
 }
 
-export default async function PlayerLoginPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function PlayerLoginPage({ searchParams }: { searchParams: { error?: string; locked?: string } }) {
   return (
     <div className="max-w-sm mx-auto py-16">
       <h1 className="font-display text-2xl text-gold mb-2 text-center">Player Access</h1>
@@ -55,6 +63,9 @@ export default async function PlayerLoginPage({ searchParams }: { searchParams: 
         </label>
         {searchParams.error && (
           <p className="text-sm text-red-400">Incorrect username or password.</p>
+        )}
+        {searchParams.locked && (
+          <p className="text-sm text-red-400">Too many attempts. Try again in about {searchParams.locked} minute{Number(searchParams.locked) === 1 ? "" : "s"}.</p>
         )}
         <button
           type="submit"

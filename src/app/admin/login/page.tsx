@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getAdminSession, checkPassword, isAdminAuthed } from "@/lib/auth";
 import { dmLogin } from "@/lib/dm-queries";
 import { LEGACY_DM_ID } from "@/lib/db";
+import { headers } from "next/headers";
+import { checkLoginAllowed, noteLoginFailure, noteLoginSuccess, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,11 @@ async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
+  const ip = clientIp(headers().get("x-forwarded-for"));
+  const identifier = username || "__founder__";
+  const gate = await checkLoginAllowed("dm", identifier, ip);
+  if (!gate.allowed) redirect(`/admin/login?locked=${gate.retryMinutes}`);
+
   let dmId: string | null = null;
   if (!username) {
     if (checkPassword(password)) dmId = LEGACY_DM_ID;
@@ -22,8 +29,10 @@ async function loginAction(formData: FormData) {
     dmId = await dmLogin(username, password);
   }
   if (!dmId) {
+    await noteLoginFailure("dm", identifier, ip);
     redirect("/admin/login?error=1");
   }
+  await noteLoginSuccess("dm", identifier);
   const session = await getAdminSession();
   session.isAdmin = true;
   session.dmId = dmId;
@@ -33,7 +42,7 @@ async function loginAction(formData: FormData) {
   redirect("/admin");
 }
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function AdminLoginPage({ searchParams }: { searchParams: { error?: string; locked?: string } }) {
   if (await isAdminAuthed()) redirect("/admin");
 
   return (
@@ -61,6 +70,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: {
         />
         {searchParams.error && (
           <p className="text-sm text-blood-400 text-red-400">Incorrect username or password.</p>
+        )}
+        {searchParams.locked && (
+          <p className="text-sm text-red-400">Too many attempts. Try again in about {searchParams.locked} minute{Number(searchParams.locked) === 1 ? "" : "s"}.</p>
         )}
         <button
           type="submit"

@@ -963,6 +963,17 @@ CREATE TABLE IF NOT EXISTS character_drafts (
 );
 CREATE INDEX IF NOT EXISTS idx_drafts_campaign ON character_drafts(campaign_id);
 
+-- Login rate limiting (2026-07-31, SCHEMA v9). DB-backed because Vercel
+-- lambdas share no memory - Turso is the one store every instance sees.
+-- One row per key ("surface:identifier"); lazily reset when the window
+-- passes. See src/lib/rate-limit.ts for the policy.
+CREATE TABLE IF NOT EXISTS login_attempts (
+  key          TEXT PRIMARY KEY,
+  fails        INTEGER NOT NULL DEFAULT 0,
+  window_start TEXT NOT NULL DEFAULT (datetime('now')),
+  locked_until TEXT
+);
+
 CREATE TABLE IF NOT EXISTS scenes (
   id          TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,

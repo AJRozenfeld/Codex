@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDmBySlug, playerLogin } from "@/lib/dm-queries";
+import { headers } from "next/headers";
+import { checkLoginAllowed, noteLoginFailure, noteLoginSuccess, clientIp } from "@/lib/rate-limit";
 import { getPlayerSession } from "@/lib/player-session";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +20,15 @@ async function loginAction(dmSlug: string, formData: FormData) {
   if (!dm || !dm.isActive) {
     redirect(`/login/${dmSlug}?error=1`);
   }
+  const ip = clientIp(headers().get("x-forwarded-for"));
+  const gate = await checkLoginAllowed("player:" + dm.id, username, ip);
+  if (!gate.allowed) redirect(`/login/${dmSlug}?locked=${gate.retryMinutes}`);
   const playerId = await playerLogin(dm.id, username, password);
   if (!playerId) {
+    await noteLoginFailure("player:" + dm.id, username, ip);
     redirect(`/login/${dmSlug}?error=1`);
   }
+  await noteLoginSuccess("player:" + dm.id, username);
   const session = await getPlayerSession();
   session.playerId = playerId;
   await session.save();
@@ -33,7 +40,7 @@ export default async function ScopedPlayerLoginPage({
   searchParams,
 }: {
   params: { dmSlug: string };
-  searchParams: { error?: string };
+  searchParams: { error?: string; locked?: string };
 }) {
   const dm = await getDmBySlug(params.dmSlug);
   if (!dm || !dm.isActive) {
@@ -74,6 +81,9 @@ export default async function ScopedPlayerLoginPage({
           />
         </label>
         {searchParams?.error && <p className="text-sm text-red-400">Incorrect username or password.</p>}
+        {searchParams?.locked && (
+          <p className="text-sm text-red-400">Too many attempts. Try again in about {searchParams?.locked} minute{Number(searchParams?.locked) === 1 ? "" : "s"}.</p>
+        )}
         <button type="submit" className="w-full rounded-lg bg-gold/90 text-ink py-2.5 font-medium hover:bg-gold transition-colors">
           Enter the Codex
         </button>
