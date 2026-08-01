@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCurrentDmId } from "@/lib/dm-queries";
 import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -26,7 +27,7 @@ async function saveAction(
 ) {
   "use server";
   try {
-  const template = await adminGetTemplate(templateId);
+  const template = await adminGetTemplate(await getCurrentDmId(), templateId);
   if (!template) redirect(sectionId ? `/admin/sections/${sectionId}` : "/admin/templates");
 
   const existing = articleId ? await adminGetArticle(campaignId, articleId) : null;
@@ -89,7 +90,7 @@ export default async function AdminArticleEditPage({
 
   const templateId = isNew ? searchParams.templateId : existing!.templateId;
   if (!templateId) notFound();
-  const template = await adminGetTemplate(templateId);
+  const template = await adminGetTemplate(await getCurrentDmId(), templateId);
   if (!template) notFound();
 
   const sectionId = searchParams.sectionId;

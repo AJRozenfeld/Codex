@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getCurrentDmId } from "@/lib/dm-queries";
 import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import Link from "next/link";
 import {
@@ -124,7 +125,7 @@ export default async function AdminSectionEditPage({ params }: { params: { id: s
   if (!isNew && !section) notFound();
 
   const lists = isNew ? [] : await adminGetArticleLists(campaignId, params.id);
-  const templates = isNew ? [] : await adminGetTemplates();
+  const templates = isNew ? [] : await adminGetTemplates(await getCurrentDmId());
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
   const del = deleteAction.bind(null, params.id);

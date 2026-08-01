@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 9; // v9: login_attempts - DB-backed login rate limiting (statements pass only)
+const SCHEMA_VERSION = 10; // v10: templates gain dm_id (tenancy) - rebuild migration, founder backfill
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {
@@ -737,6 +737,34 @@ async function runMigrations(db: Client): Promise<void> {
   // NOT NULL flag on campaign_id itself - the statements pass can create the
   // new partial index on the OLD table, so the index's existence proves
   // nothing about nullability.
+  // Template tenancy (2026-07-31): templates gain dm_id - the last entity
+  // still shared globally-by-accident across DMs. Rebuild dance (ids
+  // preserved so template_fields / article_lists / articles FKs survive;
+  // foreign_keys OFF from the top of this function); every existing
+  // template belonged to the founder in practice, so backfill LEGACY_DM_ID.
+  if (!(await hasColumn(db, "templates", "dm_id"))) {
+    await db.batch(
+      [
+        `CREATE TABLE templates_new (
+          id          TEXT PRIMARY KEY,
+          dm_id       TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+          slug        TEXT NOT NULL,
+          name        TEXT NOT NULL,
+          description TEXT,
+          created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (dm_id, slug)
+        )`,
+        `INSERT INTO templates_new (id, dm_id, slug, name, description, created_at, updated_at)
+         SELECT id, '${LEGACY_DM_ID}', slug, name, description, created_at, updated_at FROM templates`,
+        "DROP TABLE templates",
+        "ALTER TABLE templates_new RENAME TO templates",
+        "CREATE INDEX IF NOT EXISTS idx_templates_dm ON templates(dm_id)",
+      ],
+      "write"
+    );
+  }
+
   const creatureCols = await db.execute("PRAGMA table_info(creatures)");
   const campaignCol = creatureCols.rows.find((r) => r.name === "campaign_id");
   if (campaignCol && Number(campaignCol.notnull) === 1) {

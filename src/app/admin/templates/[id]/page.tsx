@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import { getCurrentDmId } from "@/lib/dm-queries";
 import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetTemplate,
   adminGetTemplates,
   adminUpsertTemplate,
   adminDeleteTemplate,
+  adminTemplateBelongsTo,
   adminCreateTemplateField,
   adminUpdateTemplateField,
   adminDeleteTemplateField,
@@ -48,7 +50,9 @@ function parseReferenceTarget(raw: string): { referenceTargetType: SectionEntity
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
   try {
+  const dmId = await getCurrentDmId();
   const newId = await adminUpsertTemplate(
+    dmId,
     {
       name: String(formData.get("name") ?? ""),
       description: String(formData.get("description") ?? "") || null,
@@ -64,12 +68,14 @@ async function saveAction(id: string | undefined, formData: FormData) {
 
 async function deleteAction(id: string) {
   "use server";
-  const result = await adminDeleteTemplate(id);
+  const result = await adminDeleteTemplate(await getCurrentDmId(), id);
   redirect(result.deleted ? "/admin/templates" : `/admin/templates?blockedDelete=${result.articleCount}`);
 }
 
 async function addFieldAction(templateId: string, formData: FormData) {
   "use server";
+  const dmId = await getCurrentDmId();
+  if (!(await adminTemplateBelongsTo(dmId, templateId))) redirect(noticePath("That template belongs to another DM.", "/admin/templates"));
   const label = String(formData.get("label") ?? "");
   const fieldType = String(formData.get("fieldType") ?? "text") as TemplateFieldType;
   const roleRaw = String(formData.get("role") ?? "");
@@ -88,6 +94,8 @@ async function addFieldAction(templateId: string, formData: FormData) {
 
 async function updateFieldAction(templateId: string, fieldId: string, formData: FormData) {
   "use server";
+  const dmId = await getCurrentDmId();
+  if (!(await adminTemplateBelongsTo(dmId, templateId))) redirect(noticePath("That template belongs to another DM.", "/admin/templates"));
   const label = String(formData.get(`label-${fieldId}`) ?? "");
   const fieldType = String(formData.get(`fieldType-${fieldId}`) ?? "text") as TemplateFieldType;
   const roleRaw = String(formData.get(`role-${fieldId}`) ?? "");
@@ -106,22 +114,27 @@ async function updateFieldAction(templateId: string, fieldId: string, formData: 
 
 async function deleteFieldAction(templateId: string, fieldId: string) {
   "use server";
+  const dmId = await getCurrentDmId();
+  if (!(await adminTemplateBelongsTo(dmId, templateId))) redirect(noticePath("That template belongs to another DM.", "/admin/templates"));
   await adminDeleteTemplateField(fieldId);
   redirect(`/admin/templates/${templateId}`);
 }
 
 async function moveFieldAction(templateId: string, fieldId: string, direction: "up" | "down") {
   "use server";
+  const dmId = await getCurrentDmId();
+  if (!(await adminTemplateBelongsTo(dmId, templateId))) redirect(noticePath("That template belongs to another DM.", "/admin/templates"));
   await adminMoveTemplateField(templateId, fieldId, direction);
   redirect(`/admin/templates/${templateId}`);
 }
 
 export default async function AdminTemplateEditPage({ params }: { params: { id: string } }) {
   const isNew = params.id === "new";
-  const template = isNew ? null : await adminGetTemplate(params.id);
+  const dmId = await getCurrentDmId();
+  const template = isNew ? null : await adminGetTemplate(dmId, params.id);
   if (!isNew && !template) notFound();
 
-  const allTemplates = isNew ? [] : await adminGetTemplates();
+  const allTemplates = isNew ? [] : await adminGetTemplates(dmId);
 
   const save = saveAction.bind(null, isNew ? undefined : params.id);
   const del = deleteAction.bind(null, params.id);

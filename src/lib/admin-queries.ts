@@ -1479,16 +1479,18 @@ export interface AdminTemplateSummary extends Template {
   articleCount: number;
 }
 
-export async function adminGetTemplates(): Promise<AdminTemplateSummary[]> {
+export async function adminGetTemplates(dmId: string): Promise<AdminTemplateSummary[]> {
   await ensureSchema();
   const db = getDb();
-  const r = await db.execute(
-    `SELECT t.*,
+  const r = await db.execute({
+    sql: `SELECT t.*,
             (SELECT COUNT(*) FROM template_fields tf WHERE tf.template_id = t.id) AS field_count,
             (SELECT COUNT(*) FROM articles a WHERE a.template_id = t.id) AS article_count
      FROM templates t
-     ORDER BY t.name ASC`
-  );
+     WHERE t.dm_id = ?
+     ORDER BY t.name ASC`,
+    args: [dmId],
+  });
   return r.rows.map((row) => ({
     ...rowToTemplate(row),
     fieldCount: Number(row.field_count ?? 0),
@@ -1496,7 +1498,15 @@ export async function adminGetTemplates(): Promise<AdminTemplateSummary[]> {
   }));
 }
 
-export async function adminGetTemplate(id: string): Promise<TemplateWithFields | null> {
+/** True when the template exists AND belongs to this DM. */
+export async function adminTemplateBelongsTo(dmId: string, templateId: string): Promise<boolean> {
+  const r = await getDb().execute({ sql: "SELECT 1 AS x FROM templates WHERE id = ? AND dm_id = ?", args: [templateId, dmId] });
+  return !!r.rows[0];
+}
+
+export async function adminGetTemplate(dmId: string, id: string): Promise<TemplateWithFields | null> {
+  await ensureSchema();
+  if (!(await adminTemplateBelongsTo(dmId, id))) return null;
   return getTemplateWithFields(id);
 }
 
@@ -1505,21 +1515,31 @@ export interface TemplateInput {
   description?: string | null;
 }
 
-export async function adminUpsertTemplate(input: TemplateInput, id?: string): Promise<string> {
+export async function adminUpsertTemplate(dmId: string, input: TemplateInput, id?: string): Promise<string> {
   await ensureSchema();
   const db = getDb();
-  const slug = await uniqueGlobalSlug("templates", input.name, id);
+  // slug unique per DM (not globally) since v10 tenancy
+  const base = input.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "template";
+  let slug = base;
+  let n = 2;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const r = await db.execute({ sql: "SELECT id FROM templates WHERE dm_id = ? AND slug = ?", args: [dmId, slug] });
+    const hit = r.rows[0];
+    if (!hit || hit.id === id) break;
+    slug = `${base}-${n++}`;
+  }
   if (id) {
     await db.execute({
-      sql: `UPDATE templates SET name=?, slug=?, description=?, updated_at=datetime('now') WHERE id=?`,
-      args: [input.name, slug, input.description ?? null, id],
+      sql: `UPDATE templates SET name=?, slug=?, description=?, updated_at=datetime('now') WHERE id=? AND dm_id=?`,
+      args: [input.name, slug, input.description ?? null, id, dmId],
     });
     return id;
   }
   const newIdVal = newId();
   await db.execute({
-    sql: `INSERT INTO templates (id, slug, name, description) VALUES (?,?,?,?)`,
-    args: [newIdVal, slug, input.name, input.description ?? null],
+    sql: `INSERT INTO templates (id, dm_id, slug, name, description) VALUES (?,?,?,?,?)`,
+    args: [newIdVal, dmId, slug, input.name, input.description ?? null],
   });
   return newIdVal;
 }
@@ -1531,13 +1551,13 @@ export async function adminUpsertTemplate(input: TemplateInput, id?: string): Pr
  * just the one the DM currently has selected. Returns the number of
  * articles blocking the delete (0 means it succeeded).
  */
-export async function adminDeleteTemplate(id: string): Promise<{ deleted: boolean; articleCount: number }> {
+export async function adminDeleteTemplate(dmId: string, id: string): Promise<{ deleted: boolean; articleCount: number }> {
   await ensureSchema();
   const db = getDb();
   const r = await db.execute({ sql: "SELECT COUNT(*) AS c FROM articles WHERE template_id = ?", args: [id] });
   const articleCount = Number(r.rows[0]?.c ?? 0);
   if (articleCount > 0) return { deleted: false, articleCount };
-  await db.execute({ sql: "DELETE FROM templates WHERE id = ?", args: [id] });
+  await db.execute({ sql: "DELETE FROM templates WHERE id = ? AND dm_id = ?", args: [id, dmId] });
   return { deleted: true, articleCount: 0 };
 }
 

@@ -487,12 +487,18 @@ CREATE INDEX IF NOT EXISTS idx_article_list_items_list ON article_list_items(lis
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS templates (
   id          TEXT PRIMARY KEY,
-  slug        TEXT NOT NULL UNIQUE,
+  -- Tenancy (2026-07-31, SCHEMA v10): templates belong to a DM, like
+  -- everything else - the original global-by-accident sharing is retired
+  -- (deliberate sharing returns later via the Template Marketplace).
+  dm_id       TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
   name        TEXT NOT NULL,
   description TEXT,
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (dm_id, slug)
 );
+CREATE INDEX IF NOT EXISTS idx_templates_dm ON templates(dm_id);
 
 -- field_type: 'text' | 'textarea' | 'number' | 'image' | 'checkbox' | 'heading' | 'reference'
 --   ('heading' is a static divider/label in the form and detail page - it

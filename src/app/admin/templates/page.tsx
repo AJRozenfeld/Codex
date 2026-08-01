@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCurrentDmId } from "@/lib/dm-queries";
 import { redirect } from "next/navigation";
 import { adminGetTemplates, adminDeleteTemplate } from "@/lib/admin-queries";
 
@@ -6,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 async function deleteAction(id: string) {
   "use server";
-  const result = await adminDeleteTemplate(id);
+  const result = await adminDeleteTemplate(await getCurrentDmId(), id);
   redirect(result.deleted ? "/admin/templates" : `/admin/templates?blockedDelete=${result.articleCount}`);
 }
 
@@ -15,7 +16,7 @@ export default async function AdminTemplatesPage({
 }: {
   searchParams: { blockedDelete?: string };
 }) {
-  const templates = await adminGetTemplates();
+  const templates = await adminGetTemplates(await getCurrentDmId());
   const blockedCount = searchParams.blockedDelete ? Number(searchParams.blockedDelete) : null;
 
   return (
