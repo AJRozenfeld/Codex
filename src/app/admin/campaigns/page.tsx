@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import { redirect } from "next/navigation";
 import {
   adminGetCampaigns,
@@ -23,6 +24,7 @@ async function renameAction(id: string, formData: FormData) {
 
 async function deleteAction(id: string, formData: FormData) {
   "use server";
+  try {
   const campaigns = await adminGetCampaigns();
   if (campaigns.length <= 1) return; // never delete the last remaining campaign
   await adminDeleteCampaign(id);
@@ -32,6 +34,10 @@ async function deleteAction(id: string, formData: FormData) {
     if (remaining[0]) await setCurrentCampaignId(remaining[0].id);
   }
   redirect("/admin/campaigns");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/campaigns"));
+  }
 }
 
 export default async function CampaignsPage() {

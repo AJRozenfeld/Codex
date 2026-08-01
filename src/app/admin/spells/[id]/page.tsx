@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { noticePath } from "@/lib/friendly-errors";
 import {
   getSpell, getLibrarySpell, upsertSpell, upsertLibrarySpell,
   deleteSpell, deleteLibrarySpell, copyLibrarySpellToCampaign,
@@ -40,7 +41,7 @@ async function saveAction(id: string, formData: FormData) {
   if (!spell) return;
   if (spell.campaignId === null) {
     const master = await getMasterSession();
-    if (!master.isMaster) return;
+    if (!master.isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/spells"));
     await upsertLibrarySpell(input, id);
   } else {
     await upsertSpell(spell.campaignId, input, id);
@@ -55,7 +56,7 @@ async function deleteAction(id: string) {
   if (!spell) return;
   if (spell.campaignId === null) {
     const master = await getMasterSession();
-    if (!master.isMaster) return;
+    if (!master.isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/spells"));
     await deleteLibrarySpell(id);
   } else {
     await deleteSpell(spell.campaignId, id);

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetMap,
   adminUpsertMap,
@@ -27,6 +28,7 @@ export const dynamic = "force-dynamic";
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   const imageFile = formData.get("image");
   await adminUpsertMap(
@@ -43,6 +45,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect("/admin/maps");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/maps"));
+  }
 }
 
 async function deleteAction(id: string) {

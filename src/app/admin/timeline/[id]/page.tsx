@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetTimelineEvent,
   adminUpsertTimelineEvent,
@@ -19,6 +20,7 @@ const EVENT_TYPES = ["Session", "Historical", "Prophecy", "Rumor"];
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   await adminUpsertTimelineEvent(
     campaignId,
@@ -38,6 +40,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect("/admin/timeline");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/timeline"));
+  }
 }
 
 async function deleteAction(id: string) {

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetFaction,
   adminUpsertFaction,
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   await adminUpsertFaction(
     campaignId,
@@ -30,6 +32,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect("/admin/factions");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/factions"));
+  }
 }
 
 async function deleteAction(id: string) {

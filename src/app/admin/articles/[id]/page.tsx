@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import { notFound, redirect } from "next/navigation";
 import {
   adminGetArticle,
@@ -24,6 +25,7 @@ async function saveAction(
   formData: FormData
 ) {
   "use server";
+  try {
   const template = await adminGetTemplate(templateId);
   if (!template) redirect(sectionId ? `/admin/sections/${sectionId}` : "/admin/templates");
 
@@ -61,6 +63,10 @@ async function saveAction(
     await adminAddArticleListItem(listId, newArticleId);
   }
   redirect(sectionId ? `/admin/sections/${sectionId}` : "/admin/templates");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/articles"));
+  }
 }
 
 async function deleteAction(campaignId: string, sectionId: string | undefined, id: string) {

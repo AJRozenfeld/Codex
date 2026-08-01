@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import { adminGetMoon, adminUpsertMoon, adminDeleteMoon } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { Field, TextArea, Checkbox, FormActions } from "@/components/AdminForm";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   await adminUpsertMoon(
     campaignId,
@@ -22,6 +24,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect("/admin/moons");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/moons"));
+  }
 }
 
 async function deleteAction(id: string) {

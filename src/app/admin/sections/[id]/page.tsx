@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import Link from "next/link";
 import {
   adminGetSection,
@@ -29,6 +30,7 @@ export const dynamic = "force-dynamic";
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   const newId = await adminUpsertSection(
     campaignId,
@@ -41,6 +43,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect(id ? "/admin/sections" : `/admin/sections/${newId}`);
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/sections"));
+  }
 }
 
 async function deleteAction(id: string) {

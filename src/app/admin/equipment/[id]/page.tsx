@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { noticePath } from "@/lib/friendly-errors";
 import {
   getEquipmentItem, getLibraryEquipmentItem, upsertEquipmentItem, upsertLibraryEquipmentItem,
   deleteEquipmentItem, deleteLibraryEquipmentItem, copyLibraryEquipmentToCampaign,
@@ -34,7 +35,7 @@ async function saveAction(id: string, formData: FormData) {
   if (!item) return;
   if (item.campaignId === null) {
     const master = await getMasterSession();
-    if (!master.isMaster) return;
+    if (!master.isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/equipment"));
     await upsertLibraryEquipmentItem(input, id);
   } else {
     await upsertEquipmentItem(item.campaignId, input, id);
@@ -49,7 +50,7 @@ async function deleteAction(id: string) {
   if (!item) return;
   if (item.campaignId === null) {
     const master = await getMasterSession();
-    if (!master.isMaster) return;
+    if (!master.isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/equipment"));
     await deleteLibraryEquipmentItem(id);
   } else {
     await deleteEquipmentItem(item.campaignId, id);

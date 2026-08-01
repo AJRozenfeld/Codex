@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetTemplate,
   adminGetTemplates,
@@ -46,6 +47,7 @@ function parseReferenceTarget(raw: string): { referenceTargetType: SectionEntity
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const newId = await adminUpsertTemplate(
     {
       name: String(formData.get("name") ?? ""),
@@ -54,6 +56,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect(id ? "/admin/templates" : `/admin/templates/${newId}`);
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/templates"));
+  }
 }
 
 async function deleteAction(id: string) {

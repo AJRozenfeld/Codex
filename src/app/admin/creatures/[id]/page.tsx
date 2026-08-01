@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { noticePath } from "@/lib/friendly-errors";
 import {
   getCreature,
   getLibraryCreature,
@@ -54,7 +55,7 @@ async function updateBasicsAction(id: string, formData: FormData) {
   if (!creature) return;
   const input = { name, ...parseBasics(formData), statBlock: creature.statBlock };
   if (isLibrary) {
-    if (!isMaster) return;
+    if (!isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/creatures"));
     await upsertLibraryCreature(input, id);
   } else {
     await upsertCreature(creature.campaignId as string, input, id);
@@ -84,7 +85,7 @@ async function updateStatBlockAction(id: string, formData: FormData) {
     statBlock,
   };
   if (isLibrary) {
-    if (!isMaster) return;
+    if (!isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/creatures"));
     await upsertLibraryCreature(input, id);
   } else {
     await upsertCreature(creature.campaignId as string, input, id);
@@ -97,7 +98,7 @@ async function deleteAction(id: string) {
   const { creature, isLibrary, isMaster } = await loadForEdit(id);
   if (!creature) return;
   if (isLibrary) {
-    if (!isMaster) return;
+    if (!isMaster) redirect(noticePath("Only the master console can edit platform-library content - log in at /master first.", "/admin/creatures"));
     await deleteLibraryCreature(id);
   } else {
     await deleteCreature(creature.campaignId as string, id);

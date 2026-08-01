@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isNextControlError, noticePath } from "@/lib/friendly-errors";
 import {
   adminGetStoryline,
   adminUpsertStoryline,
@@ -18,6 +19,7 @@ const STATUS_OPTIONS = ["Active", "Dormant", "Resolved", "Background"];
 
 async function saveAction(id: string | undefined, formData: FormData) {
   "use server";
+  try {
   const campaignId = await getCurrentCampaignId();
   await adminUpsertStoryline(
     campaignId,
@@ -36,6 +38,10 @@ async function saveAction(id: string | undefined, formData: FormData) {
     id
   );
   redirect("/admin/storylines");
+  } catch (err) {
+    if (isNextControlError(err)) throw err;
+    redirect(noticePath(err, "/admin/storylines"));
+  }
 }
 
 async function deleteAction(id: string) {
