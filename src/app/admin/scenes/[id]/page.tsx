@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { LibraryPickerField } from "@/components/LibraryPicker";
 import {
   getSceneDetail,
   updateSceneSettings,
@@ -165,16 +166,7 @@ export default async function AdminSceneEditPage({ params }: { params: { id: str
         <form action={addLibraryCreature} className="flex flex-wrap items-end gap-3 rounded-lg border border-gold/15 p-3">
           <label className="block flex-1 min-w-[12rem]">
             <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">From Library</span>
-            <select
-              name="creatureId"
-              defaultValue=""
-              className="w-full rounded-lg bg-void border border-gold/30 px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-gold/70"
-            >
-              <option value="" disabled>&mdash; choose a creature &mdash;</option>
-              {library.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <LibraryPickerField kind="creatures" name="creatureId" placeholder="&mdash; search the bestiary &mdash;" />
           </label>
           <label className="block w-24">
             <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">Qty</span>

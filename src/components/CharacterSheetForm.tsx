@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
 import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, newCustomAction, describeActionRoll } from "@/lib/character-sheet-shared";
+import { LibraryPickerButton } from "@/components/LibraryPicker";
+import type { PickerItem } from "@/lib/library-picker-actions";
 import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "@/lib/types";
 import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
 import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
@@ -120,6 +122,22 @@ export function CharacterSheetForm({
     setSheet((s) => ({
       ...s,
       spells: [...s.spells, { id, level: 0, name: "", prepared: false, description: "", rolls: [] }],
+    }));
+    toggleSpellExpanded(id, true);
+  }
+  function addSpellFromLibrary(item: PickerItem) {
+    const id = crypto.randomUUID();
+    setSheet((s) => ({
+      ...s,
+      spells: [...s.spells, { id, level: item.level ?? 0, name: item.name, prepared: true, description: item.text ?? "", rolls: [] }],
+    }));
+    toggleSpellExpanded(id, true);
+  }
+  function addAttackFromLibrary(item: PickerItem) {
+    const id = crypto.randomUUID();
+    setSheet((s) => ({
+      ...s,
+      attacks: [...s.attacks, { id, name: item.name, description: item.text ?? "", rolls: newWeaponRolls() }],
     }));
     toggleSpellExpanded(id, true);
   }
@@ -481,9 +499,12 @@ export function CharacterSheetForm({
       <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg text-gold">Attacks &amp; Cantrips</h2>
-          <button type="button" onClick={addAttack} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
-            + Add
-          </button>
+          <span className="inline-flex gap-2">
+            <LibraryPickerButton kind="weapons" label="+ From Library" onPick={addAttackFromLibrary} />
+            <button type="button" onClick={addAttack} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+              + Add Blank
+            </button>
+          </span>
         </div>
         <div className="space-y-2">
           {sheet.attacks.map((atk, i) => (
@@ -763,9 +784,12 @@ export function CharacterSheetForm({
 
         <div className="flex items-center justify-between mb-2">
           <span className={labelCls}>Spells</span>
-          <button type="button" onClick={addSpell} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
-            + Add
-          </button>
+          <span className="inline-flex gap-2">
+            <LibraryPickerButton kind="spells" label="+ From Library" onPick={addSpellFromLibrary} />
+            <button type="button" onClick={addSpell} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+              + Add Blank
+            </button>
+          </span>
         </div>
         <div className="space-y-2">
           {sheet.spells.map((sp, i) => (

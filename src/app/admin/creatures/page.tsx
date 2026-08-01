@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LibraryPager, paginateLibrary } from "@/components/LibraryPager";
 import { redirect } from "next/navigation";
 import { listCreatureSummaries, upsertCreature, copyLibraryCreatureToCampaign, type CreatureSummary } from "@/lib/creature-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
@@ -82,11 +83,12 @@ function CreatureTable({ rows, library }: { rows: CreatureSummary[]; library: bo
   );
 }
 
-export default async function AdminCreaturesPage() {
+export default async function AdminCreaturesPage({ searchParams }: { searchParams: { q?: string; page?: string } }) {
   const campaignId = await getCurrentCampaignId();
   const all = await listCreatureSummaries(campaignId);
   const mine = all.filter((c) => !c.inLibrary);
   const library = all.filter((c) => c.inLibrary);
+  const { pageRows, page, totalPages, totalCount } = paginateLibrary(library, searchParams.q ?? "", searchParams.page);
 
   return (
     <div>
@@ -123,7 +125,8 @@ export default async function AdminCreaturesPage() {
         The shared bestiary every DM draws from. Use these directly in Scenes, or copy one into your
         campaign to make it your own and tweak it.
       </p>
-      <CreatureTable rows={library} library={true} />
+      <LibraryPager path="/admin/creatures" q={searchParams.q ?? ""} page={page} totalPages={totalPages} totalCount={totalCount} />
+      <CreatureTable rows={pageRows} library={true} />
     </div>
   );
 }

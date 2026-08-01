@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LibraryPager, paginateLibrary } from "@/components/LibraryPager";
 import { redirect } from "next/navigation";
 import { listSpells, upsertSpell, copyLibrarySpellToCampaign } from "@/lib/library-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
@@ -80,11 +81,12 @@ function SpellTable({ rows, library }: { rows: Spell[]; library: boolean }) {
   );
 }
 
-export default async function AdminSpellsPage() {
+export default async function AdminSpellsPage({ searchParams }: { searchParams: { q?: string; page?: string } }) {
   const campaignId = await getCurrentCampaignId();
   const all = await listSpells(campaignId);
   const mine = all.filter((c) => c.campaignId !== null);
   const library = all.filter((c) => c.campaignId === null);
+  const { pageRows, page, totalPages, totalCount } = paginateLibrary(library, searchParams.q ?? "", searchParams.page);
 
   return (
     <div>
@@ -117,7 +119,8 @@ export default async function AdminSpellsPage() {
       <p className="text-sm text-parchment/40 mb-3 max-w-2xl">
         The shared grimoire every DM draws from. Copy a spell into your campaign to make it your own and tweak it.
       </p>
-      <SpellTable rows={library} library={true} />
+      <LibraryPager path="/admin/spells" q={searchParams.q ?? ""} page={page} totalPages={totalPages} totalCount={totalCount} />
+      <SpellTable rows={pageRows} library={true} />
     </div>
   );
 }
