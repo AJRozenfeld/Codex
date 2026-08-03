@@ -47,7 +47,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bulette.png"
  },
  {
   "name": "Camel",
@@ -88,7 +89,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/camel.png"
  },
  {
   "name": "Cat",
@@ -134,7 +136,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cat.png"
  },
  {
   "name": "Centaur",
@@ -192,7 +195,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/centaur.png"
  },
  {
   "name": "Chain Devil",
@@ -255,7 +259,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/chain-devil.png"
  },
  {
   "name": "Chimera",
@@ -312,7 +317,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/chimera.png"
  },
  {
   "name": "Chuul",
@@ -370,7 +376,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/chuul.png"
  },
  {
   "name": "Clay Golem",
@@ -440,7 +447,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/clay-golem.png"
  },
  {
   "name": "Cloaker",
@@ -510,7 +518,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cloaker.png"
  },
  {
   "name": "Cloud Giant",
@@ -568,7 +577,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cloud-giant.png"
  },
  {
   "name": "Cockatrice",
@@ -609,7 +619,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cockatrice.png"
  },
  {
   "name": "Commoner",
@@ -650,7 +661,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/commoner.png"
  },
  {
   "name": "Constrictor Snake",
@@ -695,7 +707,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/constrictor-snake.png"
  },
  {
   "name": "Copper Dragon Wyrmling",
@@ -740,7 +753,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/copper-dragon-wyrmling.png"
  },
  {
   "name": "Couatl",
@@ -802,7 +816,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/couatl.png"
  },
  {
   "name": "Crab",
@@ -848,7 +863,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/crab.png"
  },
  {
   "name": "Crocodile",
@@ -894,7 +910,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/crocodile.png"
  },
  {
   "name": "Cult Fanatic",
@@ -948,7 +965,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cult-fanatic.png"
  },
  {
   "name": "Cultist",
@@ -994,7 +1012,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/cultist.png"
  },
  {
   "name": "Darkmantle",
@@ -1048,7 +1067,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/darkmantle.png"
  },
  {
   "name": "Death Dog",
@@ -1098,7 +1118,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/death-dog.png"
  },
  {
   "name": "Deep Gnome (Svirfneblin)",
@@ -1156,7 +1177,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/deep-gnome-svirfneblin.png"
  },
  {
   "name": "Deer",
@@ -1197,7 +1219,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/deer.png"
  },
  {
   "name": "Deva",
@@ -1263,7 +1286,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/deva.png"
  },
  {
   "name": "Dire Wolf",
@@ -1313,7 +1337,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/dire-wolf.png"
  },
  {
   "name": "Djinni",
@@ -1371,7 +1396,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/djinni.png"
  },
  {
   "name": "Doppelganger",
@@ -1433,7 +1459,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/doppelganger.png"
  },
  {
   "name": "Draft Horse",
@@ -1474,7 +1501,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/draft-horse.png"
  },
  {
   "name": "Dragon Turtle",
@@ -1536,7 +1564,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/dragon-turtle.png"
  },
  {
   "name": "Dretch",
@@ -1589,7 +1618,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/dretch.png"
  },
  {
   "name": "Drider",
@@ -1663,7 +1693,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/drider.png"
  },
  {
   "name": "Drow",
@@ -1721,7 +1752,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/drow.png"
  },
  {
   "name": "Druid",
@@ -1767,7 +1799,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/druid.png"
  },
  {
   "name": "Dryad",
@@ -1829,7 +1862,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/dryad.png"
  },
  {
   "name": "Duergar",
@@ -1891,7 +1925,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/duergar.png"
  },
  {
   "name": "Dust Mephit",
@@ -1945,7 +1980,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/dust-mephit.png"
  },
  {
   "name": "Eagle",
@@ -1991,7 +2027,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/eagle.png"
  },
  {
   "name": "Earth Elemental",
@@ -2045,7 +2082,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/earth-elemental.png"
  },
  {
   "name": "Efreeti",
@@ -2103,7 +2141,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/efreeti.png"
  },
  {
   "name": "Elephant",
@@ -2153,7 +2192,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/elephant.png"
  },
  {
   "name": "Elk",
@@ -2203,7 +2243,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/elk.png"
  },
  {
   "name": "Erinyes",
@@ -2266,7 +2307,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/erinyes.png"
  },
  {
   "name": "Ettercap",
@@ -2332,7 +2374,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ettercap.png"
  },
  {
   "name": "Ettin",
@@ -2390,7 +2433,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ettin.png"
  },
  {
   "name": "Fire Elemental",
@@ -2448,7 +2492,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/fire-elemental.png"
  },
  {
   "name": "Fire Giant",
@@ -2497,7 +2542,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/fire-giant.png"
  },
  {
   "name": "Flesh Golem",
@@ -2567,7 +2613,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/flesh-golem.png"
  },
  {
   "name": "Flying Snake",
@@ -2613,7 +2660,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/flying-snake.png"
  },
  {
   "name": "Flying Sword",
@@ -2663,7 +2711,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/flying-sword.png"
  },
  {
   "name": "Frog",
@@ -2708,7 +2757,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/frog.png"
  },
  {
   "name": "Frost Giant",
@@ -2757,7 +2807,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/frost-giant.png"
  },
  {
   "name": "Gargoyle",
@@ -2811,7 +2862,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gargoyle.png"
  },
  {
   "name": "Gelatinous Cube",
@@ -2865,7 +2917,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gelatinous-cube.png"
  },
  {
   "name": "Ghast",
@@ -2919,7 +2972,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ghast.png"
  },
  {
   "name": "Ghost",
@@ -2981,7 +3035,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ghost.png"
  },
  {
   "name": "Ghoul",
@@ -3026,6 +3081,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ghoul.png"
  }
 ]

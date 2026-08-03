@@ -76,7 +76,8 @@
      "text": "One creature charmed by the aboleth takes 10 (3d6) psychic damage, and the aboleth regains hit points equal to the damage the creature takes."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/aboleth.png"
  },
  {
   "name": "Acolyte",
@@ -122,7 +123,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/acolyte.png"
  },
  {
   "name": "Adult Black Dragon",
@@ -205,7 +207,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 19 Dexterity saving throw or take 13 (2d6 + 6) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-black-dragon.png"
  },
  {
   "name": "Adult Blue Dragon",
@@ -284,7 +287,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 20 Dexterity saving throw or take 14 (2d6 + 7) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-blue-dragon.png"
  },
  {
   "name": "Adult Brass Dragon",
@@ -363,7 +367,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 19 Dexterity saving throw or take 13 (2d6 + 6) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-brass-dragon.png"
  },
  {
   "name": "Adult Bronze Dragon",
@@ -446,7 +451,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 20 Dexterity saving throw or take 14 (2d6 + 7) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-bronze-dragon.png"
  },
  {
   "name": "Adult Copper Dragon",
@@ -525,7 +531,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 19 Dexterity saving throw or take 13 (2d6 + 6) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-copper-dragon.png"
  },
  {
   "name": "Adult Gold Dragon",
@@ -608,7 +615,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 22 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-gold-dragon.png"
  },
  {
   "name": "Adult Green Dragon",
@@ -691,7 +699,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 19 Dexterity saving throw or take 13 (2d6 + 6) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-green-dragon.png"
  },
  {
   "name": "Adult Red Dragon",
@@ -770,7 +779,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 22 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-red-dragon.png"
  },
  {
   "name": "Adult Silver Dragon",
@@ -849,7 +859,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 22 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-silver-dragon.png"
  },
  {
   "name": "Adult White Dragon",
@@ -932,7 +943,8 @@
      "text": "The dragon beats its wings. Each creature within 10 ft. of the dragon must succeed on a DC 19 Dexterity saving throw or take 13 (2d6 + 6) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/adult-white-dragon.png"
  },
  {
   "name": "Air Elemental",
@@ -986,7 +998,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/air-elemental.png"
  },
  {
   "name": "Ancient Black Dragon",
@@ -1069,7 +1082,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 23 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-black-dragon.png"
  },
  {
   "name": "Ancient Blue Dragon",
@@ -1148,7 +1162,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 24 Dexterity saving throw or take 16 (2d6 + 9) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-blue-dragon.png"
  },
  {
   "name": "Ancient Brass Dragon",
@@ -1231,7 +1246,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 22 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-brass-dragon.png"
  },
  {
   "name": "Ancient Bronze Dragon",
@@ -1318,7 +1334,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 24 Dexterity saving throw or take 16 (2d6 + 9) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-bronze-dragon.png"
  },
  {
   "name": "Ancient Copper Dragon",
@@ -1401,7 +1418,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 23 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-copper-dragon.png"
  },
  {
   "name": "Ancient Gold Dragon",
@@ -1488,7 +1506,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 25 Dexterity saving throw or take 17 (2d6 + 10) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-gold-dragon.png"
  },
  {
   "name": "Ancient Green Dragon",
@@ -1571,7 +1590,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 23 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-green-dragon.png"
  },
  {
   "name": "Ancient Red Dragon",
@@ -1650,7 +1670,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 25 Dexterity saving throw or take 17 (2d6 + 10) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-red-dragon.png"
  },
  {
   "name": "Ancient Silver Dragon",
@@ -1733,7 +1754,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 25 Dexterity saving throw or take 17 (2d6 + 10) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-silver-dragon.png"
  },
  {
   "name": "Ancient White Dragon",
@@ -1816,7 +1838,8 @@
      "text": "The dragon beats its wings. Each creature within 15 ft. of the dragon must succeed on a DC 22 Dexterity saving throw or take 15 (2d6 + 8) bludgeoning damage and be knocked prone. The dragon can then fly up to half its flying speed."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/ancient-white-dragon.png"
  },
  {
   "name": "Androsphinx",
@@ -1891,7 +1914,8 @@
      "text": "The sphinx casts a spell from its list of prepared spells, using a spell slot as normal."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/androsphinx.png"
  },
  {
   "name": "Animated Armor",
@@ -1945,7 +1969,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/animated-armor.png"
  },
  {
   "name": "Ankheg",
@@ -1990,7 +2015,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ankheg.png"
  },
  {
   "name": "Ape",
@@ -2039,7 +2065,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ape.png"
  },
  {
   "name": "Archmage",
@@ -2089,7 +2116,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/archmage.png"
  },
  {
   "name": "Assassin",
@@ -2151,7 +2179,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/assassin.png"
  },
  {
   "name": "Awakened Shrub",
@@ -2197,7 +2226,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/awakened-shrub.png"
  },
  {
   "name": "Awakened Tree",
@@ -2243,7 +2273,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/awakened-tree.png"
  },
  {
   "name": "Axe Beak",
@@ -2284,7 +2315,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/axe-beak.png"
  },
  {
   "name": "Azer",
@@ -2338,7 +2370,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/azer.png"
  },
  {
   "name": "Baboon",
@@ -2384,7 +2417,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/baboon.png"
  },
  {
   "name": "Badger",
@@ -2430,7 +2464,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/badger.png"
  },
  {
   "name": "Balor",
@@ -2500,7 +2535,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/balor.png"
  },
  {
   "name": "Bandit",
@@ -2545,7 +2581,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bandit.png"
  },
  {
   "name": "Bandit Captain",
@@ -2599,7 +2636,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bandit-captain.png"
  },
  {
   "name": "Barbed Devil",
@@ -2665,7 +2703,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/barbed-devil.png"
  },
  {
   "name": "Basilisk",
@@ -2711,7 +2750,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/basilisk.png"
  },
  {
   "name": "Bat",
@@ -2761,7 +2801,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bat.png"
  },
  {
   "name": "Bearded Devil",
@@ -2823,7 +2864,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bearded-devil.png"
  },
  {
   "name": "Behir",
@@ -2880,7 +2922,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/behir.png"
  },
  {
   "name": "Berserker",
@@ -2926,7 +2969,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/berserker.png"
  },
  {
   "name": "Black Bear",
@@ -2980,7 +3024,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/black-bear.png"
  },
  {
   "name": "Black Dragon Wyrmling",
@@ -3030,7 +3075,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/black-dragon-wyrmling.png"
  },
  {
   "name": "Black Pudding",
@@ -3089,7 +3135,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/black-pudding.png"
  },
  {
   "name": "Blink Dog",
@@ -3139,7 +3186,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/blink-dog.png"
  },
  {
   "name": "Blood Hawk",
@@ -3189,7 +3237,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/blood-hawk.png"
  },
  {
   "name": "Blue Dragon Wyrmling",
@@ -3234,7 +3283,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/blue-dragon-wyrmling.png"
  },
  {
   "name": "Boar",
@@ -3284,7 +3334,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/boar.png"
  },
  {
   "name": "Bone Devil",
@@ -3342,7 +3393,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bone-devil.png"
  },
  {
   "name": "Brass Dragon Wyrmling",
@@ -3387,7 +3439,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/brass-dragon-wyrmling.png"
  },
  {
   "name": "Bronze Dragon Wyrmling",
@@ -3437,7 +3490,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bronze-dragon-wyrmling.png"
  },
  {
   "name": "Brown Bear",
@@ -3491,7 +3545,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/brown-bear.png"
  },
  {
   "name": "Bugbear",
@@ -3545,6 +3600,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/bugbear.png"
  }
 ]

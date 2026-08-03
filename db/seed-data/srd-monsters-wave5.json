@@ -47,7 +47,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hunter-shark.png"
  },
  {
   "name": "Hydra",
@@ -109,7 +110,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hydra.png"
  },
  {
   "name": "Hyena",
@@ -155,7 +157,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hyena.png"
  },
  {
   "name": "Ice Devil",
@@ -221,7 +224,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ice-devil.png"
  },
  {
   "name": "Ice Mephit",
@@ -279,7 +283,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ice-mephit.png"
  },
  {
   "name": "Imp",
@@ -337,7 +342,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/imp.png"
  },
  {
   "name": "Invisible Stalker",
@@ -391,7 +397,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/invisible-stalker.png"
  },
  {
   "name": "Iron Golem",
@@ -461,7 +468,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/iron-golem.png"
  },
  {
   "name": "Jackal",
@@ -511,7 +519,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/jackal.png"
  },
  {
   "name": "Killer Whale",
@@ -565,7 +574,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/killer-whale.png"
  },
  {
   "name": "Knight",
@@ -628,7 +638,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/knight.png"
  },
  {
   "name": "Kobold",
@@ -682,7 +693,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/kobold.png"
  },
  {
   "name": "Kraken",
@@ -765,7 +777,8 @@
      "text": "While underwater, the kraken expels an ink cloud in a 60-foot radius. The cloud spreads around corners, and that area is heavily obscured to creatures other than the kraken. Each creature other than the kraken that ends its turn there must succeed on a DC 23 Constitution saving throw, taking 16 (3d10) poison damage on a failed save, or half as much damage on a successful one. A strong current disperses the cloud, which otherwise disappears at the end of the kraken's next turn."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/kraken.png"
  },
  {
   "name": "Lamia",
@@ -823,7 +836,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/lamia.png"
  },
  {
   "name": "Lemure",
@@ -873,7 +887,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/lemure.png"
  },
  {
   "name": "Lich",
@@ -948,7 +963,8 @@
      "text": "Each living creature within 20 feet of the lich must make a DC 18 Constitution saving throw against this magic, taking 21 (6d6) necrotic damage on a failed save, or half as much damage on a successful one."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/lich.png"
  },
  {
   "name": "Lion",
@@ -1010,7 +1026,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/lion.png"
  },
  {
   "name": "Lizard",
@@ -1051,7 +1068,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/lizard.png"
  },
  {
   "name": "Lizardfolk",
@@ -1113,7 +1131,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/lizardfolk.png"
  },
  {
   "name": "Mage",
@@ -1159,7 +1178,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mage.png"
  },
  {
   "name": "Magma Mephit",
@@ -1217,7 +1237,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/magma-mephit.png"
  },
  {
   "name": "Magmin",
@@ -1267,7 +1288,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/magmin.png"
  },
  {
   "name": "Mammoth",
@@ -1317,7 +1339,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mammoth.png"
  },
  {
   "name": "Manticore",
@@ -1375,7 +1398,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/manticore.png"
  },
  {
   "name": "Marilith",
@@ -1446,7 +1470,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/marilith.png"
  },
  {
   "name": "Mastiff",
@@ -1492,7 +1517,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mastiff.png"
  },
  {
   "name": "Medusa",
@@ -1550,7 +1576,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/medusa.png"
  },
  {
   "name": "Merfolk",
@@ -1596,7 +1623,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/merfolk.png"
  },
  {
   "name": "Merrow",
@@ -1654,7 +1682,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/merrow.png"
  },
  {
   "name": "Mimic",
@@ -1716,7 +1745,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mimic.png"
  },
  {
   "name": "Minotaur",
@@ -1774,7 +1804,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/minotaur.png"
  },
  {
   "name": "Minotaur Skeleton",
@@ -1824,7 +1855,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/minotaur-skeleton.png"
  },
  {
   "name": "Mule",
@@ -1874,7 +1906,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mule.png"
  },
  {
   "name": "Mummy",
@@ -1923,7 +1956,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/mummy.png"
  },
  {
   "name": "Mummy Lord",
@@ -2006,7 +2040,8 @@
      "text": "The mummy lord magically transforms into a whirlwind of sand, moves up to 60 feet, and reverts to its normal form. While in whirlwind form, the mummy lord is immune to all damage, and it can't be grappled, petrified, knocked prone, restrained, or stunned. Equipment worn or carried by the mummy lord remain in its possession."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/mummy-lord.png"
  },
  {
   "name": "Nalfeshnee",
@@ -2068,7 +2103,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/nalfeshnee.png"
  },
  {
   "name": "Night Hag",
@@ -2134,7 +2170,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/night-hag.png"
  },
  {
   "name": "Nightmare",
@@ -2188,7 +2225,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/nightmare.png"
  },
  {
   "name": "Noble",
@@ -2234,7 +2272,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/noble.png"
  },
  {
   "name": "Ochre Jelly",
@@ -2289,7 +2328,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ochre-jelly.png"
  },
  {
   "name": "Octopus",
@@ -2347,7 +2387,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/octopus.png"
  },
  {
   "name": "Ogre",
@@ -2392,7 +2433,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ogre.png"
  },
  {
   "name": "Ogre Zombie",
@@ -2438,7 +2480,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/ogre-zombie.png"
  },
  {
   "name": "Oni",
@@ -2504,7 +2547,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/oni.png"
  },
  {
   "name": "Orc",
@@ -2554,7 +2598,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/orc.png"
  },
  {
   "name": "Otyugh",
@@ -2612,7 +2657,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/otyugh.png"
  },
  {
   "name": "Owl",
@@ -2662,7 +2708,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/owl.png"
  },
  {
   "name": "Owlbear",
@@ -2716,7 +2763,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/owlbear.png"
  },
  {
   "name": "Panther",
@@ -2770,7 +2818,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/panther.png"
  },
  {
   "name": "Pegasus",
@@ -2811,7 +2860,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/pegasus.png"
  },
  {
   "name": "Phase Spider",
@@ -2865,7 +2915,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/phase-spider.png"
  },
  {
   "name": "Pit Fiend",
@@ -2939,7 +2990,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/pit-fiend.png"
  },
  {
   "name": "Planetar",
@@ -3005,7 +3057,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/planetar.png"
  },
  {
   "name": "Plesiosaurus",
@@ -3051,7 +3104,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/plesiosaurus.png"
  },
  {
   "name": "Poisonous Snake",
@@ -3092,7 +3146,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/poisonous-snake.png"
  },
  {
   "name": "Polar Bear",
@@ -3146,6 +3201,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/polar-bear.png"
  }
 ]

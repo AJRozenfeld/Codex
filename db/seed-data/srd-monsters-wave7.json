@@ -51,7 +51,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/tiger.png"
  },
  {
   "name": "Treant",
@@ -113,7 +114,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/treant.png"
  },
  {
   "name": "Tribal Warrior",
@@ -159,7 +161,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/tribal-warrior.png"
  },
  {
   "name": "Triceratops",
@@ -209,7 +212,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/triceratops.png"
  },
  {
   "name": "Troll",
@@ -267,7 +271,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/troll.png"
  },
  {
   "name": "Tyrannosaurus Rex",
@@ -316,7 +321,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/tyrannosaurus-rex.png"
  },
  {
   "name": "Unicorn",
@@ -403,7 +409,8 @@
      "text": "The unicorn magically regains 11 (2d8 + 2) hit points."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/unicorn.png"
  },
  {
   "name": "Vampire Spawn",
@@ -465,7 +472,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/vampire-spawn.png"
  },
  {
   "name": "Vampire, Bat Form",
@@ -552,7 +560,8 @@
      "text": "The vampire makes one bite attack."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/vampire-bat-form.png"
  },
  {
   "name": "Vampire, Mist Form",
@@ -626,7 +635,8 @@
      "text": "The vampire makes one bite attack."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/vampire-mist-form.png"
  },
  {
   "name": "Vampire, Vampire Form",
@@ -721,7 +731,8 @@
      "text": "The vampire makes one bite attack."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/vampire-vampire-form.png"
  },
  {
   "name": "Veteran",
@@ -774,7 +785,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/veteran.png"
  },
  {
   "name": "Violet Fungus",
@@ -824,7 +836,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/violet-fungus.png"
  },
  {
   "name": "Vrock",
@@ -886,7 +899,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/vrock.png"
  },
  {
   "name": "Vulture",
@@ -936,7 +950,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/vulture.png"
  },
  {
   "name": "Warhorse",
@@ -982,7 +997,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/warhorse.png"
  },
  {
   "name": "Warhorse Skeleton",
@@ -1023,7 +1039,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/warhorse-skeleton.png"
  },
  {
   "name": "Water Elemental",
@@ -1081,7 +1098,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/water-elemental.png"
  },
  {
   "name": "Weasel",
@@ -1127,7 +1145,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/weasel.png"
  },
  {
   "name": "Werebear, Bear Form",
@@ -1185,7 +1204,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werebear-bear-form.png"
  },
  {
   "name": "Werebear, Human Form",
@@ -1239,7 +1259,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werebear-human-form.png"
  },
  {
   "name": "Werebear, Hybrid Form",
@@ -1301,7 +1322,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werebear-hybrid-form.png"
  },
  {
   "name": "Wereboar, Boar Form",
@@ -1355,7 +1377,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wereboar-boar-form.png"
  },
  {
   "name": "Wereboar, Human Form",
@@ -1409,7 +1432,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wereboar-human-form.png"
  },
  {
   "name": "Wereboar, Hybrid Form",
@@ -1471,7 +1495,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wereboar-hybrid-form.png"
  },
  {
   "name": "Wererat, Human Form",
@@ -1529,7 +1554,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wererat-human-form.png"
  },
  {
   "name": "Wererat, Hybrid Form",
@@ -1591,7 +1617,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wererat-hybrid-form.png"
  },
  {
   "name": "Wererat, Rat Form",
@@ -1641,7 +1668,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wererat-rat-form.png"
  },
  {
   "name": "Weretiger, Human Form",
@@ -1699,7 +1727,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/weretiger-human-form.png"
  },
  {
   "name": "Weretiger, Hybrid Form",
@@ -1769,7 +1798,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/weretiger-hybrid-form.png"
  },
  {
   "name": "Weretiger, Tiger Form",
@@ -1827,7 +1857,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/weretiger-tiger-form.png"
  },
  {
   "name": "Werewolf, Human Form",
@@ -1881,7 +1912,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werewolf-human-form.png"
  },
  {
   "name": "Werewolf, Hybrid Form",
@@ -1939,7 +1971,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werewolf-hybrid-form.png"
  },
  {
   "name": "Werewolf, Wolf Form",
@@ -1989,7 +2022,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/werewolf-wolf-form.png"
  },
  {
   "name": "White Dragon Wyrmling",
@@ -2034,7 +2068,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/white-dragon-wyrmling.png"
  },
  {
   "name": "Wight",
@@ -2092,7 +2127,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wight.png"
  },
  {
   "name": "Will-o'-Wisp",
@@ -2154,7 +2190,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/will-o-wisp.png"
  },
  {
   "name": "Winter Wolf",
@@ -2212,7 +2249,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/winter-wolf.png"
  },
  {
   "name": "Wolf",
@@ -2262,7 +2300,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wolf.png"
  },
  {
   "name": "Worg",
@@ -2308,7 +2347,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/worg.png"
  },
  {
   "name": "Wraith",
@@ -2362,7 +2402,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wraith.png"
  },
  {
   "name": "Wyvern",
@@ -2415,7 +2456,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/wyvern.png"
  },
  {
   "name": "Xorn",
@@ -2477,7 +2519,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/xorn.png"
  },
  {
   "name": "Young Black Dragon",
@@ -2535,7 +2578,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-black-dragon.png"
  },
  {
   "name": "Young Blue Dragon",
@@ -2588,7 +2632,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-blue-dragon.png"
  },
  {
   "name": "Young Brass Dragon",
@@ -2641,7 +2686,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-brass-dragon.png"
  },
  {
   "name": "Young Bronze Dragon",
@@ -2699,7 +2745,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-bronze-dragon.png"
  },
  {
   "name": "Young Copper Dragon",
@@ -2752,7 +2799,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-copper-dragon.png"
  },
  {
   "name": "Young Gold Dragon",
@@ -2810,7 +2858,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-gold-dragon.png"
  },
  {
   "name": "Young Green Dragon",
@@ -2868,7 +2917,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-green-dragon.png"
  },
  {
   "name": "Young Red Dragon",
@@ -2921,7 +2971,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-red-dragon.png"
  },
  {
   "name": "Young Silver Dragon",
@@ -2974,7 +3025,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-silver-dragon.png"
  },
  {
   "name": "Young White Dragon",
@@ -3032,7 +3084,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/young-white-dragon.png"
  },
  {
   "name": "Zombie",
@@ -3078,6 +3131,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/zombie.png"
  }
 ]

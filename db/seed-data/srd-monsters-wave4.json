@@ -46,7 +46,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-ape.png"
  },
  {
   "name": "Giant Badger",
@@ -100,7 +101,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-badger.png"
  },
  {
   "name": "Giant Bat",
@@ -150,7 +152,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-bat.png"
  },
  {
   "name": "Giant Boar",
@@ -200,7 +203,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-boar.png"
  },
  {
   "name": "Giant Centipede",
@@ -241,7 +245,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-centipede.png"
  },
  {
   "name": "Giant Constrictor Snake",
@@ -286,7 +291,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-constrictor-snake.png"
  },
  {
   "name": "Giant Crab",
@@ -332,7 +338,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-crab.png"
  },
  {
   "name": "Giant Crocodile",
@@ -386,7 +393,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-crocodile.png"
  },
  {
   "name": "Giant Eagle",
@@ -440,7 +448,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-eagle.png"
  },
  {
   "name": "Giant Elk",
@@ -490,7 +499,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-elk.png"
  },
  {
   "name": "Giant Fire Beetle",
@@ -536,7 +546,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-fire-beetle.png"
  },
  {
   "name": "Giant Frog",
@@ -590,7 +601,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-frog.png"
  },
  {
   "name": "Giant Goat",
@@ -640,7 +652,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-goat.png"
  },
  {
   "name": "Giant Hyena",
@@ -686,7 +699,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-hyena.png"
  },
  {
   "name": "Giant Lizard",
@@ -727,7 +741,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-lizard.png"
  },
  {
   "name": "Giant Octopus",
@@ -785,7 +800,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-octopus.png"
  },
  {
   "name": "Giant Owl",
@@ -835,7 +851,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-owl.png"
  },
  {
   "name": "Giant Poisonous Snake",
@@ -876,7 +893,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-poisonous-snake.png"
  },
  {
   "name": "Giant Rat",
@@ -926,7 +944,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-rat.png"
  },
  {
   "name": "Giant Rat (Diseased)",
@@ -976,7 +995,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-rat-diseased.png"
  },
  {
   "name": "Giant Scorpion",
@@ -1025,7 +1045,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-scorpion.png"
  },
  {
   "name": "Giant Sea Horse",
@@ -1075,7 +1096,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-sea-horse.png"
  },
  {
   "name": "Giant Shark",
@@ -1125,7 +1147,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-shark.png"
  },
  {
   "name": "Giant Spider",
@@ -1183,7 +1206,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-spider.png"
  },
  {
   "name": "Giant Toad",
@@ -1237,7 +1261,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-toad.png"
  },
  {
   "name": "Giant Vulture",
@@ -1295,7 +1320,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-vulture.png"
  },
  {
   "name": "Giant Wasp",
@@ -1336,7 +1362,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-wasp.png"
  },
  {
   "name": "Giant Weasel",
@@ -1382,7 +1409,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-weasel.png"
  },
  {
   "name": "Giant Wolf Spider",
@@ -1436,7 +1464,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/giant-wolf-spider.png"
  },
  {
   "name": "Gibbering Mouther",
@@ -1494,7 +1523,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gibbering-mouther.png"
  },
  {
   "name": "Glabrezu",
@@ -1552,7 +1582,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/glabrezu.png"
  },
  {
   "name": "Gladiator",
@@ -1615,7 +1646,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gladiator.png"
  },
  {
   "name": "Gnoll",
@@ -1669,7 +1701,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gnoll.png"
  },
  {
   "name": "Goat",
@@ -1719,7 +1752,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/goat.png"
  },
  {
   "name": "Goblin",
@@ -1769,7 +1803,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/goblin.png"
  },
  {
   "name": "Gold Dragon Wyrmling",
@@ -1819,7 +1854,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gold-dragon-wyrmling.png"
  },
  {
   "name": "Gorgon",
@@ -1873,7 +1909,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gorgon.png"
  },
  {
   "name": "Gray Ooze",
@@ -1927,7 +1964,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/gray-ooze.png"
  },
  {
   "name": "Green Dragon Wyrmling",
@@ -1977,7 +2015,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/green-dragon-wyrmling.png"
  },
  {
   "name": "Green Hag",
@@ -2039,7 +2078,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/green-hag.png"
  },
  {
   "name": "Grick",
@@ -2093,7 +2133,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/grick.png"
  },
  {
   "name": "Griffon",
@@ -2147,7 +2188,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/griffon.png"
  },
  {
   "name": "Grimlock",
@@ -2201,7 +2243,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/grimlock.png"
  },
  {
   "name": "Guard",
@@ -2242,7 +2285,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/guard.png"
  },
  {
   "name": "Guardian Naga",
@@ -2296,7 +2340,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/guardian-naga.png"
  },
  {
   "name": "Gynosphinx",
@@ -2367,7 +2412,8 @@
      "text": "The sphinx casts a spell from its list of prepared spells, using a spell slot as normal."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/gynosphinx.png"
  },
  {
   "name": "Half-Red Dragon Veteran",
@@ -2424,7 +2470,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/half-red-dragon-veteran.png"
  },
  {
   "name": "Harpy",
@@ -2477,7 +2524,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/harpy.png"
  },
  {
   "name": "Hawk",
@@ -2523,7 +2571,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hawk.png"
  },
  {
   "name": "Hell Hound",
@@ -2577,7 +2626,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hell-hound.png"
  },
  {
   "name": "Hezrou",
@@ -2635,7 +2685,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hezrou.png"
  },
  {
   "name": "Hill Giant",
@@ -2684,7 +2735,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hill-giant.png"
  },
  {
   "name": "Hippogriff",
@@ -2738,7 +2790,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hippogriff.png"
  },
  {
   "name": "Hobgoblin",
@@ -2788,7 +2841,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/hobgoblin.png"
  },
  {
   "name": "Homunculus",
@@ -2834,7 +2888,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/homunculus.png"
  },
  {
   "name": "Horned Devil",
@@ -2896,6 +2951,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/horned-devil.png"
  }
 ]

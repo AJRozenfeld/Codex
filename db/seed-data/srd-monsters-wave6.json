@@ -38,7 +38,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/pony.png"
  },
  {
   "name": "Priest",
@@ -88,7 +89,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/priest.png"
  },
  {
   "name": "Pseudodragon",
@@ -146,7 +148,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/pseudodragon.png"
  },
  {
   "name": "Purple Worm",
@@ -200,7 +203,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/purple-worm.png"
  },
  {
   "name": "Quasit",
@@ -258,7 +262,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/quasit.png"
  },
  {
   "name": "Quipper",
@@ -308,7 +313,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/quipper.png"
  },
  {
   "name": "Rakshasa",
@@ -362,7 +368,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/rakshasa.png"
  },
  {
   "name": "Rat",
@@ -408,7 +415,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/rat.png"
  },
  {
   "name": "Raven",
@@ -454,7 +462,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/raven.png"
  },
  {
   "name": "Red Dragon Wyrmling",
@@ -499,7 +508,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/red-dragon-wyrmling.png"
  },
  {
   "name": "Reef Shark",
@@ -549,7 +559,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/reef-shark.png"
  },
  {
   "name": "Remorhaz",
@@ -599,7 +610,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/remorhaz.png"
  },
  {
   "name": "Rhinoceros",
@@ -645,7 +657,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/rhinoceros.png"
  },
  {
   "name": "Riding Horse",
@@ -686,7 +699,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/riding-horse.png"
  },
  {
   "name": "Roc",
@@ -740,7 +754,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/roc.png"
  },
  {
   "name": "Roper",
@@ -806,7 +821,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/roper.png"
  },
  {
   "name": "Rug of Smothering",
@@ -860,7 +876,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/rug-of-smothering.png"
  },
  {
   "name": "Rust Monster",
@@ -914,7 +931,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/rust-monster.png"
  },
  {
   "name": "Saber-Toothed Tiger",
@@ -968,7 +986,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/saber-toothed-tiger.png"
  },
  {
   "name": "Sahuagin",
@@ -1034,7 +1053,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/sahuagin.png"
  },
  {
   "name": "Salamander",
@@ -1092,7 +1112,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/salamander.png"
  },
  {
   "name": "Satyr",
@@ -1146,7 +1167,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/satyr.png"
  },
  {
   "name": "Scorpion",
@@ -1187,7 +1209,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/scorpion.png"
  },
  {
   "name": "Scout",
@@ -1241,7 +1264,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/scout.png"
  },
  {
   "name": "Sea Hag",
@@ -1299,7 +1323,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/sea-hag.png"
  },
  {
   "name": "Sea Horse",
@@ -1340,7 +1365,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/sea-horse.png"
  },
  {
   "name": "Shadow",
@@ -1394,7 +1420,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/shadow.png"
  },
  {
   "name": "Shambling Mound",
@@ -1448,7 +1475,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/shambling-mound.png"
  },
  {
   "name": "Shield Guardian",
@@ -1511,7 +1539,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/shield-guardian.png"
  },
  {
   "name": "Shrieker",
@@ -1557,7 +1586,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/shrieker.png"
  },
  {
   "name": "Silver Dragon Wyrmling",
@@ -1602,7 +1632,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/silver-dragon-wyrmling.png"
  },
  {
   "name": "Skeleton",
@@ -1647,7 +1678,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/skeleton.png"
  },
  {
   "name": "Solar",
@@ -1734,7 +1766,8 @@
      "text": "The solar targets one creature it can see within 30 ft. of it. If the target can see it, the target must succeed on a DC 15 Constitution saving throw or be blinded until magic such as the lesser restoration spell removes the blindness."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/solar.png"
  },
  {
   "name": "Specter",
@@ -1784,7 +1817,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/specter.png"
  },
  {
   "name": "Spider",
@@ -1838,7 +1872,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/spider.png"
  },
  {
   "name": "Spirit Naga",
@@ -1888,7 +1923,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/spirit-naga.png"
  },
  {
   "name": "Sprite",
@@ -1941,7 +1977,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/sprite.png"
  },
  {
   "name": "Spy",
@@ -1999,7 +2036,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/spy.png"
  },
  {
   "name": "Steam Mephit",
@@ -2053,7 +2091,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/steam-mephit.png"
  },
  {
   "name": "Stirge",
@@ -2094,7 +2133,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/stirge.png"
  },
  {
   "name": "Stone Giant",
@@ -2153,7 +2193,8 @@
     }
    ],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/stone-giant.png"
  },
  {
   "name": "Stone Golem",
@@ -2215,7 +2256,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/stone-golem.png"
  },
  {
   "name": "Storm Giant",
@@ -2277,7 +2319,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/storm-giant.png"
  },
  {
   "name": "Succubus/Incubus",
@@ -2339,7 +2382,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/succubus-incubus.png"
  },
  {
   "name": "Swarm of Bats",
@@ -2393,7 +2437,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-bats.png"
  },
  {
   "name": "Swarm of Beetles",
@@ -2439,7 +2484,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-beetles.png"
  },
  {
   "name": "Swarm of Centipedes",
@@ -2485,7 +2531,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-centipedes.png"
  },
  {
   "name": "Swarm of Insects",
@@ -2531,7 +2578,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-insects.png"
  },
  {
   "name": "Swarm of Poisonous Snakes",
@@ -2577,7 +2625,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-poisonous-snakes.png"
  },
  {
   "name": "Swarm of Quippers",
@@ -2631,7 +2680,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-quippers.png"
  },
  {
   "name": "Swarm of Rats",
@@ -2681,7 +2731,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-rats.png"
  },
  {
   "name": "Swarm of Ravens",
@@ -2727,7 +2778,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-ravens.png"
  },
  {
   "name": "Swarm of Spiders",
@@ -2785,7 +2837,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-spiders.png"
  },
  {
   "name": "Swarm of Wasps",
@@ -2831,7 +2884,8 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/swarm-of-wasps.png"
  },
  {
   "name": "Tarrasque",
@@ -2926,7 +2980,8 @@
      "text": "The tarrasque makes one bite attack or uses its Swallow."
     }
    ]
-  }
+  },
+  "portraitPath": "/images/monsters/tarrasque.png"
  },
  {
   "name": "Thug",
@@ -2980,6 +3035,7 @@
    "bonusActions": [],
    "reactions": [],
    "legendaryActions": []
-  }
+  },
+  "portraitPath": "/images/monsters/thug.png"
  }
 ]
