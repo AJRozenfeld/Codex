@@ -4,30 +4,61 @@ import { getAdminSession } from "@/lib/auth";
 import { adminGetCampaigns, getCurrentCampaignId, setCurrentCampaignId } from "@/lib/campaign-queries";
 import { getCurrentDmId, getDmAccount } from "@/lib/dm-queries";
 import { CampaignSwitcher } from "@/components/CampaignSwitcher";
+import { AdminNav } from "@/components/AdminNav";
 
-const sections = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/board", label: "DM Screen" },
-  { href: "/admin/moons", label: "Moons" },
-  { href: "/admin/regions", label: "Regions" },
-  { href: "/admin/locations", label: "Locations" },
-  { href: "/admin/characters", label: "Characters" },
-  { href: "/admin/factions", label: "Factions" },
-  { href: "/admin/storylines", label: "Storylines" },
-  { href: "/admin/artifacts", label: "Artifacts" },
-  { href: "/admin/timeline", label: "Timeline" },
-  { href: "/admin/maps", label: "Maps" },
-  { href: "/admin/sections", label: "Sections" },
-  { href: "/admin/templates", label: "Templates" },
-  { href: "/admin/players", label: "Players" },
-  { href: "/admin/music", label: "Music" },
-  { href: "/admin/playlists", label: "Playlists" },
-  { href: "/admin/creatures", label: "Creatures" },
-  { href: "/admin/equipment", label: "Equipment" },
-  { href: "/admin/spells", label: "Spells" },
-  { href: "/admin/creation", label: "Creation" },
-  { href: "/admin/scenes", label: "Scenes" },
-  { href: "/admin/discord", label: "Discord" },
+const navGroups = [
+  { label: "Dashboard", items: [{ href: "/admin", label: "Dashboard" }] },
+  {
+    label: "World",
+    items: [
+      { href: "/admin/regions", label: "Regions" },
+      { href: "/admin/locations", label: "Locations" },
+      { href: "/admin/maps", label: "Maps" },
+      { href: "/admin/moons", label: "Moons" },
+    ],
+  },
+  {
+    label: "Story",
+    items: [
+      { href: "/admin/characters", label: "Characters" },
+      { href: "/admin/factions", label: "Factions" },
+      { href: "/admin/storylines", label: "Storylines" },
+      { href: "/admin/artifacts", label: "Artifacts" },
+      { href: "/admin/timeline", label: "Timeline" },
+    ],
+  },
+  {
+    label: "Library",
+    items: [
+      { href: "/admin/creatures", label: "Creatures" },
+      { href: "/admin/equipment", label: "Equipment" },
+      { href: "/admin/spells", label: "Spells" },
+    ],
+  },
+  {
+    label: "Play",
+    items: [
+      { href: "/admin/board", label: "DM Screen" },
+      { href: "/admin/scenes", label: "Scenes" },
+      { href: "/admin/music", label: "Music" },
+      { href: "/admin/playlists", label: "Playlists" },
+      { href: "/admin/discord", label: "Discord" },
+    ],
+  },
+  {
+    label: "Players",
+    items: [
+      { href: "/admin/players", label: "Players" },
+      { href: "/admin/creation", label: "Creation" },
+    ],
+  },
+  {
+    label: "Codex",
+    items: [
+      { href: "/admin/sections", label: "Sections" },
+      { href: "/admin/templates", label: "Templates" },
+    ],
+  },
 ];
 
 async function logoutAction() {
@@ -56,7 +87,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // campaigns that don't use it (every campaign created after the license
   // system shipped; see campaigns.show_moons).
   const currentCampaign = campaigns.find((c) => c.id === currentCampaignId);
-  const visibleSections = currentCampaign?.showMoons === false ? sections.filter((s) => s.href !== "/admin/moons") : sections;
+  const visibleGroups = navGroups
+    .map((g) =>
+      currentCampaign?.showMoons === false
+        ? { ...g, items: g.items.filter((i) => i.href !== "/admin/moons") }
+        : g
+    )
+    .filter((g) => g.items.length > 0);
 
   return (
     <div className="min-h-screen bg-ink text-parchment">
@@ -78,13 +115,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </span>
               )}
             </span>
-            <nav className="flex flex-wrap gap-4 text-sm text-parchment/70">
-              {visibleSections.map((s) => (
-                <Link key={s.href} href={s.href} className="hover:text-gold transition-colors">
-                  {s.label}
-                </Link>
-              ))}
-            </nav>
+            <AdminNav groups={visibleGroups} />
           </div>
           <div className="flex items-center gap-3">
             <CampaignSwitcher
