@@ -4,6 +4,7 @@ import { getDb, ensureSchema } from "@/lib/db";
 import { getPlayerSession } from "@/lib/player-session";
 import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
+import { resolveSheetTemplateForCampaign } from "@/lib/sheet-template-queries";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
 import { CharacterSheetView } from "@/components/CharacterSheetView";
 import type { CharacterSheetData } from "@/lib/types";
@@ -16,7 +17,8 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
 
   await ensureSchema();
   const r = await getDb().execute({
-    sql: `SELECT c.id AS character_id, c.name AS character_name, c.portrait_path AS portrait_path
+    sql: `SELECT c.id AS character_id, c.name AS character_name, c.portrait_path AS portrait_path,
+                 c.campaign_id AS campaign_id
           FROM players p LEFT JOIN characters c ON c.id = p.character_id
           WHERE p.id = ?`,
     args: [session.playerId],
@@ -28,6 +30,9 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
   const characterName = row.character_name as string;
   const portraitPath = (row.portrait_path as string) ?? null;
   const sheetData = await getCharacterSheet(characterId);
+  // Sheet Engine Phase A: which system this sheet renders through - the
+  // campaign's chosen template, falling back to the seeded 5e template.
+  const sheetTemplate = await resolveSheetTemplateForCampaign((row.campaign_id as string) ?? null);
 
   async function saveAction(formData: FormData) {
     "use server";
@@ -101,7 +106,7 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
               &larr; Back to character view
             </Link>
           </div>
-          <CharacterSheetForm characterName={characterName} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
+          <CharacterSheetForm characterName={characterName} initialData={sheetData} template={sheetTemplate.def} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
         </>
       ) : (
         <div className="mt-4">
@@ -109,6 +114,7 @@ export default async function MyCharacterSheetPage({ searchParams }: { searchPar
             characterName={characterName}
             portraitPath={portraitPath}
             data={sheetData}
+            template={sheetTemplate.def}
             editHref="/me/sheet?edit=1"
             rollAction={rollAction}
             livePatchAction={livePatchAction}

@@ -2,8 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
-import { SHEET_VARIABLES, newActionRoll, newWeaponRolls, newCustomAction, describeActionRoll } from "@/lib/character-sheet-shared";
+import { newActionRoll, newWeaponRolls, newCustomAction, describeActionRoll } from "@/lib/character-sheet-shared";
 import { LibraryPickerButton } from "@/components/LibraryPicker";
+import {
+  SHEET_TEMPLATE_5E,
+  computeSheetDerived,
+  makeSheetResolver,
+  type SheetLike,
+  type SheetTemplateDef,
+  type SheetVariableDef,
+} from "@/lib/sheet-engine";
+
+// ---------------------------------------------------------------------------
+// SHEET ENGINE PHASE A (2026-08-06): the form renders whatever
+// SheetTemplateDef it is handed - abilities, skills, derived math, the roll
+// editor's variable picker and section visibility all come from the
+// template. Default is the seeded 5e template, under which this renders
+// exactly what the hardcoded version rendered (parity contract).
+// ---------------------------------------------------------------------------
+
 /** The little "?" at the far right of collapsed spell/weapon rows - hovering
  *  it shows the entry's description in a floating card, so a player can read
  *  what a spell does without expanding the editor. CSS-only (group-hover). */
@@ -25,18 +42,9 @@ function DescHint({ title, text }: { title: string; text: string }) {
   );
 }
 import type { PickerItem } from "@/lib/library-picker-actions";
-import type { AbilityKey, ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "@/lib/types";
+import type { ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SpellEntry } from "@/lib/types";
 import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
-import { SKILL_ABILITY, SKILL_LABELS, abilityModifier, formatModifier } from "@/lib/character-sheet-shared";
-
-const ABILITIES: { key: AbilityKey; label: string }[] = [
-  { key: "str", label: "Strength" },
-  { key: "dex", label: "Dexterity" },
-  { key: "con", label: "Constitution" },
-  { key: "int", label: "Intelligence" },
-  { key: "wis", label: "Wisdom" },
-  { key: "cha", label: "Charisma" },
-];
+import { formatModifier } from "@/lib/character-sheet-shared";
 
 const inputCls =
   "w-full rounded-lg bg-void border border-gold/30 px-3 py-2 text-parchment focus:outline-none focus:border-gold/70";
@@ -45,6 +53,7 @@ const labelCls = "block text-xs uppercase tracking-widest text-ember/80 mb-1";
 export function CharacterSheetForm({
   characterName,
   initialData,
+  template = SHEET_TEMPLATE_5E,
   saveAction,
   rollAction,
   livePatchAction,
@@ -52,6 +61,8 @@ export function CharacterSheetForm({
 }: {
   characterName: string;
   initialData: CharacterSheetData;
+  /** The system this sheet renders through (Sheet Engine Phase A). */
+  template?: SheetTemplateDef;
   saveAction: (formData: FormData) => void;
   /** When present, every ability and skill gets a d20 button that fires the
    *  roll on the campaign's linked Discord server - exactly what a
@@ -93,17 +104,29 @@ export function CharacterSheetForm({
     });
   }
 
-  function updateAbility(key: AbilityKey, value: number) {
-    setSheet((s) => ({ ...s, abilityScores: { ...s.abilityScores, [key]: value } }));
+  function updateAbility(key: string, value: number) {
+    setSheet((s) => ({
+      ...s,
+      abilityScores: { ...s.abilityScores, [key]: value } as CharacterSheetData["abilityScores"],
+    }));
   }
-  function updateSavingThrow(key: AbilityKey, checked: boolean) {
-    setSheet((s) => ({ ...s, savingThrows: { ...s.savingThrows, [key]: checked } }));
+  function updateSavingThrow(key: string, checked: boolean) {
+    setSheet((s) => ({
+      ...s,
+      savingThrows: { ...s.savingThrows, [key]: checked } as CharacterSheetData["savingThrows"],
+    }));
   }
-  function updateSkill(key: SkillKey, field: "proficient" | "expertise", checked: boolean) {
-    setSheet((s) => ({ ...s, skills: { ...s.skills, [key]: { ...s.skills[key], [field]: checked } } }));
+  function updateSkill(key: string, field: "proficient" | "expertise", checked: boolean) {
+    setSheet((s) => ({
+      ...s,
+      skills: {
+        ...s.skills,
+        [key]: { ...(s.skills as Record<string, { proficient: boolean; expertise: boolean }>)[key], [field]: checked },
+      } as CharacterSheetData["skills"],
+    }));
   }
-  function updateCurrency(key: keyof CharacterSheetData["currency"], value: number) {
-    setSheet((s) => ({ ...s, currency: { ...s.currency, [key]: value } }));
+  function updateCurrency(key: string, value: number) {
+    setSheet((s) => ({ ...s, currency: { ...s.currency, [key]: value } as CharacterSheetData["currency"] }));
   }
   function updateSpellSlot(level: string, field: "total" | "used", value: number) {
     setSheet((s) => ({ ...s, spellSlots: { ...s.spellSlots, [level]: { ...s.spellSlots[level], [field]: value } } }));
@@ -231,18 +254,17 @@ export function CharacterSheetForm({
     }
   }
 
-  const profBonus = Number(sheet.proficiencyBonus) || 0;
-  const spellMod = sheet.spellcastingAbility ? abilityModifier(sheet.abilityScores[sheet.spellcastingAbility]) : 0;
-  const spellSaveDc = sheet.spellcastingAbility ? 8 + profBonus + spellMod : 0;
-  const spellAttackBonus = sheet.spellcastingAbility ? profBonus + spellMod : 0;
-  const perceptionSkill = sheet.skills.perception;
-  const passivePerception =
-    10 +
-    abilityModifier(sheet.abilityScores.wis) +
-    (perceptionSkill.proficient ? profBonus : 0) +
-    (perceptionSkill.expertise ? profBonus : 0);
-  const dexMod = abilityModifier(sheet.abilityScores.dex);
-  const initiativeTotal = dexMod + (Number(sheet.initiativeMisc) || 0);
+  // Every derived number flows through the engine against this template.
+  const resolver = makeSheetResolver(template, sheet as unknown as SheetLike);
+  const derived = computeSheetDerived(template, sheet as unknown as SheetLike);
+  const scores = sheet.abilityScores as unknown as Record<string, number>;
+  const saveFlags = sheet.savingThrows as unknown as Record<string, boolean>;
+  const skillEntries = sheet.skills as unknown as Record<string, { proficient: boolean; expertise: boolean }>;
+  const currency = sheet.currency as unknown as Record<string, number>;
+  const spellSaveDc = sheet.spellcastingAbility ? derived.spellSaveDc : 0;
+  const spellAttackBonus = sheet.spellcastingAbility ? derived.spellAttack : 0;
+  const initiativeTotal = derived.initiative;
+  const slotLevels = Array.from({ length: template.spellSlotLevels }, (_, i) => String(i + 1));
 
   return (
     <form action={saveAction} className="space-y-8">
@@ -267,49 +289,55 @@ export function CharacterSheetForm({
             <span className={labelCls}>Race</span>
             <input className={inputCls} value={sheet.race} onChange={(e) => setSheet((s) => ({ ...s, race: e.target.value }))} />
           </label>
-          <label className="block">
-            <span className={labelCls}>Alignment</span>
-            <input className={inputCls} value={sheet.alignment} onChange={(e) => setSheet((s) => ({ ...s, alignment: e.target.value }))} />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Experience Points</span>
-            <input
-              type="number"
-              className={inputCls}
-              value={sheet.experiencePoints}
-              onChange={(e) => setSheet((s) => ({ ...s, experiencePoints: Number(e.target.value) || 0 }))}
-            />
-          </label>
+          {template.features.alignment && (
+            <label className="block">
+              <span className={labelCls}>Alignment</span>
+              <input className={inputCls} value={sheet.alignment} onChange={(e) => setSheet((s) => ({ ...s, alignment: e.target.value }))} />
+            </label>
+          )}
+          {template.features.experiencePoints && (
+            <label className="block">
+              <span className={labelCls}>Experience Points</span>
+              <input
+                type="number"
+                className={inputCls}
+                value={sheet.experiencePoints}
+                onChange={(e) => setSheet((s) => ({ ...s, experiencePoints: Number(e.target.value) || 0 }))}
+              />
+            </label>
+          )}
         </div>
       </section>
 
       <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
         <h2 className="font-display text-lg text-gold mb-4">Ability Scores</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {ABILITIES.map(({ key, label }) => (
+          {template.abilities.map(({ key, label }) => (
             <div key={key} className="rounded-lg border border-gold/15 p-3 text-center">
               <div className="text-xs uppercase tracking-widest text-ember/80 mb-1">{label}</div>
               <input
                 type="number"
                 className="w-full text-center rounded-lg bg-void border border-gold/30 px-2 py-1 text-parchment mb-1"
-                value={sheet.abilityScores[key]}
+                value={scores[key] ?? 10}
                 onChange={(e) => updateAbility(key, Number(e.target.value) || 0)}
               />
-              <div className="text-gold text-sm">{formatModifier(abilityModifier(sheet.abilityScores[key]))}</div>
+              <div className="text-gold text-sm">{formatModifier(resolver.abilityMod(key))}</div>
               {rollAction && <RollButton target={key} label={label} rollAction={rollAction} className="mx-auto mt-1" />}
             </div>
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-6 mt-4">
-          <label className="flex items-center gap-2 text-sm text-parchment/70">
-            <input
-              type="checkbox"
-              className="accent-gold"
-              checked={sheet.inspiration}
-              onChange={(e) => setSheet((s) => ({ ...s, inspiration: e.target.checked }))}
-            />
-            Inspiration
-          </label>
+          {template.features.inspiration && (
+            <label className="flex items-center gap-2 text-sm text-parchment/70">
+              <input
+                type="checkbox"
+                className="accent-gold"
+                checked={sheet.inspiration}
+                onChange={(e) => setSheet((s) => ({ ...s, inspiration: e.target.checked }))}
+              />
+              Inspiration
+            </label>
+          )}
           <label className="flex items-center gap-2 text-sm text-parchment/70">
             Proficiency Bonus
             <input
@@ -319,7 +347,11 @@ export function CharacterSheetForm({
               onChange={(e) => setSheet((s) => ({ ...s, proficiencyBonus: Number(e.target.value) || 0 }))}
             />
           </label>
-          <div className="text-sm text-parchment/70">Passive Perception: <span className="text-gold">{passivePerception}</span></div>
+          {derived.passives.map((p) => (
+            <div key={p.label} className="text-sm text-parchment/70">
+              {p.label}: <span className="text-gold">{p.value}</span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -327,9 +359,9 @@ export function CharacterSheetForm({
         <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Saving Throws</h2>
           <div className="space-y-2">
-            {ABILITIES.map(({ key, label }) => {
-              const proficient = sheet.savingThrows[key];
-              const bonus = abilityModifier(sheet.abilityScores[key]) + (proficient ? profBonus : 0);
+            {template.abilities.map(({ key, label }) => {
+              const proficient = Boolean(saveFlags[key]);
+              const bonus = resolver.saveBonus(key);
               return (
                 <div key={key} className="flex items-center gap-3 text-sm text-parchment/80">
                   <input type="checkbox" className="accent-gold" checked={proficient} onChange={(e) => updateSavingThrow(key, e.target.checked)} />
@@ -345,30 +377,31 @@ export function CharacterSheetForm({
         <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Skills</h2>
           <div className="space-y-1.5 max-h-96 overflow-y-auto pr-2">
-            {(Object.keys(SKILL_LABELS) as SkillKey[]).map((key) => {
-              const ability = SKILL_ABILITY[key];
-              const entry = sheet.skills[key];
-              const bonus = abilityModifier(sheet.abilityScores[ability]) + (entry.proficient ? profBonus : 0) + (entry.expertise ? profBonus : 0);
+            {template.skills.map((skill) => {
+              const entry = skillEntries[skill.key] ?? { proficient: false, expertise: false };
+              const bonus = resolver.skillBonus(skill.key);
               return (
-                <div key={key} className="flex items-center gap-2 text-sm text-parchment/80">
+                <div key={skill.key} className="flex items-center gap-2 text-sm text-parchment/80">
                   <input
                     type="checkbox"
                     title="Proficient"
                     className="accent-gold"
                     checked={entry.proficient}
-                    onChange={(e) => updateSkill(key, "proficient", e.target.checked)}
+                    onChange={(e) => updateSkill(skill.key, "proficient", e.target.checked)}
                   />
-                  <input
-                    type="checkbox"
-                    title="Expertise"
-                    className="accent-ember"
-                    checked={entry.expertise}
-                    onChange={(e) => updateSkill(key, "expertise", e.target.checked)}
-                  />
+                  {template.expertise && (
+                    <input
+                      type="checkbox"
+                      title="Expertise"
+                      className="accent-ember"
+                      checked={entry.expertise}
+                      onChange={(e) => updateSkill(skill.key, "expertise", e.target.checked)}
+                    />
+                  )}
                   <span className="w-10 text-gold">{formatModifier(bonus)}</span>
-                  <span className="flex-1">{SKILL_LABELS[key]}</span>
-                  {rollAction && <RollButton target={key} label={SKILL_LABELS[key]} rollAction={rollAction} />}
-                  <span className="text-xs text-parchment/40 uppercase">{ability}</span>
+                  <span className="flex-1">{skill.label}</span>
+                  {rollAction && <RollButton target={skill.key} label={skill.label} rollAction={rollAction} />}
+                  <span className="text-xs text-parchment/40 uppercase">{skill.ability}</span>
                 </div>
               );
             })}
@@ -413,14 +446,18 @@ export function CharacterSheetForm({
               onChange={(e) => setSheet((s) => ({ ...s, speed: Number(e.target.value) || 0 }))}
             />
           </label>
-          <label className="block">
-            <span className={labelCls}>Hit Dice Total</span>
-            <input className={inputCls} value={sheet.hitDiceTotal} onChange={(e) => setSheet((s) => ({ ...s, hitDiceTotal: e.target.value }))} placeholder="e.g. 5d10" />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Hit Dice Current</span>
-            <input className={inputCls} value={sheet.hitDiceCurrent} onChange={(e) => setSheet((s) => ({ ...s, hitDiceCurrent: e.target.value }))} placeholder="e.g. 3d10" />
-          </label>
+          {template.features.hitDice && (
+            <label className="block">
+              <span className={labelCls}>Hit Dice Total</span>
+              <input className={inputCls} value={sheet.hitDiceTotal} onChange={(e) => setSheet((s) => ({ ...s, hitDiceTotal: e.target.value }))} placeholder="e.g. 5d10" />
+            </label>
+          )}
+          {template.features.hitDice && (
+            <label className="block">
+              <span className={labelCls}>Hit Dice Current</span>
+              <input className={inputCls} value={sheet.hitDiceCurrent} onChange={(e) => setSheet((s) => ({ ...s, hitDiceCurrent: e.target.value }))} placeholder="e.g. 3d10" />
+            </label>
+          )}
         </div>
         <div className="grid sm:grid-cols-3 gap-4 mt-4">
           <label className="block">
@@ -477,225 +514,239 @@ export function CharacterSheetForm({
           </div>
         )}
 
-        <div className="mt-4">
-          <span className={labelCls}>Death Saves</span>
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2 text-sm text-parchment/70">
-              Successes
-              {[1, 2, 3].map((n) => (
-                <input
-                  key={n}
-                  type="checkbox"
-                  className="accent-gold"
-                  checked={sheet.deathSaveSuccesses >= n}
-                  onChange={() => {
-                    const v = sheet.deathSaveSuccesses >= n ? n - 1 : n;
-                    if (livePatchAction) applyLivePatch({ kind: "deathSaves", successes: v });
-                    else setSheet((s) => ({ ...s, deathSaveSuccesses: v }));
-                  }}
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-parchment/70">
-              Failures
-              {[1, 2, 3].map((n) => (
-                <input
-                  key={n}
-                  type="checkbox"
-                  className="accent-blood"
-                  checked={sheet.deathSaveFailures >= n}
-                  onChange={() => {
-                    const v = sheet.deathSaveFailures >= n ? n - 1 : n;
-                    if (livePatchAction) applyLivePatch({ kind: "deathSaves", failures: v });
-                    else setSheet((s) => ({ ...s, deathSaveFailures: v }));
-                  }}
-                />
-              ))}
+        {template.features.deathSaves && (
+          <div className="mt-4">
+            <span className={labelCls}>Death Saves</span>
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center gap-2 text-sm text-parchment/70">
+                Successes
+                {[1, 2, 3].map((n) => (
+                  <input
+                    key={n}
+                    type="checkbox"
+                    className="accent-gold"
+                    checked={sheet.deathSaveSuccesses >= n}
+                    onChange={() => {
+                      const v = sheet.deathSaveSuccesses >= n ? n - 1 : n;
+                      if (livePatchAction) applyLivePatch({ kind: "deathSaves", successes: v });
+                      else setSheet((s) => ({ ...s, deathSaveSuccesses: v }));
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-parchment/70">
+                Failures
+                {[1, 2, 3].map((n) => (
+                  <input
+                    key={n}
+                    type="checkbox"
+                    className="accent-blood"
+                    checked={sheet.deathSaveFailures >= n}
+                    onChange={() => {
+                      const v = sheet.deathSaveFailures >= n ? n - 1 : n;
+                      if (livePatchAction) applyLivePatch({ kind: "deathSaves", failures: v });
+                      else setSheet((s) => ({ ...s, deathSaveFailures: v }));
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
-      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg text-gold">Attacks &amp; Cantrips</h2>
-          <span className="inline-flex gap-2">
-            <LibraryPickerButton kind="weapons" label="+ From Library" onPick={addAttackFromLibrary} />
-            <button type="button" onClick={addAttack} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
-              + Add Blank
-            </button>
-          </span>
-        </div>
-        <div className="space-y-2">
-          {sheet.attacks.map((atk, i) => (
-            !expandedSpells.has(atk.id) ? (
-              <div key={atk.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
-                <span className="flex-1 text-sm text-parchment truncate">
-                  {atk.name || <span className="text-parchment/40 italic">Unnamed weapon</span>}
-                </span>
-                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
-                  {atk.rolls.length > 0
-                    ? atk.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
-                    : "no rolls"}
-                </span>
-                {rollAction && atk.rolls.length > 0 && (
-                  <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => toggleSpellExpanded(atk.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
-                  Edit
-                </button>
-                <DescHint title={atk.name || "Unnamed weapon"} text={atk.description} />
-              </div>
-            ) : (
-            <div key={atk.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
-                <input className={inputCls} placeholder="Weapon name" value={atk.name} onChange={(e) => updateAttack(i, "name", e.target.value)} />
-                {rollAction && atk.rolls.length > 0 && (
-                  <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => removeAttack(i)} className="text-blood text-xs hover:underline">
-                  Remove
-                </button>
-              </div>
-              <textarea
-                className={`${inputCls} w-full`}
-                rows={2}
-                placeholder="Properties, range, weight, cost, flavor... (e.g. Martial melee · Versatile (1d10) · 3 lb · 15 gp)"
-                value={atk.description}
-                onChange={(e) => updateAttack(i, "description", e.target.value)}
-              />
-              <div className="space-y-1.5">
-                {atk.rolls.map((roll, ri) => (
-                  <ActionRollEditor
-                    key={roll.id}
-                    roll={roll}
-                    onChange={(patch) => updateAttackRoll(i, ri, patch)}
-                    onRemove={() => removeAttackRoll(i, ri)}
-                  />
-                ))}
-                <button type="button" onClick={() => addAttackRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
-                  + Add Roll
-                </button>
-              </div>
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={() => toggleSpellExpanded(atk.id, false)}
-                  className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-            )
-          ))}
-          {sheet.attacks.length === 0 && <div className="text-xs text-parchment/40">No attacks added yet.</div>}
-        </div>
-      </section>
-
-      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-lg text-gold">Actions &amp; Features</h2>
-          <button type="button" onClick={addCustomAction} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
-            + Add
-          </button>
-        </div>
-        <p className="text-xs text-parchment/40 mb-4">Class features, breath weapons - anything rollable that isn&apos;t a spell or weapon.</p>
-        <div className="space-y-2">
-          {sheet.customActions.map((act, i) => (
-            !expandedSpells.has(act.id) ? (
-              <div key={act.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
-                <span className="flex-1 text-sm text-parchment truncate">
-                  {act.name || <span className="text-parchment/40 italic">Unnamed action</span>}
-                </span>
-                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
-                  {act.rolls.length > 0 ? act.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ") : "no rolls"}
-                </span>
-                {rollAction && act.rolls.length > 0 && (
-                  <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => toggleSpellExpanded(act.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
-                  Edit
-                </button>
-              </div>
-            ) : (
-            <div key={act.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
-                <input className={inputCls} placeholder="Action name (e.g. Second Wind)" value={act.name} onChange={(e) => updateCustomAction(i, "name", e.target.value)} />
-                {rollAction && act.rolls.length > 0 && (
-                  <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => removeCustomAction(i)} className="text-blood text-xs hover:underline">
-                  Remove
-                </button>
-              </div>
-              <textarea
-                className={`${inputCls} w-full`}
-                rows={2}
-                placeholder="What it does, recharge, resource cost, flavor..."
-                value={act.description}
-                onChange={(e) => updateCustomAction(i, "description", e.target.value)}
-              />
-              <div className="space-y-1.5">
-                {act.rolls.map((roll, ri) => (
-                  <ActionRollEditor
-                    key={roll.id}
-                    roll={roll}
-                    onChange={(patch) => updateCustomRoll(i, ri, patch)}
-                    onRemove={() => removeCustomRoll(i, ri)}
-                  />
-                ))}
-                <button type="button" onClick={() => addCustomRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
-                  + Add Roll
-                </button>
-              </div>
-              <div className="text-right">
-                <button type="button" onClick={() => toggleSpellExpanded(act.id, false)} className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10">
-                  Done
-                </button>
-              </div>
-            </div>
-            )
-          ))}
-          {sheet.customActions.length === 0 && <div className="text-xs text-parchment/40">No custom actions yet.</div>}
-        </div>
-      </section>
-
-      <div className="grid lg:grid-cols-2 gap-6">
+      {template.features.attacks && (
         <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
-          <h2 className="font-display text-lg text-gold mb-4">Equipment</h2>
-          <textarea
-            rows={6}
-            className={inputCls}
-            value={sheet.equipment}
-            onChange={(e) => setSheet((s) => ({ ...s, equipment: e.target.value }))}
-          />
-          <div className="grid grid-cols-5 gap-2 mt-4">
-            {(["cp", "sp", "ep", "gp", "pp"] as const).map((c) => (
-              <label key={c} className="block text-center">
-                <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">{c}</span>
-                <input
-                  type="number"
-                  className="w-full text-center rounded-lg bg-void border border-gold/30 px-2 py-1 text-parchment"
-                  value={sheet.currency[c]}
-                  onChange={(e) => updateCurrency(c, Number(e.target.value) || 0)}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg text-gold">Attacks &amp; Cantrips</h2>
+            <span className="inline-flex gap-2">
+              <LibraryPickerButton kind="weapons" label="+ From Library" onPick={addAttackFromLibrary} />
+              <button type="button" onClick={addAttack} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+                + Add Blank
+              </button>
+            </span>
+          </div>
+          <div className="space-y-2">
+            {sheet.attacks.map((atk, i) => (
+              !expandedSpells.has(atk.id) ? (
+                <div key={atk.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                  <span className="flex-1 text-sm text-parchment truncate">
+                    {atk.name || <span className="text-parchment/40 italic">Unnamed weapon</span>}
+                  </span>
+                  <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                    {atk.rolls.length > 0
+                      ? atk.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
+                      : "no rolls"}
+                  </span>
+                  {rollAction && atk.rolls.length > 0 && (
+                    <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => toggleSpellExpanded(atk.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                    Edit
+                  </button>
+                  <DescHint title={atk.name || "Unnamed weapon"} text={atk.description} />
+                </div>
+              ) : (
+              <div key={atk.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+                  <input className={inputCls} placeholder="Weapon name" value={atk.name} onChange={(e) => updateAttack(i, "name", e.target.value)} />
+                  {rollAction && atk.rolls.length > 0 && (
+                    <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => removeAttack(i)} className="text-blood text-xs hover:underline">
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  className={`${inputCls} w-full`}
+                  rows={2}
+                  placeholder="Properties, range, weight, cost, flavor... (e.g. Martial melee · Versatile (1d10) · 3 lb · 15 gp)"
+                  value={atk.description}
+                  onChange={(e) => updateAttack(i, "description", e.target.value)}
                 />
-              </label>
+                <div className="space-y-1.5">
+                  {atk.rolls.map((roll, ri) => (
+                    <ActionRollEditor
+                      key={roll.id}
+                      roll={roll}
+                      variables={template.variables}
+                      onChange={(patch) => updateAttackRoll(i, ri, patch)}
+                      onRemove={() => removeAttackRoll(i, ri)}
+                    />
+                  ))}
+                  <button type="button" onClick={() => addAttackRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                    + Add Roll
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => toggleSpellExpanded(atk.id, false)}
+                    className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+              )
             ))}
+            {sheet.attacks.length === 0 && <div className="text-xs text-parchment/40">No attacks added yet.</div>}
           </div>
         </section>
+      )}
+
+      {template.features.customActions && (
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-display text-lg text-gold">Actions &amp; Features</h2>
+            <button type="button" onClick={addCustomAction} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+              + Add
+            </button>
+          </div>
+          <p className="text-xs text-parchment/40 mb-4">Class features, breath weapons - anything rollable that isn&apos;t a spell or weapon.</p>
+          <div className="space-y-2">
+            {sheet.customActions.map((act, i) => (
+              !expandedSpells.has(act.id) ? (
+                <div key={act.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                  <span className="flex-1 text-sm text-parchment truncate">
+                    {act.name || <span className="text-parchment/40 italic">Unnamed action</span>}
+                  </span>
+                  <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                    {act.rolls.length > 0 ? act.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ") : "no rolls"}
+                  </span>
+                  {rollAction && act.rolls.length > 0 && (
+                    <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => toggleSpellExpanded(act.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                    Edit
+                  </button>
+                </div>
+              ) : (
+              <div key={act.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+                  <input className={inputCls} placeholder="Action name (e.g. Second Wind)" value={act.name} onChange={(e) => updateCustomAction(i, "name", e.target.value)} />
+                  {rollAction && act.rolls.length > 0 && (
+                    <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => removeCustomAction(i)} className="text-blood text-xs hover:underline">
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  className={`${inputCls} w-full`}
+                  rows={2}
+                  placeholder="What it does, recharge, resource cost, flavor..."
+                  value={act.description}
+                  onChange={(e) => updateCustomAction(i, "description", e.target.value)}
+                />
+                <div className="space-y-1.5">
+                  {act.rolls.map((roll, ri) => (
+                    <ActionRollEditor
+                      key={roll.id}
+                      roll={roll}
+                      variables={template.variables}
+                      onChange={(patch) => updateCustomRoll(i, ri, patch)}
+                      onRemove={() => removeCustomRoll(i, ri)}
+                    />
+                  ))}
+                  <button type="button" onClick={() => addCustomRoll(i)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                    + Add Roll
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button type="button" onClick={() => toggleSpellExpanded(act.id, false)} className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10">
+                    Done
+                  </button>
+                </div>
+              </div>
+              )
+            ))}
+            {sheet.customActions.length === 0 && <div className="text-xs text-parchment/40">No custom actions yet.</div>}
+          </div>
+        </section>
+      )}
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {template.features.equipment && (
+          <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
+            <h2 className="font-display text-lg text-gold mb-4">Equipment</h2>
+            <textarea
+              rows={6}
+              className={inputCls}
+              value={sheet.equipment}
+              onChange={(e) => setSheet((s) => ({ ...s, equipment: e.target.value }))}
+            />
+            {template.coins.length > 0 && (
+              <div className="grid grid-cols-5 gap-2 mt-4">
+                {template.coins.map((c) => (
+                  <label key={c.key} className="block text-center">
+                    <span className="block text-xs uppercase tracking-widest text-ember/80 mb-1">{c.key}</span>
+                    <input
+                      type="number"
+                      className="w-full text-center rounded-lg bg-void border border-gold/30 px-2 py-1 text-parchment"
+                      value={currency[c.key] ?? 0}
+                      onChange={(e) => updateCurrency(c.key, Number(e.target.value) || 0)}
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
           <h2 className="font-display text-lg text-gold mb-4">Proficiencies, Languages &amp; Features</h2>
-          <label className="block mb-4">
-            <span className={labelCls}>Other Proficiencies &amp; Languages</span>
-            <textarea
-              rows={3}
-              className={inputCls}
-              value={sheet.proficienciesLanguages}
-              onChange={(e) => setSheet((s) => ({ ...s, proficienciesLanguages: e.target.value }))}
-            />
-          </label>
+          {template.features.proficienciesLanguages && (
+            <label className="block mb-4">
+              <span className={labelCls}>Other Proficiencies &amp; Languages</span>
+              <textarea
+                rows={3}
+                className={inputCls}
+                value={sheet.proficienciesLanguages}
+                onChange={(e) => setSheet((s) => ({ ...s, proficienciesLanguages: e.target.value }))}
+              />
+            </label>
+          )}
           <label className="block">
             <span className={labelCls}>Features &amp; Traits</span>
             <textarea
@@ -708,195 +759,202 @@ export function CharacterSheetForm({
         </section>
       </div>
 
-      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
-        <h2 className="font-display text-lg text-gold mb-4">Personality</h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <label className="block">
-            <span className={labelCls}>Personality Traits</span>
-            <textarea rows={3} className={inputCls} value={sheet.personalityTraits} onChange={(e) => setSheet((s) => ({ ...s, personalityTraits: e.target.value }))} />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Ideals</span>
-            <textarea rows={3} className={inputCls} value={sheet.ideals} onChange={(e) => setSheet((s) => ({ ...s, ideals: e.target.value }))} />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Bonds</span>
-            <textarea rows={3} className={inputCls} value={sheet.bonds} onChange={(e) => setSheet((s) => ({ ...s, bonds: e.target.value }))} />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Flaws</span>
-            <textarea rows={3} className={inputCls} value={sheet.flaws} onChange={(e) => setSheet((s) => ({ ...s, flaws: e.target.value }))} />
-          </label>
-        </div>
-      </section>
-
-      <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
-        <h2 className="font-display text-lg text-gold mb-4">Spellcasting</h2>
-        <div className="grid sm:grid-cols-4 gap-4 mb-4">
-          <label className="block">
-            <span className={labelCls}>Spellcasting Class</span>
-            <input className={inputCls} value={sheet.spellcastingClass} onChange={(e) => setSheet((s) => ({ ...s, spellcastingClass: e.target.value }))} />
-          </label>
-          <label className="block">
-            <span className={labelCls}>Spellcasting Ability</span>
-            <select
-              className={inputCls}
-              value={sheet.spellcastingAbility}
-              onChange={(e) => setSheet((s) => ({ ...s, spellcastingAbility: e.target.value as AbilityKey | "" }))}
-            >
-              <option value="">&mdash;</option>
-              {ABILITIES.map(({ key, label }) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="block">
-            <span className={labelCls}>Spell Save DC</span>
-            <div className="rounded-lg border border-gold/15 px-3 py-2 text-gold">{spellSaveDc}</div>
+      {template.features.personality && (
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
+          <h2 className="font-display text-lg text-gold mb-4">Personality</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="block">
+              <span className={labelCls}>Personality Traits</span>
+              <textarea rows={3} className={inputCls} value={sheet.personalityTraits} onChange={(e) => setSheet((s) => ({ ...s, personalityTraits: e.target.value }))} />
+            </label>
+            <label className="block">
+              <span className={labelCls}>Ideals</span>
+              <textarea rows={3} className={inputCls} value={sheet.ideals} onChange={(e) => setSheet((s) => ({ ...s, ideals: e.target.value }))} />
+            </label>
+            <label className="block">
+              <span className={labelCls}>Bonds</span>
+              <textarea rows={3} className={inputCls} value={sheet.bonds} onChange={(e) => setSheet((s) => ({ ...s, bonds: e.target.value }))} />
+            </label>
+            <label className="block">
+              <span className={labelCls}>Flaws</span>
+              <textarea rows={3} className={inputCls} value={sheet.flaws} onChange={(e) => setSheet((s) => ({ ...s, flaws: e.target.value }))} />
+            </label>
           </div>
-          <div className="block">
-            <span className={labelCls}>Spell Attack Bonus</span>
-            <div className="rounded-lg border border-gold/15 px-3 py-2 text-gold">{formatModifier(spellAttackBonus)}</div>
-          </div>
-        </div>
+        </section>
+      )}
 
-        <div className="mb-4">
-          <span className={labelCls}>Spell Slots</span>
-          <div className="grid grid-cols-3 sm:grid-cols-9 gap-2">
-            {Array.from({ length: 9 }, (_, i) => String(i + 1)).map((lvl) => (
-              <div key={lvl} className="rounded-lg border border-gold/15 p-2 text-center">
-                <div className="text-xs text-ember/80 mb-1">Lvl {lvl}</div>
-                <input
-                  type="number"
-                  className="w-full text-center rounded bg-void border border-gold/30 px-1 py-1 text-parchment text-xs mb-1"
-                  value={sheet.spellSlots[lvl]?.total ?? 0}
-                  onChange={(e) => updateSpellSlot(lvl, "total", Number(e.target.value) || 0)}
-                  title="Total"
-                />
-                <input
-                  type="number"
-                  className="w-full text-center rounded bg-void border border-gold/20 px-1 py-1 text-parchment/60 text-xs"
-                  value={sheet.spellSlots[lvl]?.used ?? 0}
-                  onChange={(e) => updateSpellSlot(lvl, "used", Number(e.target.value) || 0)}
-                  title="Used"
-                />
-                {livePatchAction && (sheet.spellSlots[lvl]?.total ?? 0) > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1 mt-1">
-                    {Array.from({ length: sheet.spellSlots[lvl].total }, (_, pi) => {
-                      const used = pi < (sheet.spellSlots[lvl]?.used ?? 0);
-                      return (
-                        <button
-                          key={pi}
-                          type="button"
-                          title={used ? "Recover this slot" : "Spend a slot"}
-                          onClick={() => applyLivePatch({ kind: "slot", level: lvl, used: used ? pi : pi + 1 })}
-                          className={`h-3 w-3 rounded-full border transition-colors ${used ? "bg-gold border-gold" : "bg-void border-gold/40 hover:border-gold"}`}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-2">
-          <span className={labelCls}>Spells</span>
-          <span className="inline-flex gap-2">
-            <LibraryPickerButton kind="spells" label="+ From Library" onPick={addSpellFromLibrary} />
-            <button type="button" onClick={addSpell} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
-              + Add Blank
-            </button>
-          </span>
-        </div>
-        <div className="space-y-2">
-          {sheet.spells.map((sp, i) => (
-            !expandedSpells.has(sp.id) ? (
-              <div key={sp.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
-                <span className="shrink-0 rounded-full border border-gold/30 text-gold text-[10px] px-2 py-0.5 uppercase tracking-wider">
-                  {sp.level > 0 ? `Lv ${sp.level}` : "Cantrip"}
-                </span>
-                <span className="flex-1 text-sm text-parchment truncate">
-                  {sp.name || <span className="text-parchment/40 italic">Unnamed spell</span>}
-                  {sp.prepared && <span className="ml-2 text-[10px] text-gold/70 uppercase tracking-wider">prepared</span>}
-                </span>
-                <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
-                  {sp.rolls.length > 0
-                    ? sp.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
-                    : "no rolls"}
-                </span>
-                {rollAction && sp.rolls.length > 0 && (
-                  <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => toggleSpellExpanded(sp.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
-                  Edit
-                </button>
-                <DescHint title={sp.name || "Unnamed spell"} text={sp.description} />
-              </div>
-            ) : (
-            <div key={sp.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
-              <div className="grid grid-cols-[4rem_1fr_auto_auto_auto] gap-2 items-center">
-                <input
-                  type="number"
-                  className={inputCls}
-                  value={sp.level}
-                  onChange={(e) => updateSpell(i, "level", Number(e.target.value) || 0)}
-                  title="Level"
-                />
-                <input className={inputCls} placeholder="Spell name" value={sp.name} onChange={(e) => updateSpell(i, "name", e.target.value)} />
-                <label className="flex items-center gap-1 text-xs text-parchment/70">
-                  <input type="checkbox" className="accent-gold" checked={sp.prepared} onChange={(e) => updateSpell(i, "prepared", e.target.checked)} />
-                  Prepared
-                </label>
-                {rollAction && sp.rolls.length > 0 && (
-                  <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
-                )}
-                <button type="button" onClick={() => removeSpell(i)} className="text-blood text-xs hover:underline">
-                  Remove
-                </button>
-              </div>
-              <textarea
-                className={`${inputCls} w-full`}
-                rows={2}
-                placeholder="Spell description - what it does, rules text, flavor..."
-                value={sp.description}
-                onChange={(e) => updateSpell(i, "description", e.target.value)}
-              />
-              <div className="space-y-1.5">
-                {sp.rolls.map((roll, ri) => (
-                  <ActionRollEditor
-                    key={roll.id}
-                    roll={roll}
-                    onChange={(patch) => updateSpellRoll(i, ri, patch)}
-                    onRemove={() => removeSpellRoll(i, ri)}
-                  />
+      {template.features.spellcasting && (
+        <section className="card-static rounded-lg border border-gold/20 shadow-card p-5">
+          <h2 className="font-display text-lg text-gold mb-4">Spellcasting</h2>
+          <div className="grid sm:grid-cols-4 gap-4 mb-4">
+            <label className="block">
+              <span className={labelCls}>Spellcasting Class</span>
+              <input className={inputCls} value={sheet.spellcastingClass} onChange={(e) => setSheet((s) => ({ ...s, spellcastingClass: e.target.value }))} />
+            </label>
+            <label className="block">
+              <span className={labelCls}>Spellcasting Ability</span>
+              <select
+                className={inputCls}
+                value={sheet.spellcastingAbility}
+                onChange={(e) => setSheet((s) => ({ ...s, spellcastingAbility: e.target.value as CharacterSheetData["spellcastingAbility"] }))}
+              >
+                <option value="">&mdash;</option>
+                {template.abilities.map(({ key, label }) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => addSpellRoll(i)}
-                  className="text-xs text-gold/80 hover:text-gold hover:underline"
-                >
-                  + Add Roll
-                </button>
-              </div>
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={() => toggleSpellExpanded(sp.id, false)}
-                  className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
-                >
-                  Done
-                </button>
+              </select>
+            </label>
+            <div className="block">
+              <span className={labelCls}>Spell Save DC</span>
+              <div className="rounded-lg border border-gold/15 px-3 py-2 text-gold">{spellSaveDc}</div>
+            </div>
+            <div className="block">
+              <span className={labelCls}>Spell Attack Bonus</span>
+              <div className="rounded-lg border border-gold/15 px-3 py-2 text-gold">{formatModifier(spellAttackBonus)}</div>
+            </div>
+          </div>
+
+          {slotLevels.length > 0 && (
+            <div className="mb-4">
+              <span className={labelCls}>Spell Slots</span>
+              <div className="grid grid-cols-3 sm:grid-cols-9 gap-2">
+                {slotLevels.map((lvl) => (
+                  <div key={lvl} className="rounded-lg border border-gold/15 p-2 text-center">
+                    <div className="text-xs text-ember/80 mb-1">Lvl {lvl}</div>
+                    <input
+                      type="number"
+                      className="w-full text-center rounded bg-void border border-gold/30 px-1 py-1 text-parchment text-xs mb-1"
+                      value={sheet.spellSlots[lvl]?.total ?? 0}
+                      onChange={(e) => updateSpellSlot(lvl, "total", Number(e.target.value) || 0)}
+                      title="Total"
+                    />
+                    <input
+                      type="number"
+                      className="w-full text-center rounded bg-void border border-gold/20 px-1 py-1 text-parchment/60 text-xs"
+                      value={sheet.spellSlots[lvl]?.used ?? 0}
+                      onChange={(e) => updateSpellSlot(lvl, "used", Number(e.target.value) || 0)}
+                      title="Used"
+                    />
+                    {livePatchAction && (sheet.spellSlots[lvl]?.total ?? 0) > 0 && (
+                      <div className="flex flex-wrap justify-center gap-1 mt-1">
+                        {Array.from({ length: sheet.spellSlots[lvl].total }, (_, pi) => {
+                          const used = pi < (sheet.spellSlots[lvl]?.used ?? 0);
+                          return (
+                            <button
+                              key={pi}
+                              type="button"
+                              title={used ? "Recover this slot" : "Spend a slot"}
+                              onClick={() => applyLivePatch({ kind: "slot", level: lvl, used: used ? pi : pi + 1 })}
+                              className={`h-3 w-3 rounded-full border transition-colors ${used ? "bg-gold border-gold" : "bg-void border-gold/40 hover:border-gold"}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-            )
-          ))}
-          {sheet.spells.length === 0 && <div className="text-xs text-parchment/40">No spells added yet.</div>}
-        </div>
-      </section>
+          )}
+
+          <div className="flex items-center justify-between mb-2">
+            <span className={labelCls}>Spells</span>
+            <span className="inline-flex gap-2">
+              <LibraryPickerButton kind="spells" label="+ From Library" onPick={addSpellFromLibrary} />
+              <button type="button" onClick={addSpell} className="text-xs rounded-full border border-gold/40 text-gold px-3 py-1 hover:bg-gold/10">
+                + Add Blank
+              </button>
+            </span>
+          </div>
+          <div className="space-y-2">
+            {sheet.spells.map((sp, i) => (
+              !expandedSpells.has(sp.id) ? (
+                <div key={sp.id} className="flex items-center gap-3 rounded-lg border border-gold/15 bg-void/40 px-3 py-2">
+                  <span className="shrink-0 rounded-full border border-gold/30 text-gold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                    {sp.level > 0 ? `Lv ${sp.level}` : "Cantrip"}
+                  </span>
+                  <span className="flex-1 text-sm text-parchment truncate">
+                    {sp.name || <span className="text-parchment/40 italic">Unnamed spell</span>}
+                    {sp.prepared && <span className="ml-2 text-[10px] text-gold/70 uppercase tracking-wider">prepared</span>}
+                  </span>
+                  <span className="hidden sm:block text-xs text-parchment/45 truncate max-w-64">
+                    {sp.rolls.length > 0
+                      ? sp.rolls.map((r) => `${r.label} ${describeActionRoll(r)}`).join(" · ")
+                      : "no rolls"}
+                  </span>
+                  {rollAction && sp.rolls.length > 0 && (
+                    <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => toggleSpellExpanded(sp.id, true)} className="text-xs text-gold/80 hover:text-gold hover:underline">
+                    Edit
+                  </button>
+                  <DescHint title={sp.name || "Unnamed spell"} text={sp.description} />
+                </div>
+              ) : (
+              <div key={sp.id} className="rounded-lg border border-gold/40 bg-void/40 p-3 space-y-2">
+                <div className="grid grid-cols-[4rem_1fr_auto_auto_auto] gap-2 items-center">
+                  <input
+                    type="number"
+                    className={inputCls}
+                    value={sp.level}
+                    onChange={(e) => updateSpell(i, "level", Number(e.target.value) || 0)}
+                    title="Level"
+                  />
+                  <input className={inputCls} placeholder="Spell name" value={sp.name} onChange={(e) => updateSpell(i, "name", e.target.value)} />
+                  <label className="flex items-center gap-1 text-xs text-parchment/70">
+                    <input type="checkbox" className="accent-gold" checked={sp.prepared} onChange={(e) => updateSpell(i, "prepared", e.target.checked)} />
+                    Prepared
+                  </label>
+                  {rollAction && sp.rolls.length > 0 && (
+                    <RollButton target={`spell:${sp.id}`} label={sp.name || "this spell"} rollAction={rollAction} />
+                  )}
+                  <button type="button" onClick={() => removeSpell(i)} className="text-blood text-xs hover:underline">
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  className={`${inputCls} w-full`}
+                  rows={2}
+                  placeholder="Spell description - what it does, rules text, flavor..."
+                  value={sp.description}
+                  onChange={(e) => updateSpell(i, "description", e.target.value)}
+                />
+                <div className="space-y-1.5">
+                  {sp.rolls.map((roll, ri) => (
+                    <ActionRollEditor
+                      key={roll.id}
+                      roll={roll}
+                      variables={template.variables}
+                      onChange={(patch) => updateSpellRoll(i, ri, patch)}
+                      onRemove={() => removeSpellRoll(i, ri)}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addSpellRoll(i)}
+                    className="text-xs text-gold/80 hover:text-gold hover:underline"
+                  >
+                    + Add Roll
+                  </button>
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => toggleSpellExpanded(sp.id, false)}
+                    className="rounded-full border border-gold/40 text-gold px-4 py-1 text-xs hover:bg-gold/10"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+              )
+            ))}
+            {sheet.spells.length === 0 && <div className="text-xs text-parchment/40">No spells added yet.</div>}
+          </div>
+        </section>
+      )}
 
       <div>
         <button type="submit" className="rounded-full bg-gold/90 text-ink px-6 py-2.5 text-sm font-medium hover:bg-gold">
@@ -915,9 +973,9 @@ export function CharacterSheetForm({
 
 // One slot of a roll expression (Action Creator v1): a compact picker that
 // is either a literal number input or a sheet-variable dropdown. Selecting
-// "123" flips back to number mode; anything else is a variable key from
-// SHEET_VARIABLES (see character-sheet-shared.ts - the keys are a stable
-// contract with the Discord bot's resolver).
+// "123" flips back to number mode; anything else is a variable key from the
+// template's variable registry (Sheet Engine Phase A - for the 5e template
+// these are the same keys as ever, a stable contract with the Discord bot).
 // A small damage/heal entry: a number and an apply button (play-ready
 // sheet). Kept local so its input state doesn't re-render the whole sheet.
 function HpAdjust({ label, tone, onApply }: { label: string; tone: "blood" | "green"; onApply: (n: number) => void }) {
@@ -953,10 +1011,12 @@ function HpAdjust({ label, tone, onApply }: { label: string; tone: "blood" | "gr
 // 1d20 + [strMod] + [prof]. Shared by the spell and weapon editors.
 function ActionRollEditor({
   roll,
+  variables,
   onChange,
   onRemove,
 }: {
   roll: ActionRoll;
+  variables: SheetVariableDef[];
   onChange: (patch: Partial<ActionRoll>) => void;
   onRemove: () => void;
 }) {
@@ -970,14 +1030,15 @@ function ActionRollEditor({
         onChange={(e) => onChange({ label: e.target.value })}
         title="What this roll is for (To Hit, Damage...)"
       />
-      <RollPartInput value={roll.count} onChange={(v) => onChange({ count: v })} title="Number of dice" />
+      <RollPartInput value={roll.count} variables={variables} onChange={(v) => onChange({ count: v })} title="Number of dice" />
       <span className="text-gold font-medium">d</span>
-      <RollPartInput value={roll.die} onChange={(v) => onChange({ die: v })} title="Die type" />
+      <RollPartInput value={roll.die} variables={variables} onChange={(v) => onChange({ die: v })} title="Die type" />
       {mods.map((m, mi) => (
         <span key={mi} className="inline-flex items-center gap-1">
           <span className="text-gold font-medium">+</span>
           <RollPartInput
             value={m}
+            variables={variables}
             onChange={(v) => onChange({ modifiers: mods.map((x, xi) => (xi === mi ? v : x)) })}
             title="Modifier term"
             allowNegative
@@ -1010,16 +1071,21 @@ function ActionRollEditor({
 
 function RollPartInput({
   value,
+  variables,
   onChange,
   title,
   allowNegative = false,
 }: {
   value: RollPart;
+  variables: SheetVariableDef[];
   onChange: (v: RollPart) => void;
   title: string;
   allowNegative?: boolean;
 }) {
   const isNumber = typeof value === "number";
+  // Optgroups in first-appearance order - for the 5e template this yields
+  // the historical Modifiers / Ability scores / Other ordering.
+  const groups = variables.reduce<string[]>((acc, v) => (acc.includes(v.group) ? acc : [...acc, v.group]), []);
   return (
     <span className="inline-flex items-center gap-1" title={title}>
       {isNumber && (
@@ -1041,9 +1107,9 @@ function RollPartInput({
         }}
       >
         <option value="__number">123 (number)</option>
-        {["Modifiers", "Ability scores", "Other"].map((group) => (
+        {groups.map((group) => (
           <optgroup key={group} label={group}>
-            {SHEET_VARIABLES.filter((sv) => sv.group === group).map((sv) => (
+            {variables.filter((sv) => sv.group === group).map((sv) => (
               <option key={sv.key} value={sv.key}>
                 {sv.label}
               </option>

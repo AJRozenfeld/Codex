@@ -43,6 +43,14 @@ CREATE TABLE IF NOT EXISTS campaigns (
   -- Moons are Aviv's homebrew cosmology, not core D&D - hidden by default
   -- for new campaigns (pre-license campaigns keep theirs via migration).
   show_moons INTEGER NOT NULL DEFAULT 0,
+  -- Sheet Engine Phase A (2026-08-06): which sheet template this campaign's
+  -- character sheets render through. NULL (or the fixed id
+  -- 'platform-5e-2014') = the seeded 5e template, which lives as CODE in
+  -- src/lib/sheet-engine.ts rather than as a sheet_templates row - zero
+  -- extra round trips on the default path. Deliberately a plain TEXT, no
+  -- FK: a dangling/deleted template id safely falls back to 5e in
+  -- resolveSheetTemplateForCampaign() instead of ever failing a render.
+  sheet_template_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -1075,3 +1083,27 @@ CREATE TABLE IF NOT EXISTS api_tokens (
   last_used_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_api_tokens_player ON api_tokens(player_id);
+
+-- ---------------------------------------------------------------------------
+-- Sheet Engine Phase A (2026-08-06): custom sheet templates. One row per
+-- DM-authored system definition - the JSON blob is a SheetTemplateDef (see
+-- src/lib/sheet-engine.ts: abilities, skills, derived-stat formulas, roll
+-- variables, feature flags). The seeded 5e system is NOT a row here - it
+-- ships as the SHEET_TEMPLATE_5E code constant so the default sheet path
+-- costs no extra database reads and its parity can never drift via a row
+-- edit. Rows are sanitized on load (a stored definition is a claim, not a
+-- fact) and anything unusable falls back to 5e. dm_id scopes ownership the
+-- same way templates.dm_id does (template tenancy, 2026-07-31); the Phase B
+-- template editor writes here.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sheet_templates (
+  id          TEXT PRIMARY KEY,
+  dm_id       TEXT NOT NULL REFERENCES dm_accounts(id) ON DELETE CASCADE,
+  slug        TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  definition  TEXT NOT NULL DEFAULT '{}',
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (dm_id, slug)
+);
+CREATE INDEX IF NOT EXISTS idx_sheet_templates_dm ON sheet_templates(dm_id);

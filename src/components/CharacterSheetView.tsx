@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { RollButton } from "./RollButton";
+import { formatModifier, describeActionRoll } from "@/lib/character-sheet-shared";
 import {
-  SKILL_ABILITY,
-  SKILL_LABELS,
-  abilityModifier,
-  formatModifier,
-  describeActionRoll,
-} from "@/lib/character-sheet-shared";
-import type { AbilityKey, CharacterSheetData, SkillKey } from "@/lib/types";
+  SHEET_TEMPLATE_5E,
+  computeSheetDerived,
+  makeSheetResolver,
+  type SheetLike,
+  type SheetTemplateDef,
+} from "@/lib/sheet-engine";
+import type { CharacterSheetData } from "@/lib/types";
 import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
 
 // ---------------------------------------------------------------------------
@@ -20,16 +21,24 @@ import type { LiveSheetPatch, LiveSheetState } from "@/lib/character-sheet";
 // arsenal and the spellbook as cards - with every roll button and live
 // combat control still active. Editing lives behind the Edit toggle
 // (CharacterSheetForm, unchanged).
+//
+// SHEET ENGINE PHASE A (2026-08-06): the page renders whatever
+// SheetTemplateDef it is handed - abilities, skills, derived-stat math and
+// section visibility all come from the template. The default is the seeded
+// 5e template, under which this renders EXACTLY what the hardcoded version
+// rendered (parity contract).
 // ---------------------------------------------------------------------------
 
-const ABILITIES: { key: AbilityKey; label: string; short: string }[] = [
-  { key: "str", label: "Strength", short: "STR" },
-  { key: "dex", label: "Dexterity", short: "DEX" },
-  { key: "con", label: "Constitution", short: "CON" },
-  { key: "int", label: "Intelligence", short: "INT" },
-  { key: "wis", label: "Wisdom", short: "WIS" },
-  { key: "cha", label: "Charisma", short: "CHA" },
-];
+/** 5e coin styling by key; unknown coins of a custom system get the plain
+ *  gold-ish look. */
+const COIN_CLS: Record<string, string> = {
+  pp: "border-slate-300/50 text-slate-200",
+  gp: "border-gold/60 text-gold",
+  ep: "border-teal-300/40 text-teal-200",
+  sp: "border-slate-400/40 text-slate-300",
+  cp: "border-ember/50 text-ember",
+};
+const COIN_CLS_DEFAULT = "border-gold/40 text-gold/80";
 
 function Stagger({ i, children }: { i: number; children: React.ReactNode }) {
   return (
@@ -54,6 +63,7 @@ export function CharacterSheetView({
   characterName,
   portraitPath,
   data,
+  template = SHEET_TEMPLATE_5E,
   editHref,
   rollAction,
   livePatchAction,
@@ -62,6 +72,8 @@ export function CharacterSheetView({
   characterName: string;
   portraitPath: string | null;
   data: CharacterSheetData;
+  /** The system this sheet renders through (Sheet Engine Phase A). */
+  template?: SheetTemplateDef;
   /** Where the Edit button leads (the classic form). */
   editHref: string;
   rollAction?: (target: string) => Promise<{ ok: boolean; error?: string }>;
@@ -98,19 +110,23 @@ export function CharacterSheetView({
     }
   }
 
+  // Every derived number flows through the engine against this template.
+  const sheetLike = data as unknown as SheetLike;
+  const resolver = makeSheetResolver(template, sheetLike);
+  const derived = computeSheetDerived(template, sheetLike);
   const prof = Number(data.proficiencyBonus) || 0;
-  const dexMod = abilityModifier(data.abilityScores.dex);
-  const initiative = dexMod + (Number(data.initiativeMisc) || 0);
-  const perception = data.skills.perception;
-  const passivePerception =
-    10 + abilityModifier(data.abilityScores.wis) + (perception.proficient ? prof : 0) + (perception.expertise ? prof : 0);
-  const spellMod = data.spellcastingAbility ? abilityModifier(data.abilityScores[data.spellcastingAbility]) : 0;
-  const spellDc = 8 + prof + spellMod;
-  const spellAtk = spellMod + prof;
+  const scores = data.abilityScores as unknown as Record<string, number>;
+  const saves = data.savingThrows as unknown as Record<string, boolean>;
+  const skillEntries = data.skills as unknown as Record<string, { proficient: boolean; expertise: boolean }>;
+  const currency = data.currency as unknown as Record<string, number>;
+  const initiative = derived.initiative;
+  const spellDc = derived.spellSaveDc;
+  const spellAtk = derived.spellAttack;
   const hpPct = data.hitPointMax > 0 ? Math.max(0, Math.min(100, (live.hitPointCurrent / data.hitPointMax) * 100)) : 0;
-  const dying = data.hitPointMax > 0 && live.hitPointCurrent === 0;
-  const hasSpellcasting = Boolean(data.spellcastingClass || data.spellcastingAbility || data.spells.length > 0);
-  const slotLevels = Array.from({ length: 9 }, (_, i) => String(i + 1)).filter(
+  const dying = template.features.deathSaves && data.hitPointMax > 0 && live.hitPointCurrent === 0;
+  const hasSpellcasting =
+    template.features.spellcasting && Boolean(data.spellcastingClass || data.spellcastingAbility || data.spells.length > 0);
+  const slotLevels = Array.from({ length: template.spellSlotLevels }, (_, i) => String(i + 1)).filter(
     (lvl) => (live.spellSlots[lvl]?.total ?? 0) > 0
   );
   const spellsByLevel = new Map<number, typeof data.spells>();
@@ -119,19 +135,21 @@ export function CharacterSheetView({
     arr.push(sp);
     spellsByLevel.set(sp.level, arr);
   }
-  const persona = [
-    { label: "Personality", text: data.personalityTraits },
-    { label: "Ideals", text: data.ideals },
-    { label: "Bonds", text: data.bonds },
-    { label: "Flaws", text: data.flaws },
-  ].filter((p) => p.text.trim());
-  const coins: { key: keyof CharacterSheetData["currency"]; label: string; cls: string }[] = [
-    { key: "pp", label: "Platinum", cls: "border-slate-300/50 text-slate-200" },
-    { key: "gp", label: "Gold", cls: "border-gold/60 text-gold" },
-    { key: "ep", label: "Electrum", cls: "border-teal-300/40 text-teal-200" },
-    { key: "sp", label: "Silver", cls: "border-slate-400/40 text-slate-300" },
-    { key: "cp", label: "Copper", cls: "border-ember/50 text-ember" },
-  ];
+  const persona = template.features.personality
+    ? [
+        { label: "Personality", text: data.personalityTraits },
+        { label: "Ideals", text: data.ideals },
+        { label: "Bonds", text: data.bonds },
+        { label: "Flaws", text: data.flaws },
+      ].filter((p) => p.text.trim())
+    : [];
+  // 5e renders its coins in the historical pp->cp display order; custom
+  // templates show theirs in template order.
+  const coinOrder = template === SHEET_TEMPLATE_5E ? ["pp", "gp", "ep", "sp", "cp"] : template.coins.map((c) => c.key);
+  const coins = coinOrder
+    .map((key) => template.coins.find((c) => c.key === key))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c))
+    .map((c) => ({ key: c.key, label: c.label, cls: COIN_CLS[c.key] ?? COIN_CLS_DEFAULT }));
 
   return (
     <div className="space-y-10">
@@ -169,9 +187,11 @@ export function CharacterSheetView({
                 {[data.race, data.classLevel, data.background].filter(Boolean).join(" · ") || "A story yet unwritten"}
               </p>
               <div className="mt-3 flex items-center justify-center sm:justify-start gap-4 text-xs text-parchment/55 flex-wrap">
-                {data.alignment && <span>{data.alignment}</span>}
-                {data.experiencePoints > 0 && <span>{data.experiencePoints.toLocaleString()} XP</span>}
-                {data.inspiration && (
+                {template.features.alignment && data.alignment && <span>{data.alignment}</span>}
+                {template.features.experiencePoints && data.experiencePoints > 0 && (
+                  <span>{data.experiencePoints.toLocaleString()} XP</span>
+                )}
+                {template.features.inspiration && data.inspiration && (
                   <span className="text-gold" title="Inspiration!">
                     ✦ Inspired
                   </span>
@@ -211,12 +231,18 @@ export function CharacterSheetView({
           <div className="card-static rounded-xl border border-gold/20 shadow-card p-5 text-center">
             <div className="text-[10px] uppercase tracking-[0.25em] text-ember/80 mb-2">Proficiency</div>
             <div className="font-display text-3xl text-parchment">{formatModifier(prof)}</div>
-            <div className="text-[10px] text-parchment/40 mt-2">Passive Perception {passivePerception}</div>
+            {derived.passives.map((p) => (
+              <div key={p.label} className="text-[10px] text-parchment/40 mt-2">
+                {p.label} {p.value}
+              </div>
+            ))}
           </div>
           <div className="card-static rounded-xl border border-gold/20 shadow-card p-5 text-center">
             <div className="text-[10px] uppercase tracking-[0.25em] text-ember/80 mb-2">Hit Dice</div>
-            <div className="font-display text-2xl text-parchment">{data.hitDiceCurrent || data.hitDiceTotal || "—"}</div>
-            {data.hitDiceCurrent && data.hitDiceTotal && (
+            <div className="font-display text-2xl text-parchment">
+              {template.features.hitDice ? data.hitDiceCurrent || data.hitDiceTotal || "—" : "—"}
+            </div>
+            {template.features.hitDice && data.hitDiceCurrent && data.hitDiceTotal && (
               <div className="text-[10px] text-parchment/40 mt-2">of {data.hitDiceTotal}</div>
             )}
           </div>
@@ -280,11 +306,11 @@ export function CharacterSheetView({
       <Stagger i={3}>
         <SectionHeading>Abilities</SectionHeading>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {ABILITIES.map(({ key, label, short }) => {
-            const score = data.abilityScores[key];
-            const mod = abilityModifier(score);
-            const saveProf = data.savingThrows[key];
-            const saveBonus = mod + (saveProf ? prof : 0);
+          {template.abilities.map(({ key, label, short }) => {
+            const score = scores[key] ?? 10;
+            const mod = resolver.abilityMod(key);
+            const saveProf = Boolean(saves[key]);
+            const saveBonus = resolver.saveBonus(key);
             return (
               <div key={key} className="card-static rounded-xl border border-gold/20 shadow-card p-4 text-center relative">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-ember/80">{short}</div>
@@ -308,81 +334,82 @@ export function CharacterSheetView({
       </Stagger>
 
       {/* ---------- Skills ---------- */}
-      <Stagger i={4}>
-        <SectionHeading>Skills</SectionHeading>
-        <div className="card-static rounded-xl border border-gold/20 shadow-card p-5">
-          <div className="grid sm:grid-cols-2 gap-x-10 gap-y-1.5">
-            {(Object.keys(SKILL_LABELS) as SkillKey[]).map((key) => {
-              const ability = SKILL_ABILITY[key];
-              const entry = data.skills[key];
-              const bonus =
-                abilityModifier(data.abilityScores[ability]) +
-                (entry.proficient ? prof : 0) +
-                (entry.expertise ? prof : 0);
-              return (
-                <div key={key} className="flex items-center gap-2.5 text-sm py-0.5">
-                  <span
-                    className={`w-6 text-center text-[10px] ${entry.expertise ? "text-gold" : entry.proficient ? "text-gold/70" : "text-parchment/25"}`}
-                    title={entry.expertise ? "Expertise" : entry.proficient ? "Proficient" : "Untrained"}
-                  >
-                    {entry.expertise ? "◆◆" : entry.proficient ? "◆" : "◇"}
-                  </span>
-                  <span className="w-9 text-gold">{formatModifier(bonus)}</span>
-                  <span className="flex-1 text-parchment/85">{SKILL_LABELS[key]}</span>
-                  <span className="text-[10px] uppercase text-parchment/35">{ability}</span>
-                  {rollAction && <RollButton target={key} label={SKILL_LABELS[key]} rollAction={rollAction} />}
-                </div>
-              );
-            })}
+      {template.skills.length > 0 && (
+        <Stagger i={4}>
+          <SectionHeading>Skills</SectionHeading>
+          <div className="card-static rounded-xl border border-gold/20 shadow-card p-5">
+            <div className="grid sm:grid-cols-2 gap-x-10 gap-y-1.5">
+              {template.skills.map((skill) => {
+                const entry = skillEntries[skill.key] ?? { proficient: false, expertise: false };
+                const bonus = resolver.skillBonus(skill.key);
+                return (
+                  <div key={skill.key} className="flex items-center gap-2.5 text-sm py-0.5">
+                    <span
+                      className={`w-6 text-center text-[10px] ${entry.expertise ? "text-gold" : entry.proficient ? "text-gold/70" : "text-parchment/25"}`}
+                      title={entry.expertise ? "Expertise" : entry.proficient ? "Proficient" : "Untrained"}
+                    >
+                      {entry.expertise ? "◆◆" : entry.proficient ? "◆" : "◇"}
+                    </span>
+                    <span className="w-9 text-gold">{formatModifier(bonus)}</span>
+                    <span className="flex-1 text-parchment/85">{skill.label}</span>
+                    <span className="text-[10px] uppercase text-parchment/35">{skill.ability}</span>
+                    {rollAction && <RollButton target={skill.key} label={skill.label} rollAction={rollAction} />}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </Stagger>
+        </Stagger>
+      )}
 
       {/* ---------- Arsenal ---------- */}
-      {(data.attacks.length > 0 || data.customActions.length > 0) && (
+      {((template.features.attacks && data.attacks.length > 0) ||
+        (template.features.customActions && data.customActions.length > 0)) && (
         <Stagger i={5}>
           <SectionHeading>Arsenal &amp; Deeds</SectionHeading>
           <div className="grid sm:grid-cols-2 gap-4">
-            {data.attacks.map((atk) => (
-              <div key={atk.id} className="card-static rounded-xl border border-ember/25 shadow-card p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-display text-lg text-parchment">⚔️ {atk.name || "Unnamed weapon"}</h3>
-                  {rollAction && atk.rolls.length > 0 && (
-                    <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+            {template.features.attacks &&
+              data.attacks.map((atk) => (
+                <div key={atk.id} className="card-static rounded-xl border border-ember/25 shadow-card p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-display text-lg text-parchment">⚔️ {atk.name || "Unnamed weapon"}</h3>
+                    {rollAction && atk.rolls.length > 0 && (
+                      <RollButton target={`attack:${atk.id}`} label={atk.name || "this weapon"} rollAction={rollAction} />
+                    )}
+                  </div>
+                  {atk.description && <p className="text-xs text-parchment/55 italic mt-1.5">{atk.description}</p>}
+                  {atk.rolls.length > 0 && (
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {atk.rolls.map((r) => (
+                        <span key={r.id} className="text-[11px] rounded-full border border-ember/30 text-ember px-2.5 py-0.5">
+                          {r.label} {describeActionRoll(r)}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {atk.description && <p className="text-xs text-parchment/55 italic mt-1.5">{atk.description}</p>}
-                {atk.rolls.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {atk.rolls.map((r) => (
-                      <span key={r.id} className="text-[11px] rounded-full border border-ember/30 text-ember px-2.5 py-0.5">
-                        {r.label} {describeActionRoll(r)}
-                      </span>
-                    ))}
+              ))}
+            {template.features.customActions &&
+              data.customActions.map((act) => (
+                <div key={act.id} className="card-static rounded-xl border border-green-700/30 shadow-card p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-display text-lg text-parchment">✦ {act.name || "Unnamed action"}</h3>
+                    {rollAction && act.rolls.length > 0 && (
+                      <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-            {data.customActions.map((act) => (
-              <div key={act.id} className="card-static rounded-xl border border-green-700/30 shadow-card p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-display text-lg text-parchment">✦ {act.name || "Unnamed action"}</h3>
-                  {rollAction && act.rolls.length > 0 && (
-                    <RollButton target={`custom:${act.id}`} label={act.name || "this action"} rollAction={rollAction} />
+                  {act.description && <p className="text-xs text-parchment/55 italic mt-1.5">{act.description}</p>}
+                  {act.rolls.length > 0 && (
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {act.rolls.map((r) => (
+                        <span key={r.id} className="text-[11px] rounded-full border border-green-600/30 text-green-400/90 px-2.5 py-0.5">
+                          {r.label} {describeActionRoll(r)}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {act.description && <p className="text-xs text-parchment/55 italic mt-1.5">{act.description}</p>}
-                {act.rolls.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {act.rolls.map((r) => (
-                      <span key={r.id} className="text-[11px] rounded-full border border-green-600/30 text-green-400/90 px-2.5 py-0.5">
-                        {r.label} {describeActionRoll(r)}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
           </div>
         </Stagger>
       )}
@@ -503,7 +530,7 @@ export function CharacterSheetView({
             </div>
           )}
           <div className="space-y-4">
-            {(data.equipment.trim() || coins.some((c) => data.currency[c.key] > 0)) && (
+            {template.features.equipment && (data.equipment.trim() || coins.some((c) => (currency[c.key] ?? 0) > 0)) && (
               <div className="card-static rounded-xl border border-gold/20 shadow-card p-5">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-ember/80 mb-2">Possessions</div>
                 {data.equipment.trim() && (
@@ -511,16 +538,16 @@ export function CharacterSheetView({
                 )}
                 <div className="flex flex-wrap gap-2">
                   {coins
-                    .filter((c) => data.currency[c.key] > 0)
+                    .filter((c) => (currency[c.key] ?? 0) > 0)
                     .map((c) => (
                       <span key={c.key} className={`text-xs rounded-full border px-3 py-1 ${c.cls}`} title={c.label}>
-                        {data.currency[c.key].toLocaleString()} {c.key}
+                        {(currency[c.key] ?? 0).toLocaleString()} {c.key}
                       </span>
                     ))}
                 </div>
               </div>
             )}
-            {data.proficienciesLanguages.trim() && (
+            {template.features.proficienciesLanguages && data.proficienciesLanguages.trim() && (
               <div className="card-static rounded-xl border border-gold/20 shadow-card p-5">
                 <div className="text-[10px] uppercase tracking-[0.25em] text-ember/80 mb-2">Proficiencies &amp; Languages</div>
                 <p className="text-sm text-parchment/70 whitespace-pre-wrap">{data.proficienciesLanguages}</p>

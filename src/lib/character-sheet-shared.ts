@@ -3,98 +3,39 @@
 // CharacterSheetForm without webpack trying to bundle node:fs/node:path from
 // db.ts. Server-side load/save lives in character-sheet.ts, which re-exports
 // everything from this module too.
+//
+// SHEET ENGINE PHASE A (2026-08-06): the 5e system definition itself moved
+// into src/lib/sheet-engine.ts as the seeded SHEET_TEMPLATE_5E template -
+// every export below that used to hardcode 5e (SKILL_ABILITY, SKILL_LABELS,
+// SHEET_VARIABLES, resolveSheetVariable, abilityModifier,
+// defaultCharacterSheet) is now DERIVED from that template through the
+// engine. Same keys, same values, same behavior - the Phase A parity drill
+// asserts equality against the pre-engine math - but there is now exactly
+// one place the system lives.
 import type { ActionRoll, AttackEntry, CharacterSheetData, CustomAction, RollPart, SkillKey, SpellEntry } from "./types";
+import {
+  SHEET_TEMPLATE_5E,
+  abilityModFor,
+  defaultSheetDataForTemplate,
+  resolveTemplateVariable,
+} from "./sheet-engine";
 
-export const SKILL_ABILITY: Record<SkillKey, "str" | "dex" | "con" | "int" | "wis" | "cha"> = {
-  acrobatics: "dex",
-  animalHandling: "wis",
-  arcana: "int",
-  athletics: "str",
-  deception: "cha",
-  history: "int",
-  insight: "wis",
-  intimidation: "cha",
-  investigation: "int",
-  medicine: "wis",
-  nature: "int",
-  perception: "wis",
-  performance: "cha",
-  persuasion: "cha",
-  religion: "int",
-  sleightOfHand: "dex",
-  stealth: "dex",
-  survival: "wis",
-};
+export const SKILL_ABILITY: Record<SkillKey, "str" | "dex" | "con" | "int" | "wis" | "cha"> =
+  SHEET_TEMPLATE_5E.skills.reduce((acc, s) => {
+    acc[s.key as SkillKey] = s.ability as "str" | "dex" | "con" | "int" | "wis" | "cha";
+    return acc;
+  }, {} as Record<SkillKey, "str" | "dex" | "con" | "int" | "wis" | "cha">);
 
-export const SKILL_LABELS: Record<SkillKey, string> = {
-  acrobatics: "Acrobatics",
-  animalHandling: "Animal Handling",
-  arcana: "Arcana",
-  athletics: "Athletics",
-  deception: "Deception",
-  history: "History",
-  insight: "Insight",
-  intimidation: "Intimidation",
-  investigation: "Investigation",
-  medicine: "Medicine",
-  nature: "Nature",
-  perception: "Perception",
-  performance: "Performance",
-  persuasion: "Persuasion",
-  religion: "Religion",
-  sleightOfHand: "Sleight of Hand",
-  stealth: "Stealth",
-  survival: "Survival",
-};
+export const SKILL_LABELS: Record<SkillKey, string> = SHEET_TEMPLATE_5E.skills.reduce((acc, s) => {
+  acc[s.key as SkillKey] = s.label;
+  return acc;
+}, {} as Record<SkillKey, string>);
 
 export function defaultCharacterSheet(): CharacterSheetData {
-  const emptySkills = Object.keys(SKILL_ABILITY).reduce((acc, key) => {
-    acc[key as SkillKey] = { proficient: false, expertise: false };
-    return acc;
-  }, {} as Record<SkillKey, { proficient: boolean; expertise: boolean }>);
-
-  const spellSlots: Record<string, { total: number; used: number }> = {};
-  for (let lvl = 1; lvl <= 9; lvl++) {
-    spellSlots[String(lvl)] = { total: 0, used: 0 };
-  }
-
-  return {
-    playerName: "",
-    race: "",
-    classLevel: "",
-    background: "",
-    alignment: "",
-    experiencePoints: 0,
-    abilityScores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-    inspiration: false,
-    proficiencyBonus: 2,
-    savingThrows: { str: false, dex: false, con: false, int: false, wis: false, cha: false },
-    skills: emptySkills,
-    armorClass: 10,
-    initiativeMisc: 0,
-    speed: 30,
-    hitPointMax: 0,
-    hitPointCurrent: 0,
-    hitPointTemp: 0,
-    hitDiceTotal: "",
-    hitDiceCurrent: "",
-    deathSaveSuccesses: 0,
-    deathSaveFailures: 0,
-    attacks: [],
-    customActions: [],
-    equipment: "",
-    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
-    proficienciesLanguages: "",
-    featuresTraits: "",
-    personalityTraits: "",
-    ideals: "",
-    bonds: "",
-    flaws: "",
-    spellcastingClass: "",
-    spellcastingAbility: "",
-    spellSlots,
-    spells: [],
-  };
+  // The 5e template's default blob has exactly the historical shape - the
+  // cast is the Phase A bridge between the engine's generic records and the
+  // 5e-specialized CharacterSheetData typing.
+  return defaultSheetDataForTemplate(SHEET_TEMPLATE_5E) as unknown as CharacterSheetData;
 }
 
 export function mergeWithDefaults(partial: Partial<CharacterSheetData>): CharacterSheetData {
@@ -114,14 +55,16 @@ export function mergeWithDefaults(partial: Partial<CharacterSheetData>): Charact
 }
 
 export function abilityModifier(score: number): number {
-  return Math.floor((score - 10) / 2);
+  return abilityModFor(SHEET_TEMPLATE_5E, score);
 }
 
 // ---------------------------------------------------------------------------
 // Sheet variables (Action Creator v1, 2026-07-19): every numerical value a
 // roll expression may reference. KEYS ARE A STABLE CONTRACT - the Discord
 // bot resolves the same keys in discord-bot/src/rolls.ts (resolveSheetVariable
-// there); change them in both places or not at all.
+// there); change them in both places or not at all. As of Phase A the keys
+// live on SHEET_TEMPLATE_5E.variables in sheet-engine.ts - this array is a
+// derived view kept for its many call sites.
 // ---------------------------------------------------------------------------
 
 export interface SheetVariable {
@@ -130,51 +73,17 @@ export interface SheetVariable {
   group: string;
 }
 
-export const SHEET_VARIABLES: SheetVariable[] = [
-  { key: "strMod", label: "Strength modifier", group: "Modifiers" },
-  { key: "dexMod", label: "Dexterity modifier", group: "Modifiers" },
-  { key: "conMod", label: "Constitution modifier", group: "Modifiers" },
-  { key: "intMod", label: "Intelligence modifier", group: "Modifiers" },
-  { key: "wisMod", label: "Wisdom modifier", group: "Modifiers" },
-  { key: "chaMod", label: "Charisma modifier", group: "Modifiers" },
-  { key: "strScore", label: "Strength score", group: "Ability scores" },
-  { key: "dexScore", label: "Dexterity score", group: "Ability scores" },
-  { key: "conScore", label: "Constitution score", group: "Ability scores" },
-  { key: "intScore", label: "Intelligence score", group: "Ability scores" },
-  { key: "wisScore", label: "Wisdom score", group: "Ability scores" },
-  { key: "chaScore", label: "Charisma score", group: "Ability scores" },
-  { key: "prof", label: "Proficiency bonus", group: "Other" },
-  { key: "spellMod", label: "Spellcasting ability modifier", group: "Other" },
-  { key: "spellAttack", label: "Spell attack bonus (spell mod + prof)", group: "Other" },
-  { key: "spellDC", label: "Spell save DC (8 + prof + spell mod)", group: "Other" },
-  { key: "level", label: "Character level (parsed from Class & Level)", group: "Other" },
-  { key: "ac", label: "Armor class", group: "Other" },
-];
+export const SHEET_VARIABLES: SheetVariable[] = SHEET_TEMPLATE_5E.variables.map((v) => ({
+  key: v.key,
+  label: v.label,
+  group: v.group,
+}));
 
 /** Resolves a variable key against a sheet. Null for unknown keys - callers
- *  treat that as 0 with a warning rather than refusing to roll. */
+ *  treat that as 0 with a warning rather than refusing to roll. Delegates to
+ *  the engine against the seeded 5e template. */
 export function resolveSheetVariable(sheet: CharacterSheetData, key: string): number | null {
-  const abilities = ["str", "dex", "con", "int", "wis", "cha"] as const;
-  for (const a of abilities) {
-    if (key === `${a}Mod`) return abilityModifier(sheet.abilityScores[a]);
-    if (key === `${a}Score`) return sheet.abilityScores[a];
-  }
-  const spellMod = sheet.spellcastingAbility
-    ? abilityModifier(sheet.abilityScores[sheet.spellcastingAbility as (typeof abilities)[number]] ?? 10)
-    : 0;
-  switch (key) {
-    case "prof": return sheet.proficiencyBonus;
-    case "spellMod": return spellMod;
-    case "spellAttack": return spellMod + sheet.proficiencyBonus;
-    case "spellDC": return 8 + sheet.proficiencyBonus + spellMod;
-    case "level": {
-      // "Wizard 5" / "Fighter 3 / Rogue 2" -> first number found, else 1.
-      const m = (sheet.classLevel ?? "").match(/\d+/);
-      return m ? Number(m[0]) : 1;
-    }
-    case "ac": return sheet.armorClass;
-    default: return null;
-  }
+  return resolveTemplateVariable(SHEET_TEMPLATE_5E, sheet as unknown as Record<string, unknown>, key);
 }
 
 const VARIABLE_LABELS = new Map(SHEET_VARIABLES.map((v) => [v.key, v.label]));
@@ -249,7 +158,7 @@ export function normalizeAttackEntry(atk: Partial<AttackEntry> & Record<string, 
   if (typeof atk.damage === "string" && atk.damage.trim()) legacyBits.push(`Damage ${atk.damage.trim()}`);
   const baseDescription = typeof atk.description === "string" ? atk.description : "";
   const description =
-    baseDescription || (legacyBits.length ? legacyBits.join(" \u00B7 ") : "");
+    baseDescription || (legacyBits.length ? legacyBits.join(" · ") : "");
   return {
     id: typeof atk.id === "string" && atk.id ? atk.id : crypto.randomUUID(),
     name: typeof atk.name === "string" ? atk.name : "",

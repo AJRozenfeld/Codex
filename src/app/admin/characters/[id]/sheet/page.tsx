@@ -4,6 +4,7 @@ import { adminGetCharacter } from "@/lib/admin-queries";
 import { getCurrentCampaignId } from "@/lib/campaign-queries";
 import { getCharacterSheet, saveCharacterSheet, patchLiveSheet, type LiveSheetPatch } from "@/lib/character-sheet";
 import { requestSheetRoll } from "@/lib/roll-requests";
+import { resolveSheetTemplateForCampaign } from "@/lib/sheet-template-queries";
 import { CharacterSheetForm } from "@/components/CharacterSheetForm";
 import { CharacterSheetView } from "@/components/CharacterSheetView";
 import type { CharacterSheetData } from "@/lib/types";
@@ -22,6 +23,9 @@ export default async function AdminCharacterSheetPage({
   if (!character) notFound();
 
   const sheetData = await getCharacterSheet(character.id);
+  // Sheet Engine Phase A: which system this sheet renders through - the
+  // campaign's chosen template, falling back to the seeded 5e template.
+  const sheetTemplate = await resolveSheetTemplateForCampaign(campaignId);
 
   async function saveAction(formData: FormData) {
     "use server";
@@ -69,7 +73,7 @@ export default async function AdminCharacterSheetPage({
               &larr; Back to character view
             </Link>
           </div>
-          <CharacterSheetForm characterName={character.name} initialData={sheetData} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
+          <CharacterSheetForm characterName={character.name} initialData={sheetData} template={sheetTemplate.def} saveAction={saveAction} rollAction={rollAction} livePatchAction={livePatchAction} />
         </>
       ) : (
         <div className="mt-4">
@@ -77,6 +81,7 @@ export default async function AdminCharacterSheetPage({
             characterName={character.name}
             portraitPath={character.portraitPath}
             data={sheetData}
+            template={sheetTemplate.def}
             editHref={`/admin/characters/${params.id}/sheet?edit=1`}
             rollAction={rollAction}
             livePatchAction={livePatchAction}
