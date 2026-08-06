@@ -50,6 +50,7 @@ const navGroups = [
     items: [
       { href: "/admin/players", label: "Players" },
       { href: "/admin/creation", label: "Creation" },
+      { href: "/admin/sheets", label: "Sheet Systems" },
     ],
   },
   {
