@@ -9,6 +9,7 @@ import {
   ABILITIES, ABILITY_LABELS, pointBuyTotal, statMethodSummary,
 } from "@/lib/blueprint-shared";
 import { SectionHeading } from "@/components/Card";
+import { WizardEquipmentPicker, WizardSpellPicker } from "@/components/WizardPickers";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +132,10 @@ function StatFields({ step, answer }: { step: Extract<BlueprintStep, { kind: "st
 export default async function CreateCharacterPage({ searchParams }: { searchParams: { step?: string; error?: string } }) {
   const ctx = await requireCreationContext();
   const bp = await getBlueprint(ctx.campaignId);
-  const draft = await getDraftForPlayer(ctx.playerId);
+  const rawDraft = await getDraftForPlayer(ctx.playerId);
+  // A draft from a previous campaign is stale for display - the first save
+  // resets it server-side (requireEditableDraft); until then show a clean start.
+  const draft = rawDraft && rawDraft.campaignId !== ctx.campaignId && rawDraft.status !== "approved" ? null : rawDraft;
 
   if (!bp.enabled) {
     return (
@@ -166,16 +170,20 @@ export default async function CreateCharacterPage({ searchParams }: { searchPara
   const step = stepIndex < total ? bp.steps[stepIndex] : null;
 
   // Library data for picker steps.
-  let equipmentRows: { id: string; name: string; category: string | null; cost: string | null; statLine: string }[] = [];
+  let equipmentRows: { id: string; name: string; category: string | null; cost: string | null; statLine: string; gold: number }[] = [];
   let spellRows: { id: string; name: string; level: number; school: string | null }[] = [];
   if (step?.kind === "equipment") {
     const r = await getDb().execute("SELECT id, name, category, cost, details FROM equipment_items WHERE campaign_id IS NULL ORDER BY category, name");
     equipmentRows = r.rows
       .filter((row) => step.categories.length === 0 || step.categories.includes((row.category as string) ?? ""))
+      .filter((row) => !!row.cost) // unpriced (magic) items can't ride a gold budget
       .map((row) => {
         let statLine = "";
         try { statLine = JSON.parse((row.details as string) || "{}").statLine ?? ""; } catch { /* ignore */ }
-        return { id: row.id as string, name: row.name as string, category: (row.category as string) ?? null, cost: (row.cost as string) ?? null, statLine };
+        const costStr = (row.cost as string) ?? null;
+        const m = costStr?.trim().match(/^([\d.]+)\s*(pp|gp|ep|sp|cp)$/i);
+        const gold = m ? Number(m[1]) * ({ pp: 10, gp: 1, ep: 0.5, sp: 0.1, cp: 0.01 }[m[2].toLowerCase() as "pp" | "gp" | "ep" | "sp" | "cp"] ?? 0) : 0;
+        return { id: row.id as string, name: row.name as string, category: (row.category as string) ?? null, cost: costStr, statLine, gold };
       });
   } else if (step?.kind === "spells") {
     const r = await getDb().execute({
@@ -250,32 +258,22 @@ export default async function CreateCharacterPage({ searchParams }: { searchPara
           {step.kind === "equipment" && (
             <form action={answerWithIndex} className="space-y-3">
               <p className="text-sm text-parchment/60">Budget: <span className="text-gold">{step.goldBudget} gp</span> · up to {step.maxItems} items. Unspent gold becomes your starting coin.</p>
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-gold/15 divide-y divide-gold/10">
-                {equipmentRows.map((it) => (
-                  <label key={it.id} className="flex items-center gap-3 px-3 py-2 hover:bg-void/40 cursor-pointer text-sm">
-                    <input type="checkbox" name="itemId" value={it.id} defaultChecked={stepAnswer?.kind === "equipment" && stepAnswer.itemIds.includes(it.id)} className="accent-[#6e1f14]" />
-                    <span className="flex-1 text-parchment">{it.name}</span>
-                    <span className="text-parchment/40 text-xs">{it.statLine}</span>
-                    <span className="text-parchment/60 w-16 text-right">{it.cost ?? "—"}</span>
-                  </label>
-                ))}
-              </div>
-              <button type="submit" className="rounded-full bg-gold/90 text-ink px-6 py-2 text-sm font-medium hover:bg-gold">Save &amp; Continue</button>
+              <WizardEquipmentPicker
+                rows={equipmentRows}
+                budget={step.goldBudget}
+                maxItems={step.maxItems}
+                initialSelected={stepAnswer?.kind === "equipment" ? stepAnswer.itemIds : []}
+              />
             </form>
           )}
           {step.kind === "spells" && (
             <form action={answerWithIndex} className="space-y-3">
               <p className="text-sm text-parchment/60">Choose up to <span className="text-gold">{step.maxSpells}</span> spells of level {step.maxLevel} or lower.</p>
-              <div className="max-h-96 overflow-y-auto rounded-lg border border-gold/15 divide-y divide-gold/10">
-                {spellRows.map((sp) => (
-                  <label key={sp.id} className="flex items-center gap-3 px-3 py-2 hover:bg-void/40 cursor-pointer text-sm">
-                    <input type="checkbox" name="spellId" value={sp.id} defaultChecked={stepAnswer?.kind === "spells" && stepAnswer.spellIds.includes(sp.id)} className="accent-[#6e1f14]" />
-                    <span className="flex-1 text-parchment">{sp.name}</span>
-                    <span className="text-parchment/40 text-xs">{sp.level === 0 ? "Cantrip" : `Level ${sp.level}`}{sp.school ? ` · ${sp.school}` : ""}</span>
-                  </label>
-                ))}
-              </div>
-              <button type="submit" className="rounded-full bg-gold/90 text-ink px-6 py-2 text-sm font-medium hover:bg-gold">Save &amp; Continue</button>
+              <WizardSpellPicker
+                rows={spellRows}
+                maxSpells={step.maxSpells}
+                initialSelected={stepAnswer?.kind === "spells" ? stepAnswer.spellIds : []}
+              />
             </form>
           )}
           {step.kind === "text" && (

@@ -83,6 +83,15 @@ export async function getDraftForPlayer(playerId: string): Promise<Draft | null>
 
 async function requireEditableDraft(playerId: string, campaignId: string): Promise<Draft> {
   let draft = await getDraftForPlayer(playerId);
+  // A player moved to another campaign since drafting: the old answers
+  // reference another blueprint's steps - restart cleanly in the new home.
+  if (draft && draft.campaignId !== campaignId && draft.status !== "approved") {
+    await getDb().execute({
+      sql: `UPDATE character_drafts SET campaign_id=?, status='draft', data='{"answers":{}}', dm_note=NULL, updated_at=datetime('now') WHERE id=?`,
+      args: [campaignId, draft.id],
+    });
+    draft = await getDraftForPlayer(playerId);
+  }
   if (!draft) {
     const id = newId();
     await getDb().execute({
@@ -157,6 +166,11 @@ export async function answerStep(playerId: string, campaignId: string, step: Blu
         if (step.categories.length && !step.categories.includes((row.category as string) ?? "")) {
           return { ok: false, error: "An item is outside this campaign's allowed categories." };
         }
+      }
+      const unpriced = r.rows.find((row) => goldValue(row.cost as string | null) === 0 && !/^0/.test(String(row.cost ?? "")));
+      if (unpriced) {
+        const nm = await getDb().execute({ sql: "SELECT name FROM equipment_items WHERE id = ?", args: [unpriced.id as string] });
+        return { ok: false, error: `"${(nm.rows[0]?.name as string) ?? "An item"}" has no listed price and can't be taken with starting gold - ask your DM to grant it directly.` };
       }
       const total = r.rows.reduce((s, row) => s + goldValue(row.cost as string | null), 0);
       if (total > step.goldBudget) return { ok: false, error: `That costs ${total.toFixed(1)} gp - the budget is ${step.goldBudget} gp.` };
@@ -252,6 +266,10 @@ export async function approveDraft(campaignId: string, draftId: string, steps: B
   const r = await db.execute({ sql: "SELECT * FROM character_drafts WHERE id = ? AND campaign_id = ? AND status = 'submitted'", args: [draftId, campaignId] });
   if (!r.rows[0]) throw new Error("Draft not found or not awaiting approval.");
   const draft = rowToDraft(r.rows[0]);
+  const playerRow = await db.execute({ sql: "SELECT campaign_id FROM players WHERE id = ?", args: [draft.playerId] });
+  if ((playerRow.rows[0]?.campaign_id ?? null) !== campaignId) {
+    throw new Error("This player has moved to another campaign - the draft is stale and can't be approved here.");
+  }
 
   const sheet: CharacterSheetData = defaultCharacterSheet();
   let name = "", summary = "", bio = "", race = "", charClass = "";
