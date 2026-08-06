@@ -1107,3 +1107,127 @@ CREATE TABLE IF NOT EXISTS sheet_templates (
   UNIQUE (dm_id, slug)
 );
 CREATE INDEX IF NOT EXISTS idx_sheet_templates_dm ON sheet_templates(dm_id);
+
+-- ---------------------------------------------------------------------------
+-- Discord bot configuration suite (2026-08-06, SCHEMA v12). Three parts,
+-- all DM-configured from /admin/discord once a guild is linked:
+--
+-- 1. discord_settings - one row per campaign: where website rolls post
+--    (roll_channel_id NULL = "auto", the last channel masks spoke in, via
+--    guild_links.roll_channel_id as before; set = a fixed channel override),
+--    whether players get reveal-notification DMs (notify_reveals, OFF by
+--    default - digested by the bot, see reveal_events), and
+--    commands_version - bumped on every custom-command save so the bot's
+--    sync loop knows to re-register this campaign's guild slash commands.
+-- 2. custom_commands / command_buttons - DM-defined slash commands. Each
+--    command registers as a GUILD command (instant propagation, never
+--    global) in the linked server and opens an ephemeral DM-only panel of
+--    buttons; each button's `action` JSON posts something to the channel:
+--    {kind:"entity"|"text"|"roll"|"status", ...} - see
+--    sanitizeCommandAction in src/lib/discord-io.ts for the exact shapes.
+--    The "roll" kind resolves variables through the campaign's SHEET
+--    TEMPLATE (sheet-engine), not the hardcoded 5e schema - custom systems
+--    roll their own stats.
+-- 3. custom_masks - masks not attached to any character: DM-only voices
+--    with their own display name and uploaded avatar. They speak via the
+--    same webhook trick as character masks but never execute *commands*
+--    (*roll x*, *init*, *introduction*).
+--
+-- guild_channels is a bot-maintained snapshot of the linked server's text
+-- channels (refreshed on ready + periodically) so the website can offer a
+-- real channel dropdown instead of asking the DM to paste channel ids.
+--
+-- reveal_events is the notification queue, filled by the SQL triggers at
+-- the end of this file whenever an entity's `revealed` flips 0->1 (or is
+-- born revealed) in a campaign that opted in - the bot digests pending
+-- events per player into one DM (respecting entity_player_access rows) and
+-- marks them done. Queue-through-DB, same pattern as roll_requests.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS discord_settings (
+  campaign_id      TEXT PRIMARY KEY REFERENCES campaigns(id) ON DELETE CASCADE,
+  notify_reveals   INTEGER NOT NULL DEFAULT 0,
+  roll_channel_id  TEXT,
+  commands_version INTEGER NOT NULL DEFAULT 0,
+  updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS guild_channels (
+  channel_id  TEXT PRIMARY KEY,
+  guild_id    TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  position    INTEGER NOT NULL DEFAULT 0,
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_guild_channels_guild ON guild_channels(guild_id);
+
+CREATE TABLE IF NOT EXISTS custom_commands (
+  id          TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  enabled     INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_custom_commands_campaign ON custom_commands(campaign_id);
+
+CREATE TABLE IF NOT EXISTS command_buttons (
+  id          TEXT PRIMARY KEY,
+  command_id  TEXT NOT NULL REFERENCES custom_commands(id) ON DELETE CASCADE,
+  label       TEXT NOT NULL,
+  style       TEXT NOT NULL DEFAULT 'secondary' CHECK (style IN ('primary','secondary','success','danger')),
+  action      TEXT NOT NULL DEFAULT '{}',
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_command_buttons_command ON command_buttons(command_id);
+
+CREATE TABLE IF NOT EXISTS custom_masks (
+  id           TEXT PRIMARY KEY,
+  campaign_id  TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  mask         TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  avatar_path  TEXT,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (campaign_id, mask)
+);
+CREATE INDEX IF NOT EXISTS idx_custom_masks_campaign ON custom_masks(campaign_id);
+
+CREATE TABLE IF NOT EXISTS reveal_events (
+  id           TEXT PRIMARY KEY,
+  campaign_id  TEXT NOT NULL,
+  entity_type  TEXT NOT NULL,
+  entity_id    TEXT NOT NULL,
+  title        TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','done','skipped')),
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  processed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_reveal_events_pending ON reveal_events(status, created_at);
+
+-- Reveal triggers. DELIBERATELY SINGLE-LINE: ensureSchema() splits schema.sql
+-- on any semicolon followed by a NEWLINE, so a trigger body's internal
+-- semicolon must be followed by a space (" END;") to survive the split - see
+-- the isCommentOnly note in src/lib/db.ts. Each fires only for campaigns
+-- that opted in (notify_reveals = 1), so non-opted campaigns accumulate
+-- nothing. Both transitions covered: an existing row flipping 0->1, and a
+-- row INSERTed already revealed (imports, "revealed" checked at creation).
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_regions AFTER UPDATE OF revealed ON regions WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'regions', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_regions AFTER INSERT ON regions WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'regions', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_locations AFTER UPDATE OF revealed ON locations WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'locations', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_locations AFTER INSERT ON locations WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'locations', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_characters AFTER UPDATE OF revealed ON characters WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'characters', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_characters AFTER INSERT ON characters WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'characters', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_factions AFTER UPDATE OF revealed ON factions WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'factions', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_factions AFTER INSERT ON factions WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'factions', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_storylines AFTER UPDATE OF revealed ON storylines WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'storylines', NEW.id, NEW.title); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_storylines AFTER INSERT ON storylines WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'storylines', NEW.id, NEW.title); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_artifacts AFTER UPDATE OF revealed ON artifacts WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'artifacts', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_artifacts AFTER INSERT ON artifacts WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'artifacts', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_timeline AFTER UPDATE OF revealed ON timeline_events WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'timeline_events', NEW.id, NEW.title); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_timeline AFTER INSERT ON timeline_events WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'timeline_events', NEW.id, NEW.title); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_maps AFTER UPDATE OF revealed ON maps WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'maps', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_maps AFTER INSERT ON maps WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'maps', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_upd_sections AFTER UPDATE OF revealed ON sections WHEN OLD.revealed = 0 AND NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'sections', NEW.id, NEW.name); END;
+CREATE TRIGGER IF NOT EXISTS trg_reveal_ins_sections AFTER INSERT ON sections WHEN NEW.revealed = 1 AND EXISTS (SELECT 1 FROM discord_settings ds WHERE ds.campaign_id = NEW.campaign_id AND ds.notify_reveals = 1) BEGIN INSERT INTO reveal_events (id, campaign_id, entity_type, entity_id, title) VALUES (lower(hex(randomblob(16))), NEW.campaign_id, 'sections', NEW.id, NEW.name); END;

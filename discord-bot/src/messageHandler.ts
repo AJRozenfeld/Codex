@@ -1,5 +1,5 @@
 import { AttachmentBuilder, Message, PermissionsBitField, TextChannel } from "discord.js";
-import { getCampaignIdForGuild, getCharacterByMask, getOwnedCharacterId, getCharacterSheetData } from "./db.js";
+import { getCampaignIdForGuild, getCharacterByMask, getCustomMaskByWord, getOwnedCharacterId, getCharacterSheetData } from "./db.js";
 import { findRollTrigger, computeRoll, computeInitiative } from "./rolls.js";
 import { rememberRollChannel } from "./db.js";
 import { getActiveBattle, recordRollAndRefresh } from "./battle.js";
@@ -125,22 +125,38 @@ export async function handleMessage(message: Message): Promise<void> {
 
   // Resolve and permission-check EVERY mask up front: a typo in the second
   // mask must not eat the whole message (nothing is deleted or posted until
-  // every segment is valid).
-  const charByMask = new Map<string, NonNullable<Awaited<ReturnType<typeof getCharacterByMask>>>>();
+  // every segment is valid). A mask word resolves to a CHARACTER first; if
+  // no character wears it, the DM's custom masks (2026-08-06) are checked -
+  // free-standing voices with their own name/avatar that never execute
+  // *commands* and are usable by the DM alone.
+  type ResolvedMask =
+    | { kind: "character"; character: NonNullable<Awaited<ReturnType<typeof getCharacterByMask>>> }
+    | { kind: "custom"; displayName: string; avatarPath: string | null };
+  const resolvedByMask = new Map<string, ResolvedMask>();
   const isDm = message.member.permissions.has(PermissionsBitField.Flags.ManageGuild);
   const ownedCharacterId = isDm ? null : await getOwnedCharacterId(message.author.id, campaignId);
   for (const seg of segments) {
-    if (charByMask.has(seg.mask)) continue;
+    if (resolvedByMask.has(seg.mask)) continue;
     const found = await getCharacterByMask(campaignId, seg.mask);
-    if (!found) {
-      await replyAndForget(message, `No character has the mask **[[${seg.mask}]]** - message left untouched.`);
-      return;
+    if (found) {
+      if (!isDm && ownedCharacterId !== found.id) {
+        await replyAndForget(message, `You aren't linked to **${found.name}** - see /me/profile on the website.`);
+        return;
+      }
+      resolvedByMask.set(seg.mask, { kind: "character", character: found });
+      continue;
     }
-    if (!isDm && ownedCharacterId !== found.id) {
-      await replyAndForget(message, `You aren't linked to **${found.name}** - see /me/profile on the website.`);
-      return;
+    const custom = await getCustomMaskByWord(campaignId, seg.mask);
+    if (custom) {
+      if (!isDm) {
+        await replyAndForget(message, `**[[${seg.mask}]]** is a DM-only mask.`);
+        return;
+      }
+      resolvedByMask.set(seg.mask, { kind: "custom", displayName: custom.displayName, avatarPath: custom.avatarPath });
+      continue;
     }
-    charByMask.set(seg.mask, found);
+    await replyAndForget(message, `No character has the mask **[[${seg.mask}]]** - message left untouched.`);
+    return;
   }
 
   if (!(message.channel instanceof TextChannel)) {
@@ -163,8 +179,25 @@ export async function handleMessage(message: Message): Promise<void> {
   // character; triggers fire per segment so two NPCs can each roll from
   // their own line of the same message.
   for (const seg of segments) {
-    const character = charByMask.get(seg.mask)!;
+    const resolved = resolvedByMask.get(seg.mask)!;
     const spoken = seg.text.replace(/\s+$/, "");
+
+    // Custom masks: pure voice. Post the webhook line and move on - no
+    // *introduction*, no *init*, no *roll x* (they have no sheet to roll).
+    if (resolved.kind === "custom") {
+      try {
+        await webhook.send({
+          content: spoken || "*...*",
+          username: resolved.displayName,
+          avatarURL: resolved.avatarPath && /^https?:\/\//i.test(resolved.avatarPath) ? resolved.avatarPath : undefined,
+        });
+      } catch (err) {
+        console.error("[mask] custom-mask post failed:", err);
+      }
+      continue;
+    }
+
+    const character = resolved.character;
 
     try {
       // Introduction takes over this segment: bio as the character, portrait

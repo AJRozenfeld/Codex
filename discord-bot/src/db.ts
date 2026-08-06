@@ -569,17 +569,26 @@ export async function resolveRollRequest(id: string, status: "done" | "failed", 
   });
 }
 
-/** Where this campaign's website-initiated rolls should land. */
+/** Where this campaign's website-initiated rolls should land. The DM's
+ *  fixed channel choice (discord_settings.roll_channel_id, set on the
+ *  website - Discord config suite 2026-08-06) wins; otherwise "auto": the
+ *  last channel masks spoke in (guild_links.roll_channel_id, maintained by
+ *  messageHandler as before). */
 export async function getRollDestination(
   campaignId: string
 ): Promise<{ guildId: string; rollChannelId: string | null } | null> {
   const r = await getDb().execute({
-    sql: "SELECT guild_id, roll_channel_id FROM guild_links WHERE campaign_id = ? LIMIT 1",
+    sql: `SELECT gl.guild_id, gl.roll_channel_id, ds.roll_channel_id AS fixed_channel_id
+          FROM guild_links gl LEFT JOIN discord_settings ds ON ds.campaign_id = gl.campaign_id
+          WHERE gl.campaign_id = ? LIMIT 1`,
     args: [campaignId],
   });
   const row = r.rows[0];
   if (!row) return null;
-  return { guildId: row.guild_id as string, rollChannelId: (row.roll_channel_id as string) ?? null };
+  return {
+    guildId: row.guild_id as string,
+    rollChannelId: ((row.fixed_channel_id as string) || (row.roll_channel_id as string)) ?? null,
+  };
 }
 
 /** messageHandler calls this on every processed mask message so rolls post
@@ -590,4 +599,333 @@ export async function rememberRollChannel(guildId: string, channelId: string): P
     sql: "UPDATE guild_links SET roll_channel_id = ? WHERE guild_id = ?",
     args: [channelId, guildId],
   });
+}
+
+// ---------------------------------------------------------------------------
+// Discord configuration suite (2026-08-06). Website-authored settings,
+// custom commands, custom masks, plus the reveal-notification queue - the
+// bot reads (and, for guild_channels/reveal_events, maintains) these. See
+// db/schema.sql's discord_settings design comment and src/lib/discord-io.ts
+// for the write side.
+// ---------------------------------------------------------------------------
+
+export interface CampaignBotConfig {
+  campaignId: string;
+  guildId: string;
+  notifyReveals: boolean;
+  rollChannelId: string | null;
+  commandsVersion: number;
+}
+
+/** Every linked campaign with its settings - the command-sync loop's view. */
+export async function listCampaignBotConfigs(): Promise<CampaignBotConfig[]> {
+  const r = await getDb().execute(
+    `SELECT gl.campaign_id, gl.guild_id, ds.notify_reveals, ds.roll_channel_id, ds.commands_version
+     FROM guild_links gl LEFT JOIN discord_settings ds ON ds.campaign_id = gl.campaign_id`
+  );
+  return r.rows.map((row) => ({
+    campaignId: row.campaign_id as string,
+    guildId: row.guild_id as string,
+    notifyReveals: !!row.notify_reveals,
+    rollChannelId: (row.roll_channel_id as string) ?? null,
+    commandsVersion: Number(row.commands_version ?? 0),
+  }));
+}
+
+/** The fixed roll-channel override, if the DM set one on the website. */
+export async function getFixedRollChannel(campaignId: string): Promise<string | null> {
+  const r = await getDb().execute({
+    sql: "SELECT roll_channel_id FROM discord_settings WHERE campaign_id = ?",
+    args: [campaignId],
+  });
+  return (r.rows[0]?.roll_channel_id as string) ?? null;
+}
+
+export interface BotCommandButton {
+  id: string;
+  label: string;
+  style: string;
+  /** Raw JSON - the executor sanitizes shape itself (a stored action is a claim). */
+  action: Record<string, unknown> | null;
+  sortOrder: number;
+}
+
+export interface BotCustomCommand {
+  id: string;
+  campaignId: string;
+  name: string;
+  description: string;
+  buttons: BotCommandButton[];
+}
+
+export async function listEnabledCustomCommands(campaignId: string): Promise<BotCustomCommand[]> {
+  const db = getDb();
+  const cmds = await db.execute({
+    sql: "SELECT * FROM custom_commands WHERE campaign_id = ? AND enabled = 1 ORDER BY name ASC",
+    args: [campaignId],
+  });
+  const out: BotCustomCommand[] = [];
+  for (const row of cmds.rows) {
+    const buttons = await db.execute({
+      sql: "SELECT * FROM command_buttons WHERE command_id = ? ORDER BY sort_order ASC, created_at ASC",
+      args: [row.id as string],
+    });
+    out.push({
+      id: row.id as string,
+      campaignId: row.campaign_id as string,
+      name: row.name as string,
+      description: (row.description as string) || "A Codex panel",
+      buttons: buttons.rows.map((b) => {
+        let action: Record<string, unknown> | null = null;
+        try {
+          action = JSON.parse((b.action as string) || "{}");
+        } catch {
+          action = null;
+        }
+        return {
+          id: b.id as string,
+          label: (b.label as string) || "Button",
+          style: (b.style as string) || "secondary",
+          action,
+          sortOrder: Number(b.sort_order ?? 0),
+        };
+      }),
+    });
+  }
+  return out;
+}
+
+/** One button plus enough context to execute it (and to verify the guild
+ *  pressing it is the campaign it belongs to). */
+export async function getCommandButtonForExecution(
+  buttonId: string
+): Promise<{ campaignId: string; commandName: string; label: string; action: Record<string, unknown> | null } | null> {
+  const r = await getDb().execute({
+    sql: `SELECT cb.label, cb.action, cc.campaign_id, cc.name AS command_name, cc.enabled
+          FROM command_buttons cb JOIN custom_commands cc ON cc.id = cb.command_id
+          WHERE cb.id = ?`,
+    args: [buttonId],
+  });
+  const row = r.rows[0];
+  if (!row || !row.enabled) return null;
+  let action: Record<string, unknown> | null = null;
+  try {
+    action = JSON.parse((row.action as string) || "{}");
+  } catch {
+    action = null;
+  }
+  return {
+    campaignId: row.campaign_id as string,
+    commandName: row.command_name as string,
+    label: (row.label as string) || "Button",
+    action,
+  };
+}
+
+export interface BotCustomMask {
+  displayName: string;
+  avatarPath: string | null;
+}
+
+/** Case-insensitive custom-mask lookup - DM-only voices with no character
+ *  behind them (they never execute *commands*, see messageHandler). */
+export async function getCustomMaskByWord(campaignId: string, mask: string): Promise<BotCustomMask | null> {
+  const r = await getDb().execute({
+    sql: "SELECT display_name, avatar_path FROM custom_masks WHERE campaign_id = ? AND lower(mask) = lower(?)",
+    args: [campaignId, mask],
+  });
+  const row = r.rows[0];
+  if (!row) return null;
+  return { displayName: row.display_name as string, avatarPath: (row.avatar_path as string) ?? null };
+}
+
+/** Replaces the stored snapshot of a guild's text channels - the website's
+ *  channel dropdown reads this. Called on ready + periodically. */
+export async function replaceGuildChannels(
+  guildId: string,
+  channels: { id: string; name: string; position: number }[]
+): Promise<void> {
+  const db = getDb();
+  await db.execute({ sql: "DELETE FROM guild_channels WHERE guild_id = ?", args: [guildId] });
+  for (const ch of channels) {
+    await db.execute({
+      sql: "INSERT OR REPLACE INTO guild_channels (channel_id, guild_id, name, position) VALUES (?,?,?,?)",
+      args: [ch.id, guildId, ch.name, ch.position],
+    });
+  }
+}
+
+// ---- Reveal notifications --------------------------------------------------
+
+export interface RevealEvent {
+  id: string;
+  campaignId: string;
+  entityType: string;
+  entityId: string;
+  title: string;
+  createdAt: string;
+}
+
+/** Pending reveal events old enough to digest (the batch window lets a bulk
+ *  reveal session settle into ONE message per player instead of a flood). */
+export async function fetchDigestableRevealEvents(windowSeconds: number, limit = 200): Promise<RevealEvent[]> {
+  const r = await getDb().execute({
+    sql: `SELECT id, campaign_id, entity_type, entity_id, title, created_at FROM reveal_events
+          WHERE status = 'pending' AND created_at < datetime('now', ?)
+          ORDER BY created_at ASC LIMIT ?`,
+    args: [`-${Math.max(1, Math.floor(windowSeconds))} seconds`, limit],
+  });
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    campaignId: row.campaign_id as string,
+    entityType: row.entity_type as string,
+    entityId: row.entity_id as string,
+    title: row.title as string,
+    createdAt: row.created_at as string,
+  }));
+}
+
+/** True when a NEWER pending event exists for the campaign - the digest
+ *  waits for the reveal session to go quiet before sending, so a DM mid-
+ *  reveal-spree doesn't trigger three partial digests. */
+export async function campaignHasFresherPending(campaignId: string, windowSeconds: number): Promise<boolean> {
+  const r = await getDb().execute({
+    sql: `SELECT 1 FROM reveal_events WHERE campaign_id = ? AND status = 'pending' AND created_at >= datetime('now', ?) LIMIT 1`,
+    args: [campaignId, `-${Math.max(1, Math.floor(windowSeconds))} seconds`],
+  });
+  return !!r.rows[0];
+}
+
+export async function markRevealEvents(ids: string[], status: "done" | "skipped"): Promise<void> {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  await getDb().execute({
+    sql: `UPDATE reveal_events SET status = '${status}', processed_at = datetime('now') WHERE id IN (${placeholders})`,
+    args: ids,
+  });
+}
+
+export interface NotifiablePlayer {
+  playerId: string;
+  discordUserId: string;
+  displayName: string;
+}
+
+/** Players of this campaign who linked their Discord account - the only ones a DM digest can reach. */
+export async function listNotifiablePlayers(campaignId: string): Promise<NotifiablePlayer[]> {
+  const r = await getDb().execute({
+    sql: "SELECT id, discord_user_id, display_name FROM players WHERE campaign_id = ? AND discord_user_id IS NOT NULL",
+    args: [campaignId],
+  });
+  return r.rows.map((row) => ({
+    playerId: row.id as string,
+    discordUserId: row.discord_user_id as string,
+    displayName: row.display_name as string,
+  }));
+}
+
+/** entity_player_access rows for one entity - empty means "no restriction"
+ *  (every player with the campaign revealed sees it), non-empty means ONLY
+ *  these players do; the digest respects the same rule as the website. */
+export async function listEntityAccessPlayerIds(entityType: string, entityId: string): Promise<string[]> {
+  const r = await getDb().execute({
+    sql: "SELECT player_id FROM entity_player_access WHERE entity_type = ? AND entity_id = ?",
+    args: [entityType, entityId],
+  });
+  return r.rows.map((row) => row.player_id as string);
+}
+
+// ---- Sheet templates (Sheet Engine Phase A stitch) -------------------------
+
+/** Raw sheet-template definition JSON for a campaign, or null for the 5e
+ *  default - the caller sanitizes through sheet-engine's
+ *  sanitizeSheetTemplate and falls back to SHEET_TEMPLATE_5E, mirroring the
+ *  website's resolveSheetTemplateForCampaign. */
+export async function getCampaignSheetTemplateRaw(campaignId: string): Promise<unknown | null> {
+  const db = getDb();
+  const c = await db.execute({ sql: "SELECT sheet_template_id FROM campaigns WHERE id = ?", args: [campaignId] });
+  const templateId = (c.rows[0]?.sheet_template_id as string) ?? null;
+  if (!templateId || templateId === "platform-5e-2014") return null;
+  const t = await db.execute({ sql: "SELECT definition FROM sheet_templates WHERE id = ?", args: [templateId] });
+  const row = t.rows[0];
+  if (!row) return null;
+  try {
+    return JSON.parse(row.definition as string);
+  } catch {
+    return null;
+  }
+}
+
+/** Bestiary hp/ac/portrait for status cards. */
+export async function getCreatureStatus(
+  creatureId: string
+): Promise<{ name: string; hp: number | null; ac: number | null; portraitPath: string | null } | null> {
+  const r = await getDb().execute({
+    sql: "SELECT name, hp, ac, portrait_path FROM creatures WHERE id = ?",
+    args: [creatureId],
+  });
+  const row = r.rows[0];
+  if (!row) return null;
+  return {
+    name: row.name as string,
+    hp: row.hp === null || row.hp === undefined ? null : Number(row.hp),
+    ac: row.ac === null || row.ac === undefined ? null : Number(row.ac),
+    portraitPath: (row.portrait_path as string) ?? null,
+  };
+}
+
+export interface BotNamedEntity {
+  name: string;
+  description: string;
+  imagePath: string | null;
+  subtitle: string | null;
+}
+
+/** Generic entity fetch for the "entity" button kind - the four campaign
+ *  content types beyond characters (which have their own richer embed). */
+export async function getNamedEntity(
+  entityType: "locations" | "factions" | "artifacts",
+  entityId: string
+): Promise<BotNamedEntity | null> {
+  const db = getDb();
+  if (entityType === "locations") {
+    const r = await db.execute({ sql: "SELECT name, type, description, thumbnail_path FROM locations WHERE id = ?", args: [entityId] });
+    const row = r.rows[0];
+    if (!row) return null;
+    return { name: row.name as string, description: row.description as string, imagePath: (row.thumbnail_path as string) ?? null, subtitle: (row.type as string) ?? null };
+  }
+  if (entityType === "factions") {
+    const r = await db.execute({ sql: "SELECT name, type, description FROM factions WHERE id = ?", args: [entityId] });
+    const row = r.rows[0];
+    if (!row) return null;
+    return { name: row.name as string, description: row.description as string, imagePath: null, subtitle: (row.type as string) ?? null };
+  }
+  const r = await db.execute({ sql: "SELECT name, type, rarity, description, image_path FROM artifacts WHERE id = ?", args: [entityId] });
+  const row = r.rows[0];
+  if (!row) return null;
+  const subtitle = [row.type as string, (row.rarity as string) ?? null].filter(Boolean).join(" · ");
+  return { name: row.name as string, description: row.description as string, imagePath: (row.image_path as string) ?? null, subtitle: subtitle || null };
+}
+
+/** Bestiary entry for the "entity" button kind - summary line from the stat block. */
+export async function getCreatureForEmbed(creatureId: string): Promise<BotNamedEntity | null> {
+  const r = await getDb().execute({
+    sql: "SELECT name, notes, portrait_path, stat_block FROM creatures WHERE id = ?",
+    args: [creatureId],
+  });
+  const row = r.rows[0];
+  if (!row) return null;
+  let subtitle: string | null = null;
+  try {
+    const sb = JSON.parse((row.stat_block as string) || "{}");
+    subtitle = [sb.size, sb.creatureType, sb.challengeRating ? `CR ${sb.challengeRating}` : null].filter(Boolean).join(" · ") || null;
+  } catch {
+    subtitle = null;
+  }
+  return {
+    name: row.name as string,
+    description: ((row.notes as string) ?? "").trim(),
+    imagePath: (row.portrait_path as string) ?? null,
+    subtitle,
+  };
 }

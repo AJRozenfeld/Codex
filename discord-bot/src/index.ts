@@ -4,6 +4,8 @@ import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { handleInteraction } from "./interactions.js";
 import { handleMessage } from "./messageHandler.js";
 import { startRollQueue } from "./rollQueue.js";
+import { startCommandSync } from "./customCommands.js";
+import { startNotifyQueue } from "./notifyQueue.js";
 
 // Voice fix (2026-07-07): without this, @discordjs/voice's UDP handshake can
 // resolve Discord's voice endpoint to an IPv6 address that the host network
@@ -34,6 +36,10 @@ const client = new Client({
 
 client.once("ready", (c) => {
   startRollQueue(client);
+  // Discord config suite (2026-08-06): custom-command registration + channel
+  // snapshots, and the reveal-notification DM digests.
+  startCommandSync(client);
+  startNotifyQueue(client);
   console.log(`Erendyl Codex bot logged in as ${c.user.tag}`);
 });
 

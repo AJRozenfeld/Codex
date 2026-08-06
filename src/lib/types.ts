@@ -803,3 +803,81 @@ export interface JournalEntry {
   createdAt: string;
   updatedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Discord bot configuration suite (2026-08-06). See the design comment above
+// discord_settings in db/schema.sql and src/lib/discord-io.ts for the
+// read/write layer. The bot mirrors the read side in discord-bot/src/db.ts.
+// ---------------------------------------------------------------------------
+
+export interface DiscordSettings {
+  campaignId: string;
+  /** Reveal-notification DMs to linked players - OFF by default, digested by the bot. */
+  notifyReveals: boolean;
+  /** Fixed channel for website-initiated rolls - null = "auto" (the last channel masks spoke in). */
+  rollChannelId: string | null;
+  /** Bumped on every custom-command save; the bot re-registers guild commands when it changes. */
+  commandsVersion: number;
+}
+
+/** Bot-maintained snapshot of the linked guild's text channels, so the
+ *  website can offer a real dropdown instead of asking for channel ids. */
+export interface GuildChannelInfo {
+  channelId: string;
+  guildId: string;
+  name: string;
+  position: number;
+}
+
+/** What one custom-command button does when pressed. Sanitized server-side
+ *  (sanitizeCommandAction in discord-io.ts) - a stored action is a claim. */
+export type CommandButtonAction =
+  | { kind: "entity"; entityType: "characters" | "locations" | "factions" | "artifacts" | "creatures"; entityId: string }
+  | { kind: "text"; text: string; imageUrl?: string }
+  | {
+      kind: "roll";
+      /** Character whose sheet the roll resolves against. */
+      characterId: string;
+      label: string;
+      count: number | string;
+      die: number | string;
+      /** Additive terms - numbers or SHEET-TEMPLATE variable keys (template-aware, not 5e-fixed). */
+      modifiers: (number | string)[];
+    }
+  | { kind: "status"; targetType: "character" | "creature"; targetId: string };
+
+export type CommandButtonStyle = "primary" | "secondary" | "success" | "danger";
+
+export interface CommandButton {
+  id: string;
+  commandId: string;
+  label: string;
+  style: CommandButtonStyle;
+  action: CommandButtonAction | null;
+  sortOrder: number;
+}
+
+export interface CustomCommand {
+  id: string;
+  campaignId: string;
+  /** Slash-command name: 1-32 chars, [a-z0-9-], no collision with built-ins. */
+  name: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface CustomCommandDetail extends CustomCommand {
+  buttons: CommandButton[];
+}
+
+/** A DM-only mask not attached to any character: own display name +
+ *  uploaded avatar, speaks via the same webhook trick but never executes
+ *  *commands* (*roll x*, *init*, *introduction*). */
+export interface CustomMask {
+  id: string;
+  campaignId: string;
+  /** The [[mask]] trigger word. */
+  mask: string;
+  displayName: string;
+  avatarPath: string | null;
+}

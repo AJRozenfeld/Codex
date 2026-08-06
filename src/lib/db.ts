@@ -64,7 +64,7 @@ let schemaReady: Promise<void> | null = null;
 // >>> the new statements. (Brand-new/dev databases are unaffected - version
 // >>> 0 always runs the full pass.)
 // ---------------------------------------------------------------------------
-const SCHEMA_VERSION = 11; // v11: Sheet Engine Phase A - sheet_templates table + campaigns.sheet_template_id
+const SCHEMA_VERSION = 12; // v12: Discord config suite - discord_settings, custom_commands/buttons, custom_masks, guild_channels, reveal_events + reveal triggers
 
 /** Applies db/schema.sql idempotently, then runs one-time migrations. Safe to call on every request. */
 export async function ensureSchema(): Promise<void> {

@@ -24,6 +24,7 @@ import {
   type BotCharacter,
 } from "./db.js";
 import { playTrackInChannel, playPlaylistInChannel, stopPlayback } from "./voice.js";
+import { handleCustomCommand, handleCustomButton } from "./customCommands.js";
 import { getActiveBattle, beginBattle, nextTurn, finishBattle, activateScene } from "./battle.js";
 
 const GOLD = 0xd97706;
@@ -518,8 +519,13 @@ export async function handleInteraction(interaction: Interaction): Promise<void>
         if (sub === "music") return void (await handlePanelMusic(interaction));
         if (sub === "scenes") return void (await handlePanelScenes(interaction));
       }
+      // Anything else is a DM-defined custom command (Discord config suite,
+      // 2026-08-06) - guild-scoped, synced from the website's builder.
+      return void (await handleCustomCommand(interaction));
     } else if (interaction.isStringSelectMenu()) {
       await handleSelectMenu(interaction);
+    } else if (interaction.isButton()) {
+      await handleCustomButton(interaction);
     }
   } catch (err) {
     console.error("[interaction] error:", err);

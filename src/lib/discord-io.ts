@@ -11,6 +11,14 @@ import type {
   SceneDetail,
   SceneCreatureItem,
   SceneCharacterItem,
+  CommandButton,
+  CommandButtonAction,
+  CommandButtonStyle,
+  CustomCommand,
+  CustomCommandDetail,
+  CustomMask,
+  DiscordSettings,
+  GuildChannelInfo,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -516,4 +524,406 @@ export async function addCharacterToScene(sceneId: string, characterId: string):
 export async function removeSceneCharacter(sceneCharacterId: string): Promise<void> {
   await ensureSchema();
   await getDb().execute({ sql: "DELETE FROM scene_characters WHERE id = ?", args: [sceneCharacterId] });
+}
+
+// ---------------------------------------------------------------------------
+// Discord bot configuration suite (2026-08-06). Three parts, all edited from
+// /admin/discord: message routing (discord_settings), the custom-command
+// builder (custom_commands/command_buttons), and custom masks (custom_masks).
+// See the design comment in db/schema.sql. The bot reads all of it through
+// its own mirror queries (discord-bot/src/db.ts) and re-registers guild
+// slash commands whenever discord_settings.commands_version changes.
+// ---------------------------------------------------------------------------
+
+export async function getDiscordSettings(campaignId: string): Promise<DiscordSettings> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM discord_settings WHERE campaign_id = ?",
+    args: [campaignId],
+  });
+  const row = r.rows[0];
+  if (!row) return { campaignId, notifyReveals: false, rollChannelId: null, commandsVersion: 0 };
+  return {
+    campaignId,
+    notifyReveals: !!row.notify_reveals,
+    rollChannelId: (row.roll_channel_id as string) ?? null,
+    commandsVersion: Number(row.commands_version ?? 0),
+  };
+}
+
+export async function updateDiscordMessageSettings(
+  campaignId: string,
+  input: { notifyReveals: boolean; rollChannelId: string | null }
+): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({
+    sql: `INSERT INTO discord_settings (campaign_id, notify_reveals, roll_channel_id)
+          VALUES (?, ?, ?)
+          ON CONFLICT(campaign_id) DO UPDATE SET
+            notify_reveals = excluded.notify_reveals,
+            roll_channel_id = excluded.roll_channel_id,
+            updated_at = datetime('now')`,
+    args: [campaignId, input.notifyReveals ? 1 : 0, input.rollChannelId],
+  });
+}
+
+/** Signals the bot's sync loop that this campaign's guild commands changed. */
+async function bumpCommandsVersion(campaignId: string): Promise<void> {
+  await getDb().execute({
+    sql: `INSERT INTO discord_settings (campaign_id, commands_version)
+          VALUES (?, 1)
+          ON CONFLICT(campaign_id) DO UPDATE SET
+            commands_version = discord_settings.commands_version + 1,
+            updated_at = datetime('now')`,
+    args: [campaignId],
+  });
+}
+
+/** The linked guild's text channels, as last snapshotted by the bot. Empty
+ *  until the bot has been online with the new sync code at least once. */
+export async function listGuildChannels(campaignId: string): Promise<GuildChannelInfo[]> {
+  await ensureSchema();
+  const link = await getGuildLinkForCampaign(campaignId);
+  if (!link) return [];
+  const r = await getDb().execute({
+    sql: "SELECT * FROM guild_channels WHERE guild_id = ? ORDER BY position ASC, name ASC",
+    args: [link.guildId],
+  });
+  return r.rows.map((row) => ({
+    channelId: row.channel_id as string,
+    guildId: row.guild_id as string,
+    name: row.name as string,
+    position: Number(row.position ?? 0),
+  }));
+}
+
+// ---- Custom commands -------------------------------------------------------
+
+/** Built-in command names the bot registers globally - a custom command may
+ *  never shadow one. Keep in sync with discord-bot/src/register-commands.ts. */
+export const RESERVED_COMMAND_NAMES = ["link", "panel", "stopmusic", "startbattle", "next", "endbattle"] as const;
+
+/** Discord's slash-name rules (the subset we allow): 1-32 chars, lowercase
+ *  letters/digits/hyphens. Returns null when nothing salvageable remains. */
+export function sanitizeCommandName(raw: string): string | null {
+  const name = raw.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
+  if (!name) return null;
+  if ((RESERVED_COMMAND_NAMES as readonly string[]).includes(name)) return null;
+  return name;
+}
+
+/** A stored button action is a claim, not a fact - coerce to a known shape
+ *  or reject. Mirrored (read side) in discord-bot/src/db.ts. */
+export function sanitizeCommandAction(raw: unknown): CommandButtonAction | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const str = (v: unknown, max = 200): string | null => (typeof v === "string" && v.trim() ? v.slice(0, max) : null);
+  if (o.kind === "entity") {
+    const entityType = str(o.entityType, 40);
+    const entityId = str(o.entityId, 64);
+    if (!entityType || !entityId) return null;
+    if (!["characters", "locations", "factions", "artifacts", "creatures"].includes(entityType)) return null;
+    return { kind: "entity", entityType: entityType as "characters", entityId };
+  }
+  if (o.kind === "text") {
+    const text = str(o.text, 1800);
+    if (!text) return null;
+    const imageUrl = typeof o.imageUrl === "string" && /^https?:\/\//i.test(o.imageUrl) ? o.imageUrl.slice(0, 500) : undefined;
+    return { kind: "text", text, ...(imageUrl ? { imageUrl } : {}) };
+  }
+  if (o.kind === "roll") {
+    const characterId = str(o.characterId, 64);
+    const label = str(o.label, 60) ?? "Roll";
+    if (!characterId) return null;
+    const part = (v: unknown): number | string | null => {
+      if (typeof v === "number" && Number.isFinite(v)) return Math.floor(v);
+      if (typeof v === "string" && /^[a-zA-Z][a-zA-Z0-9_]{0,39}$/.test(v)) return v;
+      return null;
+    };
+    const count = part(o.count) ?? 1;
+    const die = part(o.die) ?? 20;
+    const modifiers = Array.isArray(o.modifiers)
+      ? o.modifiers.map(part).filter((m): m is number | string => m !== null).slice(0, 8)
+      : [];
+    return { kind: "roll", characterId, label, count, die, modifiers };
+  }
+  if (o.kind === "status") {
+    const targetType = str(o.targetType, 20);
+    const targetId = str(o.targetId, 64);
+    if (!targetId || (targetType !== "character" && targetType !== "creature")) return null;
+    return { kind: "status", targetType, targetId };
+  }
+  return null;
+}
+
+function rowToCommand(row: Record<string, unknown>): CustomCommand {
+  return {
+    id: row.id as string,
+    campaignId: row.campaign_id as string,
+    name: row.name as string,
+    description: (row.description as string) ?? "",
+    enabled: !!row.enabled,
+  };
+}
+
+function rowToButton(row: Record<string, unknown>): CommandButton {
+  let action: CommandButtonAction | null = null;
+  try {
+    action = sanitizeCommandAction(JSON.parse((row.action as string) || "{}"));
+  } catch {
+    action = null;
+  }
+  const styleRaw = row.style as string;
+  const style: CommandButtonStyle = ["primary", "secondary", "success", "danger"].includes(styleRaw)
+    ? (styleRaw as CommandButtonStyle)
+    : "secondary";
+  return {
+    id: row.id as string,
+    commandId: row.command_id as string,
+    label: (row.label as string) ?? "Button",
+    style,
+    action,
+    sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
+export async function listCustomCommands(campaignId: string): Promise<CustomCommandDetail[]> {
+  await ensureSchema();
+  const db = getDb();
+  const cmds = await db.execute({
+    sql: "SELECT * FROM custom_commands WHERE campaign_id = ? ORDER BY name ASC",
+    args: [campaignId],
+  });
+  const out: CustomCommandDetail[] = [];
+  for (const row of cmds.rows) {
+    const buttons = await db.execute({
+      sql: "SELECT * FROM command_buttons WHERE command_id = ? ORDER BY sort_order ASC, created_at ASC",
+      args: [row.id as string],
+    });
+    out.push({ ...rowToCommand(row), buttons: buttons.rows.map(rowToButton) });
+  }
+  return out;
+}
+
+export async function createCustomCommand(campaignId: string, rawName: string, description: string): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  await ensureSchema();
+  const name = sanitizeCommandName(rawName);
+  if (!name) return { ok: false, error: "Command names use lowercase letters, digits and hyphens (and can't shadow a built-in like /panel)." };
+  const db = getDb();
+  const dup = await db.execute({ sql: "SELECT id FROM custom_commands WHERE campaign_id = ? AND name = ?", args: [campaignId, name] });
+  if (dup.rows[0]) return { ok: false, error: `/${name} already exists in this campaign.` };
+  const count = await db.execute({ sql: "SELECT COUNT(*) AS n FROM custom_commands WHERE campaign_id = ?", args: [campaignId] });
+  if (Number(count.rows[0]?.n ?? 0) >= 25) return { ok: false, error: "At most 25 custom commands per campaign (Discord's own guild-command ceiling leaves room for growth)." };
+  const id = newId();
+  await db.execute({
+    sql: "INSERT INTO custom_commands (id, campaign_id, name, description) VALUES (?,?,?,?)",
+    args: [id, campaignId, name, description.slice(0, 100)],
+  });
+  await bumpCommandsVersion(campaignId);
+  return { ok: true, id };
+}
+
+export async function updateCustomCommand(
+  campaignId: string,
+  commandId: string,
+  input: { name: string; description: string; enabled: boolean }
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  const name = sanitizeCommandName(input.name);
+  if (!name) return { ok: false, error: "Command names use lowercase letters, digits and hyphens (and can't shadow a built-in like /panel)." };
+  const db = getDb();
+  const dup = await db.execute({
+    sql: "SELECT id FROM custom_commands WHERE campaign_id = ? AND name = ? AND id != ?",
+    args: [campaignId, name, commandId],
+  });
+  if (dup.rows[0]) return { ok: false, error: `/${name} already exists in this campaign.` };
+  await db.execute({
+    sql: "UPDATE custom_commands SET name=?, description=?, enabled=?, updated_at=datetime('now') WHERE id=? AND campaign_id=?",
+    args: [name, input.description.slice(0, 100), input.enabled ? 1 : 0, commandId, campaignId],
+  });
+  await bumpCommandsVersion(campaignId);
+  return { ok: true };
+}
+
+export async function deleteCustomCommand(campaignId: string, commandId: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM custom_commands WHERE id = ? AND campaign_id = ?", args: [commandId, campaignId] });
+  await bumpCommandsVersion(campaignId);
+}
+
+/** Ownership guard shared by the button actions: the button's command must
+ *  belong to this campaign, or the write silently refuses. */
+async function commandBelongsTo(campaignId: string, commandId: string): Promise<boolean> {
+  const r = await getDb().execute({
+    sql: "SELECT id FROM custom_commands WHERE id = ? AND campaign_id = ?",
+    args: [commandId, campaignId],
+  });
+  return !!r.rows[0];
+}
+
+export async function addCommandButton(
+  campaignId: string,
+  commandId: string,
+  label: string,
+  style: CommandButtonStyle,
+  action: CommandButtonAction
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  await ensureSchema();
+  if (!(await commandBelongsTo(campaignId, commandId))) return { ok: false, error: "That command no longer exists." };
+  const clean = sanitizeCommandAction(action);
+  if (!clean) return { ok: false, error: "That button's action is incomplete." };
+  const db = getDb();
+  const count = await db.execute({ sql: "SELECT COUNT(*) AS n FROM command_buttons WHERE command_id = ?", args: [commandId] });
+  if (Number(count.rows[0]?.n ?? 0) >= 25) return { ok: false, error: "At most 25 buttons per command (Discord caps a message at 5 rows of 5)." };
+  const existing = await db.execute({ sql: "SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM command_buttons WHERE command_id = ?", args: [commandId] });
+  const nextOrder = Number(existing.rows[0]?.maxOrder ?? -1) + 1;
+  const id = newId();
+  await db.execute({
+    sql: "INSERT INTO command_buttons (id, command_id, label, style, action, sort_order) VALUES (?,?,?,?,?,?)",
+    args: [id, commandId, label.slice(0, 80) || "Button", style, JSON.stringify(clean), nextOrder],
+  });
+  await bumpCommandsVersion(campaignId);
+  return { ok: true, id };
+}
+
+export async function updateCommandButton(
+  campaignId: string,
+  commandId: string,
+  buttonId: string,
+  label: string,
+  style: CommandButtonStyle,
+  action: CommandButtonAction
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureSchema();
+  if (!(await commandBelongsTo(campaignId, commandId))) return { ok: false, error: "That command no longer exists." };
+  const clean = sanitizeCommandAction(action);
+  if (!clean) return { ok: false, error: "That button's action is incomplete." };
+  await getDb().execute({
+    sql: "UPDATE command_buttons SET label=?, style=?, action=? WHERE id=? AND command_id=?",
+    args: [label.slice(0, 80) || "Button", style, JSON.stringify(clean), buttonId, commandId],
+  });
+  await bumpCommandsVersion(campaignId);
+  return { ok: true };
+}
+
+export async function removeCommandButton(campaignId: string, commandId: string, buttonId: string): Promise<void> {
+  await ensureSchema();
+  if (!(await commandBelongsTo(campaignId, commandId))) return;
+  await getDb().execute({ sql: "DELETE FROM command_buttons WHERE id = ? AND command_id = ?", args: [buttonId, commandId] });
+  await bumpCommandsVersion(campaignId);
+}
+
+/** Swaps this button's sort_order with its neighbor - same pattern as playlist tracks. */
+export async function moveCommandButton(campaignId: string, commandId: string, buttonId: string, direction: "up" | "down"): Promise<void> {
+  await ensureSchema();
+  if (!(await commandBelongsTo(campaignId, commandId))) return;
+  const db = getDb();
+  const r = await db.execute({
+    sql: "SELECT id, sort_order FROM command_buttons WHERE command_id = ? ORDER BY sort_order ASC, created_at ASC",
+    args: [commandId],
+  });
+  const rows = r.rows.map((row) => ({ id: row.id as string, sortOrder: Number(row.sort_order ?? 0) }));
+  const index = rows.findIndex((row) => row.id === buttonId);
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapIndex < 0 || swapIndex >= rows.length) return;
+  const a = rows[index];
+  const b = rows[swapIndex];
+  await db.batch(
+    [
+      { sql: "UPDATE command_buttons SET sort_order = ? WHERE id = ?", args: [b.sortOrder, a.id] },
+      { sql: "UPDATE command_buttons SET sort_order = ? WHERE id = ?", args: [a.sortOrder, b.id] },
+    ],
+    "write"
+  );
+  await bumpCommandsVersion(campaignId);
+}
+
+// ---- Custom masks ----------------------------------------------------------
+
+function rowToCustomMask(row: Record<string, unknown>): CustomMask {
+  return {
+    id: row.id as string,
+    campaignId: row.campaign_id as string,
+    mask: row.mask as string,
+    displayName: row.display_name as string,
+    avatarPath: (row.avatar_path as string) ?? null,
+  };
+}
+
+export async function listCustomMasks(campaignId: string): Promise<CustomMask[]> {
+  await ensureSchema();
+  const r = await getDb().execute({
+    sql: "SELECT * FROM custom_masks WHERE campaign_id = ? ORDER BY mask ASC",
+    args: [campaignId],
+  });
+  return r.rows.map(rowToCustomMask);
+}
+
+/** A mask word must be unique across BOTH character masks and custom masks
+ *  in the campaign (case-insensitive) - the bot resolves characters first,
+ *  so a collision would shadow one or the other confusingly. */
+async function maskWordTaken(campaignId: string, mask: string, excludeCustomId?: string): Promise<string | null> {
+  const db = getDb();
+  const ch = await db.execute({
+    sql: "SELECT name FROM characters WHERE campaign_id = ? AND lower(mask) = lower(?)",
+    args: [campaignId, mask],
+  });
+  if (ch.rows[0]) return `the character ${ch.rows[0].name as string} already uses that mask`;
+  const cm = await db.execute({
+    sql: "SELECT id, display_name FROM custom_masks WHERE campaign_id = ? AND lower(mask) = lower(?)",
+    args: [campaignId, mask],
+  });
+  const hit = cm.rows[0];
+  if (hit && hit.id !== excludeCustomId) return `the custom mask ${hit.display_name as string} already uses that word`;
+  return null;
+}
+
+export interface CustomMaskInput {
+  mask: string;
+  displayName: string;
+  avatarFile?: File | null;
+}
+
+export async function upsertCustomMask(
+  campaignId: string,
+  input: CustomMaskInput,
+  id?: string
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  await ensureSchema();
+  const mask = input.mask.trim().slice(0, 60);
+  const displayName = input.displayName.trim().slice(0, 80);
+  if (!mask || !displayName) return { ok: false, error: "A mask needs both a trigger word and a display name." };
+  if (/[\[\]:]/.test(mask)) return { ok: false, error: "Mask words can't contain [, ] or : - they'd break the [[mask]]: trigger." };
+  const taken = await maskWordTaken(campaignId, mask, id);
+  if (taken) return { ok: false, error: `Can't use [[${mask}]] - ${taken}.` };
+  let avatarPath: string | undefined;
+  if (input.avatarFile && input.avatarFile.size > 0) {
+    avatarPath = await uploadImage(input.avatarFile, "masks");
+  }
+  const db = getDb();
+  if (id) {
+    if (avatarPath) {
+      await db.execute({
+        sql: "UPDATE custom_masks SET mask=?, display_name=?, avatar_path=? WHERE id=? AND campaign_id=?",
+        args: [mask, displayName, avatarPath, id, campaignId],
+      });
+    } else {
+      await db.execute({
+        sql: "UPDATE custom_masks SET mask=?, display_name=? WHERE id=? AND campaign_id=?",
+        args: [mask, displayName, id, campaignId],
+      });
+    }
+    return { ok: true, id };
+  }
+  const newMaskId = newId();
+  await db.execute({
+    sql: "INSERT INTO custom_masks (id, campaign_id, mask, display_name, avatar_path) VALUES (?,?,?,?,?)",
+    args: [newMaskId, campaignId, mask, displayName, avatarPath ?? null],
+  });
+  return { ok: true, id: newMaskId };
+}
+
+export async function deleteCustomMask(campaignId: string, id: string): Promise<void> {
+  await ensureSchema();
+  await getDb().execute({ sql: "DELETE FROM custom_masks WHERE id = ? AND campaign_id = ?", args: [id, campaignId] });
 }

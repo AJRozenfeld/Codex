@@ -195,9 +195,19 @@ export function resolveSheetVariable(sheet: Record<string, unknown> | null, key:
   }
 }
 
-function resolvePart(sheet: Record<string, unknown> | null, part: number | string): { value: number; note: string | null } {
+/** How a variable key becomes a number. The default is the hardcoded 5e
+ *  resolver below; template-aware callers (custom-command roll buttons,
+ *  2026-08-06) pass a resolver built from the campaign's sheet template via
+ *  sheet-engine.ts, so custom systems' stats resolve too. */
+export type VariableResolver = (sheet: Record<string, unknown> | null, key: string) => number | null;
+
+function resolvePart(
+  sheet: Record<string, unknown> | null,
+  part: number | string,
+  resolve: VariableResolver = resolveSheetVariable
+): { value: number; note: string | null } {
   if (typeof part === "number") return { value: part, note: null };
-  const resolved = resolveSheetVariable(sheet, part);
+  const resolved = resolve(sheet, part);
   if (resolved === null) return { value: 0, note: `unknown variable "${part}" treated as 0` };
   return { value: resolved, note: null };
 }
@@ -210,16 +220,20 @@ export interface ActionRollResult {
 
 /** Rolls one action-roll expression against a sheet. Clamps: 1-40 dice,
  *  d2-d1000, modifier -999..999 - generous for real systems, fatal to typos. */
-export function computeActionRoll(sheet: Record<string, unknown> | null, spec: ActionRollSpec): ActionRollResult {
+export function computeActionRoll(
+  sheet: Record<string, unknown> | null,
+  spec: ActionRollSpec,
+  resolve: VariableResolver = resolveSheetVariable
+): ActionRollResult {
   const notes: string[] = [];
-  const countR = resolvePart(sheet, spec.count);
-  const dieR = resolvePart(sheet, spec.die);
+  const countR = resolvePart(sheet, spec.count, resolve);
+  const dieR = resolvePart(sheet, spec.die, resolve);
   const modParts = Array.isArray(spec.modifiers)
     ? spec.modifiers
     : spec.modifier !== undefined
       ? [spec.modifier]
       : [];
-  const resolvedMods = modParts.map((m) => resolvePart(sheet, m));
+  const resolvedMods = modParts.map((m) => resolvePart(sheet, m, resolve));
   for (const r of [countR, dieR, ...resolvedMods]) if (r.note) notes.push(r.note);
 
   const count = Math.min(40, Math.max(1, Math.floor(countR.value) || 1));
