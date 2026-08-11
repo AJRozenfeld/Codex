@@ -29,6 +29,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // The Blob client-upload handshake (music uploads) authenticates itself
+  // inside the route (isAdminAuthed) and must return JSON, never a login
+  // redirect: the DM holds an ADMIN session, not a player one, so the
+  // player catch-all below was bouncing the token request to the login
+  // page - the @vercel/blob client then surfaced the HTML as "Failed to
+  // retrieve the client token". A silent regression of the whole-site
+  // login gate (2026-07-25), caught 2026-08-09. Vercel's server-to-server
+  // onUploadCompleted callback (no cookies at all) needs this exemption
+  // just the same.
+  if (pathname.startsWith("/api/blob")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login") {
       return NextResponse.next();
